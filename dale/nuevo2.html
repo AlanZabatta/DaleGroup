@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DaleGroup - Scroll Infinito con Imágenes</title>
+  <style>
+    /* Reseteo y fondo transparente */
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background-color: transparent;
+      font-family: sans-serif;
+    }
+
+    /* Contenedor principal: Ancho y adaptado para PC */
+    .dalegroup-container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+      background-color: transparent;
+    }
+
+    /* Área de scroll */
+    .rectangles-scroll-area {
+      flex-grow: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 30px; /* Separación un poco más grande para que respiren los grupos */
+      padding: 20px;
+     
+      /* Ocultar barra de scroll */
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .rectangles-scroll-area::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* --- NUEVO: Envoltorio para cada Ítem (Rectángulo + Texto abajo) --- */
+    .item-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 8px; /* Espacio entre el rectángulo y su texto inferior */
+      width: 100%;
+    }
+
+    /* Los rectángulos (ahora actúan como botones para cargar imagen) */
+    .coupon-rectangle {
+      position: relative;
+      width: 100%;
+      height: 140px;
+      background-color: transparent;
+      border: 1px solid #000000;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      cursor: pointer;
+      overflow: hidden; /* Clave: asegura que la imagen cargada respete los bordes redondeados */
+    }
+
+    .coupon-rectangle:hover {
+      background-color: rgba(0,0,0,0.02); /* Un leve feedback visual al pasar el mouse */
+    }
+
+    .coupon-placeholder {
+      font-size: 14px;
+      color: #666;
+      pointer-events: none; /* Para que el click pase al rectángulo */
+    }
+
+    /* La imagen que se cargará dentro (oculta por defecto) */
+    .coupon-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover; /* Hace que la imagen llene el rectángulo sin deformarse */
+      display: none;
+    }
+
+    /* --- NUEVO: Texto de un renglón debajo de cada rectángulo --- */
+    .item-text {
+      margin: 0;
+      font-size: 15px;
+      color: #000000;
+      text-align: center;
+      font-weight: 500;
+     
+      /* Reglas estrictas para forzar 1 solo renglón */
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+    }
+
+    /* Sección inferior anclada (la dejamos igual) */
+    .bottom-actions {
+      padding: 15px 20px;
+      background: transparent;
+    }
+
+    .single-line-black-text {
+      background-color: #000000;
+      color: #ffffff;
+      padding: 15px;
+      margin: 0;
+      width: 100%;
+      text-align: center;
+      font-weight: bold;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      box-sizing: border-box;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="dalegroup-container">
+    <div class="rectangles-scroll-area" id="contenedor-rectangulos">
+    </div>
+
+    <div class="bottom-actions">
+      <p class="single-line-black-text">Interacciones de botones</p>
+    </div>
+  </div>
+
+  <script>
+    const contenedor = document.getElementById('contenedor-rectangulos');
+    let contadorItems = 0;
+
+    function generarItems(cantidad) {
+      for (let i = 0; i < cantidad; i++) {
+        contadorItems++;
+       
+        // 1. Creamos el envoltorio que contiene todo el bloque
+        const wrapper = document.createElement('div');
+        wrapper.className = 'item-wrapper';
+
+        // 2. Creamos el rectángulo
+        const rect = document.createElement('div');
+        rect.className = 'coupon-rectangle';
+       
+        // Input oculto para cargar la imagen localmente (simula Cloudinary)
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'image/*';
+        fileInput.style.display = 'none';
+
+        // Etiqueta de imagen (vacía al principio)
+        const img = document.createElement('img');
+        img.className = 'coupon-image';
+
+        // Texto placeholder dentro del rectángulo
+        const placeholder = document.createElement('span');
+        placeholder.className = 'coupon-placeholder';
+        placeholder.textContent = contadorItems === 1 ? 'Cupón (Click para probar imagen)' : 'Click para probar imagen';
+
+        // 3. Creamos el texto de un renglón debajo del rectángulo
+        const textoAbajo = document.createElement('p');
+        textoAbajo.className = 'item-text';
+        textoAbajo.textContent = 'Texto descriptivo del ítem ' + contadorItems; // Acá luego Phoenix inyectará tus textos
+
+        // Metemos todo en su lugar
+        rect.appendChild(fileInput);
+        rect.appendChild(img);
+        rect.appendChild(placeholder);
+       
+        wrapper.appendChild(rect);
+        wrapper.appendChild(textoAbajo);
+       
+        contenedor.appendChild(wrapper);
+
+        // --- LÓGICA DE PREVISUALIZACIÓN DE IMAGEN ---
+        // Al hacer click en el rectángulo, abrimos el selector de archivos
+        rect.addEventListener('click', () => {
+          fileInput.click();
+        });
+
+        // Cuando elijas una imagen, la mostramos adentro del rectángulo
+        fileInput.addEventListener('change', (event) => {
+          const file = event.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              img.src = e.target.result;
+              img.style.display = 'block'; // Mostramos la imagen
+              placeholder.style.display = 'none'; // Ocultamos el texto de "Click para..."
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+      }
+    }
+
+    // Generamos los primeros 15 elementos
+    generarItems(15);
+
+    // Lógica de Scroll Infinito
+    contenedor.addEventListener('scroll', () => {
+      // Si nos acercamos al fondo, generamos 10 más
+      if (contenedor.scrollTop + contenedor.clientHeight >= contenedor.scrollHeight - 200) {
+        generarItems(10);
+      }
+    });
+  </script>
+
+</body>
+</html>

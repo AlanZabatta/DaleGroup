@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DaleGroup - Menú Flotante</title>
+  <link rel="stylesheet" href="muestra2.css">
+</head>
+<body>
+
+  <div class="menu-flotante-container">
+
+    <div class="menu-desplegable-verde" id="menuVerde">
+      <div class="item-menu">
+        <img src="https://res.cloudinary.com/djziwuaky/image/upload/v1779315021/WhatsApp_Image_2026-05-20_at_7.09.50_PM-removebg-preview_q7pkdy.png" alt="Cupón">
+      </div>
+      <div class="item-menu">
+        <img src="https://res.cloudinary.com/djziwuaky/image/upload/v1779311607/WhatsApp_Image_2026-05-20_at_6.07.52_PM_1_mcfxcm.jpg" alt="Mapa">
+      </div>
+      <div class="item-menu">
+        <img src="https://res.cloudinary.com/djziwuaky/image/upload/v1779315462/WhatsApp_Image_2026-05-20_at_7.17.13_PM-removebg-preview_v8gofi.png" alt="Logo">
+      </div>
+    </div>
+
+    <div class="boton-disparador" id="btnDisparador">
+      <img src="https://res.cloudinary.com/djziwuaky/image/upload/v1779311629/WhatsApp_Image_2026-05-20_at_6.07.52_PM_2_dz41fk.jpg" alt="Abrir menú">
+    </div>
+
+  </div>
+
+  <script>
+    const boton = document.getElementById('btnDisparador');
+    const menu = document.getElementById('menuVerde');
+
+    boton.addEventListener('click', () => {
+      menu.classList.toggle('activo');
+    });
+  </script>
+
+</body>
+</html>

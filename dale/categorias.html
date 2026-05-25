@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DaleGroup</title>
+    <link rel="stylesheet" href="css/categorias.css">
+</head>
+<body> 
+   <br><br><br>
+ <div class="grilla-categorias-simple">
+
+    <div class="tarjeta-categoria">
+        <img src="img/negra.jpg" class="img-fondo" />
+        <div class="etiqueta-centro"> <a href="streetwear.html">Streetwear</a></div>
+    </div>
+
+    <div class="tarjeta-categoria"> 
+        <img src="img/old%20money.webp" class="img-fondo" />
+        <div class="etiqueta-centro"> <a href="oldmoney.html">Old Money</a></div>
+    </div>
+
+   <div class="tarjeta-categoria"> 
+        <img src="img/starboy.jpg" class="img-fondo" />
+        <div class="etiqueta-centro"> <a href="starboy.html">Starboy</a></div>
+    </div>
+
+    <div class="tarjeta-categoria"> 
+        <img src="img/biker.webp" class="img-fondo" />
+        <div class="etiqueta-centro"> <a href="biker.html">Biker</a></div>
+    </div>
+
+    <div class="tarjeta-categoria"> 
+        <img src="img/elegante.avif" class="img-fondo" />
+        <div class="etiqueta-centro"> <a href="elegante.html">Elegante</a></div>
+    </div>
+
+   <div class="tarjeta-categoria"> 
+        <img src="img/urbano.jfif" class="img-fondo" />
+        <div class="etiqueta-centro"> <a href="urbano.html">urbano</a></div>
+    </div>
+
+   
+
+    <div class="linea-curva-1"></div>
+    <div class="linea-curva-2"></div>
+    <div class="linea-curva-3"></div>
+
+    <div class="boton-menu" id="abrir-menu">
+        <div class="linea-hamburguesa"></div>
+        <div class="linea-hamburguesa"></div>
+        <div class="linea-hamburguesa"></div>
+    </div>
+
+    <div class="menu-desplegable" id="menu-desplegable">
+        <nav class="contenido-menu">
+            <ul>
+                <li><a href="nosotros.html">Nosotros</a></li>
+                <li><a href="categorias.html">Categorias</a></li>
+                <li><a href="terminos.html">Terminos</a></li>
+                <li><a href="comunidad.html">Comunidad</a></li>
+                <li><a href="contacto.html">Contacto</a></li>
+                <li><a href="ayuda.html">Ayuda</a></li>
+            </ul>
+        </nav>
+        <div class="cerrar-seccion" id="cerrar-menu">
+            <a href="#">Cerrar sección</a>
+        </div>
+    </div>
+
+    <script>
+        const btnAbrir = document.getElementById('abrir-menu');
+        const btnCerrar = document.getElementById('cerrar-menu');
+        const navMenu = document.getElementById('menu-desplegable');
+
+        btnAbrir.addEventListener('click', () => {
+            navMenu.classList.toggle('abierto');
+        });
+
+        btnCerrar.addEventListener('click', () => {
+            navMenu.classList.remove('abierto');
+        });
+           
+    </script>
+        
+</body>
+    
+</html>

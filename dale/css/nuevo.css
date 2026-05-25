@@ -1,0 +1,108 @@
+/* Contenedor principal que simula la pantalla del celular */
+.dalegroup-container {
+  max-width: 450px;
+  margin: 0 auto;
+  background-color: #f8f9fa;
+  /* Fondo de cuadrícula simulando tu diseño */
+  background-image:
+    linear-gradient(to right, #e9ecef 1px, transparent 1px),
+    linear-gradient(to bottom, #e9ecef 1px, transparent 1px);
+  background-size: 20px 20px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: sans-serif;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Barra superior */
+.top-bar {
+  margin-bottom: 20px;
+}
+.menu-btn {
+  background: white;
+  border: 1px solid #333;
+  padding: 5px 10px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+/* Área donde se generan los rectángulos (con scroll) */
+.rectangles-scroll-area {
+  flex-grow: 1;
+  overflow-y: auto; /* Permite scrollear infinitamente hacia abajo */
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* Espacio entre los rectángulos */
+  padding-bottom: 20px;
+}
+
+/* Los rectángulos (Cupones) */
+.coupon-rectangle {
+  width: 100%;
+  height: 90px;
+  background-color: white;
+  border: 1px solid #000000; /* Borde fino negro */
+  /* Si los querés totalmente rectos poné 0, si querés apenas redondeados poné 4px */
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0; /* Evita que se aplasten */
+}
+
+.coupon-text {
+  font-size: 14px;
+  color: #333;
+}
+
+/* Sección inferior */
+.bottom-actions {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  background: white;
+  padding: 15px;
+  border: 1px solid #ddd;
+}
+
+/* Input de archivo oculto por un label más lindo */
+.file-input {
+  display: none;
+}
+.upload-label {
+  background-color: #f0f0f0;
+  border: 1px solid #000;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.image-preview {
+  width: 100px;
+  height: 100px;
+  border: 1px solid #ccc;
+  overflow: hidden;
+}
+.image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* El texto de un solo renglón */
+.single-line-black-text {
+  background-color: #212529; /* Fondo oscuro como en tu foto */
+  color: #ffffff; /* Texto blanco para que resalte sobre el fondo oscuro */
+  padding: 8px 12px;
+  margin: 0;
+  width: 100%;
+  text-align: center;
+  /* Estas 3 propiedades fuerzan que sea 1 solo renglón siempre */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

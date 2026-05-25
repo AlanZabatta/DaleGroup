@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link rel="stylesheet" href="muestra.css">
+</head>
+<body>
+
+  <div class="menu-flotante-container">
+
+    <div class="menu-desplegable-verde" id="menuVerde">
+      <div class="item-menu"><span style="color:white; font-size:20px;">%</span></div>
+      <div class="item-menu"><span style="color:white; font-size:20px;">📍</span></div>
+      <div class="item-menu"><span style="color:white; font-size:20px;">👤</span></div>
+    </div>
+
+    <button class="boton-disparador" id="btnDisparador">
+      <span style="color:white; font-size:24px;">▲</span>
+    </button>
+
+  </div>
+
+  <script>
+    const boton = document.getElementById('btnDisparador');
+    const menu = document.getElementById('menuVerde');
+
+    boton.addEventListener('click', () => {
+      menu.classList.toggle('activo');
+    });
+  </script>
+
+</body>
+</html>
