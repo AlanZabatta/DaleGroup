@@ -1,0 +1,38 @@
+<div style="background-color: white; min-height: 100vh; padding: 24px; max-width: 600px; margin: 0 auto;">
+
+  <%= if @marca.logo do %>
+    <img src={@marca.logo} style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%; display: block; margin: 0 auto 16px auto;"/>
+  <% else %>
+    <div style="width: 100px; height: 100px; background-color: #1E5C1E; border-radius: 50%; margin: 0 auto 16px auto;"></div>
+  <% end %>
+
+  <h1 style="font-size: 24px; font-weight: bold; text-align: center; color: #3B2505; margin-bottom: 8px;"><%= @marca.name %></h1>
+
+  <%= if @marca.description do %>
+    <p style="text-align: center; color: #666; margin-bottom: 16px;"><%= @marca.description %></p>
+  <% end %>
+
+  <%= if @marca.address do %>
+    <p style="text-align: center; margin-bottom: 24px;">📍 <%= @marca.address %></p>
+  <% end %>
+
+  <%= if @cupon do %>
+    <div style="background-color: #1E5C1E; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
+      <p style="color: white; font-size: 14px; margin-bottom: 8px;">Cupón disponible</p>
+      <p style="color: white; font-size: 32px; font-weight: bold;"><%= @cupon.discount %></p>
+      <%= if @cupon.description do %>
+        <p style="color: #ccc; font-size: 14px; margin-top: 8px;"><%= @cupon.description %></p>
+      <% end %>
+    </div>
+
+    <button style="width: 100%; background-color: #3B2505; color: white; padding: 16px; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer;">
+      Reclamar Beneficio
+    </button>
+  <% else %>
+    <div style="background-color: #eee; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
+      <p style="color: #999; font-size: 18px;">Sin cupón activo por ahora</p>
+    </div>
+  <% end %>
+
+  <a href="/marcas" style="display: block; text-align: center; margin-top: 24px; color: #1E5C1E;">← Volver a marcas</a>
+</div>

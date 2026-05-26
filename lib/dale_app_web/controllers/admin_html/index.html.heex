@@ -1,0 +1,64 @@
+<div style="padding: 24px; font-family: sans-serif; background-color: white; min-height: 100vh;">
+  <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 24px;">Admin Panel — Usuarios</h1>
+
+  <input
+    id="buscador"
+    type="text"
+    placeholder="Buscar por nombre, email o rol..."
+    onkeyup="filtrar()"
+    style="width: 100%; padding: 10px; margin-bottom: 16px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; box-sizing: border-box;"
+  />
+
+  <table id="tabla-usuarios" style="width: 100%; border-collapse: collapse;">
+    <thead>
+      <tr style="background-color: #1E5C1E; color: white;">
+        <th style="padding: 12px; text-align: left;">Nombre</th>
+        <th style="padding: 12px; text-align: left;">Email</th>
+        <th style="padding: 12px; text-align: left;">Rol</th>
+        <th style="padding: 12px; text-align: left;">Baneado</th>
+        <th style="padding: 12px; text-align: left;">Acciones</th>
+      </tr>
+    </thead>
+    <tbody id="cuerpo-tabla">
+      <%= for user <- @users do %>
+        <tr data-buscar={"#{String.downcase(user.name || "")} #{String.downcase(user.email)} #{String.downcase(user.role)}"} style="border-bottom: 1px solid #eee;">
+          <td style="padding: 12px;"><%= user.name %></td>
+          <td style="padding: 12px;"><%= user.email %></td>
+          <td style="padding: 12px;"><%= user.role %></td>
+          <td style="padding: 12px;"><%= if user.banned, do: "Sí", else: "No" %></td>
+          <td style="padding: 12px; display: flex; gap: 8px;">
+            <form action={~p"/admin/#{user.id}/role"} method="post">
+              <input type="hidden" name="_csrf_token" value={get_csrf_token()}/>
+              <select name="role" style="padding: 4px; border-radius: 4px;">
+                <option value="user" selected={user.role == "user"}>User</option>
+                <option value="dueño" selected={user.role == "dueño"}>Dueño</option>
+                <option value="cajero" selected={user.role == "cajero"}>Cajero</option>
+                <option value="admin" selected={user.role == "admin"}>Admin</option>
+              </select>
+              <button type="submit" style="background-color: #1E5C1E; color: white; padding: 4px 10px; border: none; border-radius: 4px; cursor: pointer;">
+                Cambiar
+              </button>
+            </form>
+            <form action={~p"/admin/#{user.id}/ban"} method="post">
+              <input type="hidden" name="_csrf_token" value={get_csrf_token()}/>
+              <button type="submit" style="background-color: #c0392b; color: white; padding: 4px 10px; border: none; border-radius: 4px; cursor: pointer;">
+                Banear
+              </button>
+            </form>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  function filtrar() {
+    const texto = document.getElementById("buscador").value.toLowerCase();
+    const filas = document.querySelectorAll("#cuerpo-tabla tr");
+    filas.forEach(fila => {
+      const contenido = fila.getAttribute("data-buscar") || "";
+      fila.style.display = contenido.includes(texto) ? "" : "none";
+    });
+  }
+</script>

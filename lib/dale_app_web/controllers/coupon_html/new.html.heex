@@ -1,0 +1,28 @@
+<div style="background-color: white; min-height: 100vh; padding: 24px; max-width: 600px; margin: 0 auto;">
+  <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 24px; color: #3B2505;">Crear Cupón</h1>
+
+  <form action={~p"/mi-tienda/cupon"} method="post">
+    <input type="hidden" name="_csrf_token" value={get_csrf_token()}/>
+
+    <div style="margin-bottom: 16px;">
+      <label style="display: block; margin-bottom: 6px; font-weight: bold;">Descuento</label>
+      <input type="text" name="coupon[discount]" placeholder="Ej: 20% off, 2x1, $5000 off" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;"/>
+    </div>
+
+    <div style="margin-bottom: 16px;">
+      <label style="display: block; margin-bottom: 6px; font-weight: bold;">Descripción</label>
+      <textarea name="coupon[description]" placeholder="Descripción del cupón..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; height: 100px;"></textarea>
+    </div>
+
+    <div style="margin-bottom: 16px;">
+      <label style="display: block; margin-bottom: 6px; font-weight: bold;">Stock de cupones</label>
+      <input type="number" name="coupon[stock]" value="100" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;"/>
+    </div>
+
+    <button type="submit" style="width: 100%; background-color: #1E5C1E; color: white; padding: 16px; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer;">
+      Crear Cupón
+    </button>
+  </form>
+
+  <a href="/mi-tienda" style="display: block; text-align: center; margin-top: 24px; color: #1E5C1E;">← Volver a mi tienda</a>
+</div>

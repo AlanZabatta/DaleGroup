@@ -1,0 +1,33 @@
+// Esperar a que cargue todo el HTML
+window.addEventListener("DOMContentLoaded", () => {
+  
+  // --- LÓGICA DEL MENÚ FLOTANTE DaleGroup ---
+  const fabTrigger = document.getElementById('fab-trigger');
+  const fabMenu = document.getElementById('fab-menu');
+
+  if (fabTrigger && fabMenu) {
+    fabTrigger.addEventListener('click', (e) => {
+      // Evitar que el clic haga cosas raras en la página
+      e.stopPropagation(); 
+
+      // Conmutar las clases de Tailwind que lo ocultan
+      // Sacamos las clases 'negativas' y ponemos las 'activas'
+      fabMenu.classList.toggle('opacity-0');
+      fabMenu.classList.toggle('-translate-y-20'); // Mueve el bloque 20 unidades hacia abajo al ocultar
+      fabMenu.classList.toggle('pointer-events-none'); // Desactiva los clics cuando está oculto
+      
+      // Opcional: Le damos una vueltita al logo al tocarlo
+      fabTrigger.classList.toggle('rotate-90');
+    });
+
+    // Opcional: Si tocás cualquier otra parte de la pantalla blanca, cerrá el menú
+    document.addEventListener('click', () => {
+        if (!fabMenu.classList.contains('opacity-0')) {
+            fabMenu.classList.add('opacity-0');
+            fabMenu.classList.add('-translate-y-20');
+            fabMenu.classList.add('pointer-events-none');
+            fabTrigger.classList.remove('rotate-90');
+        }
+    });
+  }
+});

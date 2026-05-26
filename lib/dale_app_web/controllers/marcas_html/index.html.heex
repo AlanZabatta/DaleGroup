@@ -1,0 +1,18 @@
+<div style="background-color: white; min-height: 100vh; padding: 24px;">
+  <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 24px; color: #3B2505;">Marcas</h1>
+
+  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+    <%= for marca <- @marcas do %>
+      <a href={~p"/marcas/#{marca.id}"} style="text-decoration: none; color: inherit;">
+        <div style="border: 1px solid #eee; border-radius: 12px; padding: 16px; text-align: center; cursor: pointer;">
+          <%= if marca.logo do %>
+            <img src={marca.logo} style="width: 80px; height: 80px; object-fit: cover; border-radius: 50%; margin-bottom: 8px;"/>
+          <% else %>
+            <div style="width: 80px; height: 80px; background-color: #1E5C1E; border-radius: 50%; margin: 0 auto 8px auto;"></div>
+          <% end %>
+          <p style="font-weight: bold; font-size: 14px;"><%= marca.name %></p>
+        </div>
+      </a>
+    <% end %>
+  </div>
+</div>
