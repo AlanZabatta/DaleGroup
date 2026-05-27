@@ -30,6 +30,8 @@ defmodule DaleAppWeb.Router do
     post "/mi-tienda/cupon", CouponController, :create
     get "/marcas", MarcasController, :index
     get "/marcas/:id", MarcasController, :show
+    post "/claims", ClaimController, :create
+    get "/cajero/scanear", ClaimController, :redeem
   end
 
   if Application.compile_env(:dale_app, :dev_routes) do

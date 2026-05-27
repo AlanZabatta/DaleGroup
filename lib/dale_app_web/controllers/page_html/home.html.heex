@@ -6,6 +6,26 @@
     </a>
   <% end %>
 
+  <%= if @current_user && @current_user.role == "cajero" do %>
+    <a href="/cajero/scanear" style="position: fixed; bottom: 160px; right: 24px; width: 30vw; height: 30vw; max-width: 130px; max-height: 130px; border-radius: 50%; background-color: #1E5C1E; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; text-decoration: none; flex-direction: column; gap: 4px;">
+      <span style="color: white; font-size: 11px; font-weight: bold; text-align: center;">Scanear</span>
+    </a>
+  <% end %>
+
+  <%= if @current_user && @current_user.role == "admin" do %>
+    <div id="admin-menu" style="display: none;">
+      <a href="/admin" style="position: fixed; bottom: 440px; right: 24px; width: 30vw; height: 30vw; max-width: 130px; max-height: 130px; border-radius: 50%; background-color: #533AB7; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; text-decoration: none; flex-direction: column; gap: 4px;">
+        <span style="color: white; font-size: 11px; font-weight: bold; text-align: center;">Panel Admin</span>
+      </a>
+      <a href="/cajero/scanear?admin=true" style="position: fixed; bottom: 300px; right: 24px; width: 30vw; height: 30vw; max-width: 130px; max-height: 130px; border-radius: 50%; background-color: #1E5C1E; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; text-decoration: none; flex-direction: column; gap: 4px;">
+        <span style="color: white; font-size: 11px; font-weight: bold; text-align: center;">Scanear</span>
+      </a>
+    </div>
+    <button onclick="toggleAdmin()" style="position: fixed; bottom: 160px; right: 24px; width: 30vw; height: 30vw; max-width: 130px; max-height: 130px; border-radius: 50%; background-color: #533AB7; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 4px;">
+      <span style="color: white; font-size: 11px; font-weight: bold; text-align: center;">Admin ▲</span>
+    </button>
+  <% end %>
+
   <button style="position: fixed; bottom: 24px; right: 24px; width: 30vw; height: 30vw; max-width: 130px; max-height: 130px; border-radius: 50%; border: none; cursor: pointer; padding: 0; overflow: hidden;">
     <img
       src="https://res.cloudinary.com/djziwuaky/image/upload/v1779311629/WhatsApp_Image_2026-05-20_at_6.07.52_PM_2_dz41fk.jpg"
@@ -14,3 +34,10 @@
   </button>
 
 </div>
+
+<script>
+  function toggleAdmin() {
+    const menu = document.getElementById("admin-menu");
+    menu.style.display = menu.style.display === "none" ? "block" : "none";
+  }
+</script>

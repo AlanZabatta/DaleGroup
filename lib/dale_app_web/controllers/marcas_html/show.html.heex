@@ -25,9 +25,14 @@
       <% end %>
     </div>
 
-    <button style="width: 100%; background-color: #3B2505; color: white; padding: 16px; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer;">
-      Reclamar Beneficio
-    </button>
+    <form action={~p"/claims"} method="post">
+      <input type="hidden" name="_csrf_token" value={get_csrf_token()}/>
+      <input type="hidden" name="coupon_id" value={@cupon.id}/>
+      <input type="hidden" name="brand_id" value={@marca.id}/>
+      <button type="submit" style="width: 100%; background-color: #3B2505; color: white; padding: 16px; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer;">
+        Reclamar Beneficio
+      </button>
+    </form>
   <% else %>
     <div style="background-color: #eee; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
       <p style="color: #999; font-size: 18px;">Sin cupón activo por ahora</p>

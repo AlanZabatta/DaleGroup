@@ -1,0 +1,51 @@
+<div style="background-color: #1E5C1E; min-height: 100vh; padding: 24px; text-align: center;">
+
+  <h1 style="color: white; font-size: 24px; font-weight: bold; margin-bottom: 8px;">
+    <%= if @is_admin, do: "Scanear QR (Admin)", else: "Scanear QR" %>
+  </h1>
+  <p style="color: #ccc; margin-bottom: 24px;">Apuntá la cámara al código QR del usuario</p>
+
+  <div id="scanner-container" style="width: 100%; max-width: 400px; margin: 0 auto; border-radius: 12px; overflow: hidden; background: black;">
+    <video id="video" style="width: 100%;" autoplay playsinline></video>
+  </div>
+
+  <canvas id="canvas" style="display: none;"></canvas>
+
+  <p id="resultado" style="color: white; margin-top: 24px; font-size: 18px;"></p>
+
+  <a href="/" style="display: block; text-align: center; margin-top: 24px; color: #ccc;">← Volver al inicio</a>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+<script>
+  const video = document.getElementById("video");
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+  const resultado = document.getElementById("resultado");
+  let escaneado = false;
+
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+    .then(stream => {
+      video.srcObject = stream;
+      video.play();
+      requestAnimationFrame(scanear);
+    });
+
+  function scanear() {
+    if (video.readyState === video.HAVE_ENOUGH_DATA && !escaneado) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+      if (code) {
+        escaneado = true;
+        resultado.textContent = "QR detectado, verificando...";
+        window.location.href = "/cajero/scanear?code=" + code.data;
+      }
+    }
+    if (!escaneado) requestAnimationFrame(scanear);
+  }
+</script>

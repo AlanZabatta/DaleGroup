@@ -1,0 +1,14 @@
+<div style="background-color: white; min-height: 100vh; padding: 24px; max-width: 600px; margin: 0 auto; text-align: center;">
+
+  <h1 style="font-size: 24px; font-weight: bold; color: #3B2505; margin-bottom: 8px;">Tu cupón</h1>
+  <p style="color: #666; margin-bottom: 24px;">Válido por 12 horas — un solo uso</p>
+
+  <div style="background-color: white; padding: 16px; border: 2px solid #1E5C1E; border-radius: 12px; display: inline-block; margin-bottom: 24px;">
+    <%= raw EQRCode.encode(@claim.code) |> EQRCode.svg(width: 200) %>
+  </div>
+
+  <p style="font-size: 12px; color: #999; margin-bottom: 24px;">Código: <%= @claim.code %></p>
+
+  <a href="/" style="display: block; text-align: center; color: #1E5C1E;">← Volver al inicio</a>
+
+</div>

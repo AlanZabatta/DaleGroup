@@ -1,0 +1,17 @@
+<div style="background-color: white; min-height: 100vh; padding: 24px; max-width: 600px; margin: 0 auto; text-align: center;">
+
+  <%= if @success do %>
+    <div style="background-color: #1E5C1E; border-radius: 12px; padding: 48px 24px; margin-bottom: 24px;">
+      <p style="color: white; font-size: 48px; margin-bottom: 16px;">✅</p>
+      <p style="color: white; font-size: 24px; font-weight: bold;"><%= @message %></p>
+    </div>
+  <% else %>
+    <div style="background-color: #c0392b; border-radius: 12px; padding: 48px 24px; margin-bottom: 24px;">
+      <p style="color: white; font-size: 48px; margin-bottom: 16px;">❌</p>
+      <p style="color: white; font-size: 24px; font-weight: bold;"><%= @message %></p>
+    </div>
+  <% end %>
+
+  <a href="/" style="display: block; text-align: center; color: #1E5C1E;">← Volver al inicio</a>
+
+</div>
