@@ -3,12 +3,13 @@ defmodule DaleApp.Claims do
   alias DaleApp.Repo
   alias DaleApp.Claims.Claim
   alias DaleApp.Accounts.User
+  alias DaleApp.Events
 
   def create_claim(user_id, coupon_id, brand_id) do
     expires_at = DateTime.utc_now() |> DateTime.add(12 * 3600, :second) |> DateTime.truncate(:second)
     code = :crypto.strong_rand_bytes(16) |> Base.encode16()
 
-    %Claim{}
+    result = %Claim{}
     |> Claim.changeset(%{
       code: code,
       status: "pending",
@@ -19,6 +20,13 @@ defmodule DaleApp.Claims do
       brand_id: brand_id
     })
     |> Repo.insert()
+
+    case result do
+      {:ok, claim} ->
+        Events.track("coupon_claim", user_id, brand_id, %{coupon_id: coupon_id, code: code})
+        {:ok, claim}
+      error -> error
+    end
   end
 
   def get_claim_by_code(code) do
@@ -62,6 +70,7 @@ defmodule DaleApp.Claims do
         user
         |> User.changeset(%{points: (user.points || 0) + 100})
         |> Repo.update()
+        Events.track("coupon_redeem", claim.user_id, claim.brand_id, %{coupon_id: claim.coupon_id, code: claim.code})
         {:ok, claim}
       error -> error
     end
