@@ -22,6 +22,7 @@ defmodule DaleAppWeb.Router do
     get "/auth/google/callback", AuthController, :callback
     delete "/auth/logout", AuthController, :logout
     get "/admin", AdminController, :index
+    get "/admin/stats", AdminController, :stats
     post "/admin/:id/role", AdminController, :update_role
     post "/admin/:id/ban", AdminController, :ban
     post "/admin/brand/:id/disable", AdminController, :disable_brand

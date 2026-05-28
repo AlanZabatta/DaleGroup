@@ -1,0 +1,76 @@
+<div style="padding: 24px; font-family: sans-serif; background-color: white; min-height: 100vh;">
+  <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 24px; color: #3B2505;">Analytics — DaleGroup</h1>
+
+  <!-- Global Stats -->
+  <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 16px;">Global</h2>
+
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px;">
+    <div style="background-color: #f5f5f5; border-radius: 12px; padding: 24px; text-align: center;">
+      <p style="font-size: 12px; color: #666; margin-bottom: 8px;">Últimos 30 días</p>
+      <p style="font-size: 32px; font-weight: bold; color: #1E5C1E;"><%= @global_30.views %></p>
+      <p style="font-size: 12px; color: #999;">visitas</p>
+      <p style="font-size: 20px; font-weight: bold; color: #3B2505; margin-top: 8px;"><%= @global_30.claims %></p>
+      <p style="font-size: 12px; color: #999;">reclamos</p>
+      <p style="font-size: 20px; font-weight: bold; color: #533AB7; margin-top: 8px;"><%= @global_30.redeems %></p>
+      <p style="font-size: 12px; color: #999;">canjes</p>
+    </div>
+    <div style="background-color: #f5f5f5; border-radius: 12px; padding: 24px; text-align: center;">
+      <p style="font-size: 12px; color: #666; margin-bottom: 8px;">Últimos 90 días</p>
+      <p style="font-size: 32px; font-weight: bold; color: #1E5C1E;"><%= @global_90.views %></p>
+      <p style="font-size: 12px; color: #999;">visitas</p>
+      <p style="font-size: 20px; font-weight: bold; color: #3B2505; margin-top: 8px;"><%= @global_90.claims %></p>
+      <p style="font-size: 12px; color: #999;">reclamos</p>
+      <p style="font-size: 20px; font-weight: bold; color: #533AB7; margin-top: 8px;"><%= @global_90.redeems %></p>
+      <p style="font-size: 12px; color: #999;">canjes</p>
+    </div>
+    <div style="background-color: #f5f5f5; border-radius: 12px; padding: 24px; text-align: center;">
+      <p style="font-size: 12px; color: #666; margin-bottom: 8px;">Histórico total</p>
+      <p style="font-size: 32px; font-weight: bold; color: #1E5C1E;"><%= @global_all.views %></p>
+      <p style="font-size: 12px; color: #999;">visitas</p>
+      <p style="font-size: 20px; font-weight: bold; color: #3B2505; margin-top: 8px;"><%= @global_all.claims %></p>
+      <p style="font-size: 12px; color: #999;">reclamos</p>
+      <p style="font-size: 20px; font-weight: bold; color: #533AB7; margin-top: 8px;"><%= @global_all.redeems %></p>
+      <p style="font-size: 12px; color: #999;">canjes</p>
+    </div>
+  </div>
+
+  <!-- Por marca -->
+  <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 16px;">Por marca</h2>
+
+  <%= for item <- @brand_stats do %>
+    <div style="border: 1px solid #eee; border-radius: 12px; padding: 20px; margin-bottom: 16px;">
+      <h3 style="font-size: 18px; font-weight: bold; color: #3B2505; margin-bottom: 16px;"><%= item.brand.name %></h3>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+        <div style="background-color: #f9f9f9; border-radius: 8px; padding: 16px; text-align: center;">
+          <p style="font-size: 11px; color: #666; margin-bottom: 4px;">30 días</p>
+          <p style="font-size: 24px; font-weight: bold; color: #1E5C1E;"><%= item.stats_30.views %></p>
+          <p style="font-size: 11px; color: #999;">visitas</p>
+          <p style="font-size: 16px; font-weight: bold; color: #3B2505; margin-top: 4px;"><%= item.stats_30.claims %></p>
+          <p style="font-size: 11px; color: #999;">reclamos</p>
+          <p style="font-size: 16px; font-weight: bold; color: #533AB7; margin-top: 4px;"><%= item.stats_30.redeems %></p>
+          <p style="font-size: 11px; color: #999;">canjes</p>
+        </div>
+        <div style="background-color: #f9f9f9; border-radius: 8px; padding: 16px; text-align: center;">
+          <p style="font-size: 11px; color: #666; margin-bottom: 4px;">90 días</p>
+          <p style="font-size: 24px; font-weight: bold; color: #1E5C1E;"><%= item.stats_90.views %></p>
+          <p style="font-size: 11px; color: #999;">visitas</p>
+          <p style="font-size: 16px; font-weight: bold; color: #3B2505; margin-top: 4px;"><%= item.stats_90.claims %></p>
+          <p style="font-size: 11px; color: #999;">reclamos</p>
+          <p style="font-size: 16px; font-weight: bold; color: #533AB7; margin-top: 4px;"><%= item.stats_90.redeems %></p>
+          <p style="font-size: 11px; color: #999;">canjes</p>
+        </div>
+        <div style="background-color: #f9f9f9; border-radius: 8px; padding: 16px; text-align: center;">
+          <p style="font-size: 11px; color: #666; margin-bottom: 4px;">Histórico</p>
+          <p style="font-size: 24px; font-weight: bold; color: #1E5C1E;"><%= item.stats_all.views %></p>
+          <p style="font-size: 11px; color: #999;">visitas</p>
+          <p style="font-size: 16px; font-weight: bold; color: #3B2505; margin-top: 4px;"><%= item.stats_all.claims %></p>
+          <p style="font-size: 11px; color: #999;">reclamos</p>
+          <p style="font-size: 16px; font-weight: bold; color: #533AB7; margin-top: 4px;"><%= item.stats_all.redeems %></p>
+          <p style="font-size: 11px; color: #999;">canjes</p>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <a href="/admin" style="display: block; text-align: center; margin-top: 24px; color: #1E5C1E;">← Volver al admin</a>
+</div>

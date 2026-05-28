@@ -14,8 +14,35 @@ defmodule DaleApp.Events do
     |> Repo.insert()
   end
 
-  def brand_views(brand_id) do
-    Repo.aggregate(from(e in Event, where: e.brand_id == ^brand_id and e.type == "brand_view"), :count)
+  def brand_stats(brand_id) do
+    views = Repo.aggregate(from(e in Event, where: e.brand_id == ^brand_id and e.type == "brand_view"), :count)
+    claims = Repo.aggregate(from(e in Event, where: e.brand_id == ^brand_id and e.type == "coupon_claim"), :count)
+    redeems = Repo.aggregate(from(e in Event, where: e.brand_id == ^brand_id and e.type == "coupon_redeem"), :count)
+    %{views: views, claims: claims, redeems: redeems}
+  end
+
+  def brand_stats_days(brand_id, days) do
+    since = DateTime.utc_now() |> DateTime.add(-days * 86400, :second) |> DateTime.truncate(:second)
+    views = Repo.aggregate(from(e in Event, where: e.brand_id == ^brand_id and e.type == "brand_view" and e.inserted_at >= ^since), :count)
+    claims = Repo.aggregate(from(e in Event, where: e.brand_id == ^brand_id and e.type == "coupon_claim" and e.inserted_at >= ^since), :count)
+    redeems = Repo.aggregate(from(e in Event, where: e.brand_id == ^brand_id and e.type == "coupon_redeem" and e.inserted_at >= ^since), :count)
+    %{views: views, claims: claims, redeems: redeems}
+  end
+
+  def global_stats() do
+    views = Repo.aggregate(from(e in Event, where: e.type == "brand_view"), :count)
+    claims = Repo.aggregate(from(e in Event, where: e.type == "coupon_claim"), :count)
+    redeems = Repo.aggregate(from(e in Event, where: e.type == "coupon_redeem"), :count)
+    users = Repo.aggregate(from(e in Event, where: e.type == "brand_view"), :count, :user_id)
+    %{views: views, claims: claims, redeems: redeems, unique_users: users}
+  end
+
+  def global_stats_days(days) do
+    since = DateTime.utc_now() |> DateTime.add(-days * 86400, :second) |> DateTime.truncate(:second)
+    views = Repo.aggregate(from(e in Event, where: e.type == "brand_view" and e.inserted_at >= ^since), :count)
+    claims = Repo.aggregate(from(e in Event, where: e.type == "coupon_claim" and e.inserted_at >= ^since), :count)
+    redeems = Repo.aggregate(from(e in Event, where: e.type == "coupon_redeem" and e.inserted_at >= ^since), :count)
+    %{views: views, claims: claims, redeems: redeems}
   end
 
   def top_brands(limit \\ 10) do
@@ -31,13 +58,5 @@ defmodule DaleApp.Events do
 
   def user_events(user_id) do
     Repo.all(from e in Event, where: e.user_id == ^user_id, order_by: [desc: e.inserted_at])
-  end
-
-  def brand_stats(brand_id) do
-    views = Repo.aggregate(from(e in Event, where: e.brand_id == ^brand_id and e.type == "brand_view"), :count)
-    claims = Repo.aggregate(from(e in Event, where: e.brand_id == ^brand_id and e.type == "coupon_claim"), :count)
-    redeems = Repo.aggregate(from(e in Event, where: e.brand_id == ^brand_id and e.type == "coupon_redeem"), :count)
-
-    %{views: views, claims: claims, redeems: redeems}
   end
 end
