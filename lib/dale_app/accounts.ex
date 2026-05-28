@@ -1,4 +1,3 @@
-
 defmodule DaleApp.Accounts do
   import Ecto.Query
   alias DaleApp.Repo
@@ -49,5 +48,21 @@ defmodule DaleApp.Accounts do
 
   def list_users do
     Repo.all(User)
+  end
+
+  def assign_cajero(user, brand_id) do
+    user
+    |> User.changeset(%{role: "cajero", cajero_brand_id: brand_id})
+    |> Repo.update()
+  end
+
+  def remove_cajero(user) do
+    user
+    |> User.changeset(%{role: "user", cajero_brand_id: nil})
+    |> Repo.update()
+  end
+
+  def list_cajeros(brand_id) do
+    Repo.all(from u in User, where: u.cajero_brand_id == ^brand_id)
   end
 end

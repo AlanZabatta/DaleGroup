@@ -1,20 +1,15 @@
 <div style="padding: 24px; font-family: sans-serif; background-color: white; min-height: 100vh;">
   <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 24px;">Admin Panel — Usuarios</h1>
 
-  <input
-    id="buscador"
-    type="text"
-    placeholder="Buscar por nombre, email o rol..."
-    onkeyup="filtrar()"
-    style="width: 100%; padding: 10px; margin-bottom: 16px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; box-sizing: border-box;"
-  />
+  <input id="buscador" type="text" placeholder="Buscar por nombre, email o rol..." onkeyup="filtrar()" style="width: 100%; padding: 10px; margin-bottom: 16px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; box-sizing: border-box;"/>
 
-  <table id="tabla-usuarios" style="width: 100%; border-collapse: collapse;">
+  <table id="tabla-usuarios" style="width: 100%; border-collapse: collapse; margin-bottom: 48px;">
     <thead>
       <tr style="background-color: #1E5C1E; color: white;">
         <th style="padding: 12px; text-align: left;">Nombre</th>
         <th style="padding: 12px; text-align: left;">Email</th>
         <th style="padding: 12px; text-align: left;">Rol</th>
+        <th style="padding: 12px; text-align: left;">Puntos</th>
         <th style="padding: 12px; text-align: left;">Baneado</th>
         <th style="padding: 12px; text-align: left;">Acciones</th>
       </tr>
@@ -25,6 +20,7 @@
           <td style="padding: 12px;"><%= user.name %></td>
           <td style="padding: 12px;"><%= user.email %></td>
           <td style="padding: 12px;"><%= user.role %></td>
+          <td style="padding: 12px;"><%= user.points %></td>
           <td style="padding: 12px;"><%= if user.banned, do: "Sí", else: "No" %></td>
           <td style="padding: 12px; display: flex; gap: 8px;">
             <form action={~p"/admin/#{user.id}/role"} method="post">
@@ -35,15 +31,36 @@
                 <option value="cajero" selected={user.role == "cajero"}>Cajero</option>
                 <option value="admin" selected={user.role == "admin"}>Admin</option>
               </select>
-              <button type="submit" style="background-color: #1E5C1E; color: white; padding: 4px 10px; border: none; border-radius: 4px; cursor: pointer;">
-                Cambiar
-              </button>
+              <button type="submit" style="background-color: #1E5C1E; color: white; padding: 4px 10px; border: none; border-radius: 4px; cursor: pointer;">Cambiar</button>
             </form>
             <form action={~p"/admin/#{user.id}/ban"} method="post">
               <input type="hidden" name="_csrf_token" value={get_csrf_token()}/>
-              <button type="submit" style="background-color: #c0392b; color: white; padding: 4px 10px; border: none; border-radius: 4px; cursor: pointer;">
-                Banear
-              </button>
+              <button type="submit" style="background-color: #c0392b; color: white; padding: 4px 10px; border: none; border-radius: 4px; cursor: pointer;">Banear</button>
+            </form>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 16px;">Tiendas</h2>
+  <table style="width: 100%; border-collapse: collapse;">
+    <thead>
+      <tr style="background-color: #3B2505; color: white;">
+        <th style="padding: 12px; text-align: left;">Nombre</th>
+        <th style="padding: 12px; text-align: left;">Estado</th>
+        <th style="padding: 12px; text-align: left;">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <%= for brand <- @brands do %>
+        <tr style="border-bottom: 1px solid #eee;">
+          <td style="padding: 12px;"><%= brand.name %></td>
+          <td style="padding: 12px;"><%= if brand.active, do: "✅ Activa", else: "❌ Inactiva" %></td>
+          <td style="padding: 12px;">
+            <form action={~p"/admin/brand/#{brand.id}/disable"} method="post">
+              <input type="hidden" name="_csrf_token" value={get_csrf_token()}/>
+              <button type="submit" style="background-color: #c0392b; color: white; padding: 4px 10px; border: none; border-radius: 4px; cursor: pointer;">Desactivar</button>
             </form>
           </td>
         </tr>

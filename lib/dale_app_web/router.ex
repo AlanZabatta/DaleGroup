@@ -24,14 +24,18 @@ defmodule DaleAppWeb.Router do
     get "/admin", AdminController, :index
     post "/admin/:id/role", AdminController, :update_role
     post "/admin/:id/ban", AdminController, :ban
+    post "/admin/brand/:id/disable", AdminController, :disable_brand
     get "/mi-tienda", BrandController, :mi_tienda
     post "/mi-tienda", BrandController, :update
     get "/mi-tienda/cupon", CouponController, :new
     post "/mi-tienda/cupon", CouponController, :create
+    get "/mi-tienda/cajeros", BrandController, :cajeros
+    post "/mi-tienda/cajeros/:id/remove", BrandController, :remove_cajero
     get "/marcas", MarcasController, :index
     get "/marcas/:id", MarcasController, :show
     post "/claims", ClaimController, :create
     get "/cajero/scanear", ClaimController, :redeem
+    get "/unirse/:brand_id", BrandController, :unirse
   end
 
   if Application.compile_env(:dale_app, :dev_routes) do

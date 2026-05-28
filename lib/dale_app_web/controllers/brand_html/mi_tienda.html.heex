@@ -1,4 +1,4 @@
-<div style="padding: 24px; font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+<div style="padding: 24px; font-family: sans-serif; max-width: 600px; margin: 0 auto; background-color: white; min-height: 100vh;">
   <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 24px; color: #3B2505;">Mi Tienda</h1>
 
   <%= if @brand do %>
@@ -20,10 +20,19 @@
         <input type="text" name="brand[address]" value={@brand.address} style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;"/>
       </div>
 
-      <button type="submit" style="background-color: #1E5C1E; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px;">
+      <button type="submit" style="width: 100%; background-color: #1E5C1E; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; margin-bottom: 12px;">
         Guardar cambios
       </button>
     </form>
+
+    <a href="/mi-tienda/cupon" style="display: block; text-align: center; background-color: #3B2505; color: white; padding: 12px; border-radius: 6px; text-decoration: none; margin-bottom: 12px;">
+      Gestionar cupón
+    </a>
+
+    <a href="/mi-tienda/cajeros" style="display: block; text-align: center; background-color: #533AB7; color: white; padding: 12px; border-radius: 6px; text-decoration: none; margin-bottom: 12px;">
+      Gestionar cajeros (<%= length(@cajeros) %>)
+    </a>
+
   <% else %>
     <p>No tenés una tienda asignada todavía.</p>
   <% end %>

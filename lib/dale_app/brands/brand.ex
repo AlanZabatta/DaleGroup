@@ -10,6 +10,7 @@ defmodule DaleApp.Brands.Brand do
     field :latitude, :float
     field :longitude, :float
     field :image_limit, :integer, default: 10
+    field :active, :boolean, default: true
     belongs_to :user, DaleApp.Accounts.User
 
     timestamps()
@@ -17,7 +18,7 @@ defmodule DaleApp.Brands.Brand do
 
   def changeset(brand, attrs) do
     brand
-    |> cast(attrs, [:name, :logo, :description, :address, :latitude, :longitude, :image_limit, :user_id])
+    |> cast(attrs, [:name, :logo, :description, :address, :latitude, :longitude, :image_limit, :active, :user_id])
     |> validate_required([:name, :user_id])
   end
 end

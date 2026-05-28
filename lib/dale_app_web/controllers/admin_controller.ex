@@ -2,10 +2,13 @@ defmodule DaleAppWeb.AdminController do
   use DaleAppWeb, :controller
 
   alias DaleApp.Accounts
+  alias DaleApp.Repo
+  alias DaleApp.Brands.Brand
 
   def index(conn, _params) do
     users = Accounts.list_users()
-    render(conn, :index, users: users)
+    brands = Repo.all(Brand)
+    render(conn, :index, users: users, brands: brands)
   end
 
   def update_role(conn, %{"id" => id, "role" => role}) do
@@ -23,6 +26,17 @@ defmodule DaleAppWeb.AdminController do
 
     conn
     |> put_flash(:info, "Usuario baneado.")
+    |> redirect(to: ~p"/admin")
+  end
+
+  def disable_brand(conn, %{"id" => id}) do
+    brand = Repo.get(Brand, id)
+    brand
+    |> Brand.changeset(%{active: false})
+    |> Repo.update()
+
+    conn
+    |> put_flash(:info, "Tienda desactivada.")
     |> redirect(to: ~p"/admin")
   end
 end
