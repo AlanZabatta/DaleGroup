@@ -16,10 +16,23 @@ defmodule DaleAppWeb.AuthController do
 
     case DaleApp.Accounts.find_or_create_user(user_params) do
       {:ok, user} ->
-        conn
+        join_brand_id = get_session(conn, :join_brand_id)
+
+        conn = conn
         |> put_session(:user_id, user.id)
-        |> put_flash(:info, "Bienvenido #{user.name}!")
-        |> redirect(to: ~p"/")
+        |> delete_session(:join_brand_id)
+
+        if join_brand_id do
+          DaleApp.Accounts.assign_cajero(user, String.to_integer(join_brand_id))
+          brand = DaleApp.Repo.get(DaleApp.Brands.Brand, join_brand_id)
+          conn
+          |> put_flash(:info, "Bienvenido #{user.name}! Ahora sos cajero de #{brand.name}.")
+          |> redirect(to: ~p"/")
+        else
+          conn
+          |> put_flash(:info, "Bienvenido #{user.name}!")
+          |> redirect(to: ~p"/")
+        end
 
       {:error, _reason} ->
         conn
