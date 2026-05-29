@@ -26,6 +26,7 @@ defmodule DaleAppWeb.Router do
     post "/admin/:id/role", AdminController, :update_role
     post "/admin/:id/ban", AdminController, :ban
     post "/admin/brand/:id/disable", AdminController, :disable_brand
+    post "/admin/brand/:id/slot", AdminController, :assign_slot
     get "/mi-tienda", BrandController, :mi_tienda
     post "/mi-tienda", BrandController, :update
     get "/mi-tienda/cupon", CouponController, :new

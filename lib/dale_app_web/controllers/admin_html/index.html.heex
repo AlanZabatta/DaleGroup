@@ -43,11 +43,13 @@
     </tbody>
   </table>
 
-  <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 16px;">Tiendas</h2>
+  <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 16px;">Tiendas — Gestión de Slots y Estado</h2>
   <table style="width: 100%; border-collapse: collapse;">
     <thead>
       <tr style="background-color: #3B2505; color: white;">
         <th style="padding: 12px; text-align: left;">Nombre</th>
+        <th style="padding: 12px; text-align: left;">Modalidad</th>
+        <th style="padding: 12px; text-align: left;">Slot Tendencia</th>
         <th style="padding: 12px; text-align: left;">Estado</th>
         <th style="padding: 12px; text-align: left;">Acciones</th>
       </tr>
@@ -56,6 +58,19 @@
       <%= for brand <- @brands do %>
         <tr style="border-bottom: 1px solid #eee;">
           <td style="padding: 12px;"><%= brand.name %></td>
+          <td style="padding: 12px;"><%= brand.modalidad %></td>
+          <td style="padding: 12px;">
+            <form action={~p"/admin/brand/#{brand.id}/slot"} method="post" style="display: inline;">
+              <input type="hidden" name="_csrf_token" value={get_csrf_token()}/>
+              <select name="slot" style="padding: 4px; border-radius: 4px;">
+                <option value="" selected={is_nil(brand.featured_slot)}>Sin slot</option>
+                <option value="1" selected={brand.featured_slot == 1}>Slot 1</option>
+                <option value="2" selected={brand.featured_slot == 2}>Slot 2</option>
+                <option value="3" selected={brand.featured_slot == 3}>Slot 3</option>
+              </select>
+              <button type="submit" style="background-color: #3B2505; color: white; padding: 4px 10px; border: none; border-radius: 4px; cursor: pointer;">Asignar</button>
+            </form>
+          </td>
           <td style="padding: 12px;"><%= if brand.active, do: "✅ Activa", else: "❌ Inactiva" %></td>
           <td style="padding: 12px;">
             <form action={~p"/admin/brand/#{brand.id}/disable"} method="post">
@@ -67,6 +82,10 @@
       <% end %>
     </tbody>
   </table>
+
+  <div style="margin-top: 24px;">
+    <a href="/admin/stats" style="color: #1E5C1E;">Ver Analytics →</a>
+  </div>
 </div>
 
 <script>

@@ -20,6 +20,15 @@
         <input type="text" name="brand[address]" value={@brand.address} style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;"/>
       </div>
 
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 6px; font-weight: bold;">Modalidad</label>
+        <select name="brand[modalidad]" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
+          <option value="presencial" selected={@brand.modalidad == "presencial"}>Presencial</option>
+          <option value="digital" selected={@brand.modalidad == "digital"}>Solo Digital</option>
+          <option value="ambos" selected={@brand.modalidad == "ambos"}>Presencial y Digital</option>
+        </select>
+      </div>
+
       <button type="submit" style="width: 100%; background-color: #1E5C1E; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; margin-bottom: 12px;">
         Guardar cambios
       </button>
