@@ -40,9 +40,9 @@
   </div>
 
   <!-- Menú hamburguesa COMPLETO -->
-  <div id="side-menu" style="display: none; position: fixed; top: 0; left: 0; width: 75%; max-width: 300px; height: 100vh; background: white; z-index: 200; box-shadow: 4px 0 20px rgba(0,0,0,0.1); padding: 0;">
+  <div id="side-menu" style="display: none; position: fixed; top: 0; left: 0; width: 75%; max-width: 300px; height: 100vh; background: white; z-index: 200; box-shadow: 4px 0 20px rgba(0,0,0,0.1); padding: 0; overflow-y: scroll;">
     <button onclick="toggleMenu()" style="position: absolute; top: 20px; right: 20px; background: none; border: none; cursor: pointer; font-size: 24px; color: #1a1a1a;">×</button>
-    <div style="display: flex; flex-direction: column; height: 100%; padding: 60px 24px 32px; overflow-y: auto;">
+    <div style="display: flex; flex-direction: column; min-height: 100%; padding: 60px 24px 100px; overflow-y: scroll;">
 
       <div>
         <p style="font-size: 10px; color: #999; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;">Explorar</p>
@@ -69,10 +69,14 @@
         <a href="/ayuda" style="display: block; padding: 14px 0; font-size: 17px; color: #1a1a1a; text-decoration: none; border-bottom: 1px solid #f5f5f5;">Ayuda</a>
       </div>
 
-      <div style="margin-top: auto;">
+      <div style="margin-top: 24px;">
         <div style="height: 0.5px; background: #e0e0e0; margin-bottom: 16px;"></div>
         <%= if @current_user do %>
-          <a href="/auth/logout" style="display: block; padding: 14px 0; font-size: 16px; color: #c0392b; text-decoration: none;">Cerrar sesión</a>
+          <form action="/auth/logout" method="post" style="margin: 0; padding: 0;">
+            <input type="hidden" name="_method" value="delete"/>
+            <input type="hidden" name="_csrf_token" value={get_csrf_token()}/>
+            <button type="submit" style="background: none; border: none; cursor: pointer; display: block; padding: 14px 0; font-size: 16px; color: #c0392b; width: 100%; text-align: left;">Cerrar sesión</button>
+          </form>
         <% else %>
           <a href="/auth/google" style="display: block; padding: 14px 0; font-size: 16px; color: #1E5C1E; text-decoration: none;">Iniciar sesión</a>
         <% end %>
@@ -93,17 +97,14 @@
     <!-- Panel Dale desplegable con imágenes placeholder -->
     <div id="dale-menu" style="display: flex; flex-direction: column; align-items: center; background-color: #1E5C1E; border-radius: 40px; padding: 12px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.25); gap: 4px; width: 84px; opacity: 0; transform: scale(0.7) translateY(20px); transform-origin: bottom right; pointer-events: none; transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.34,1.56,0.64,1);">
       <a href="/mis-cupones" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; text-decoration: none;">
-        <!-- Imagen futura: cupones -->
         <div style="width: 36px; height: 36px; background: rgba(255,255,255,0.2); border-radius: 8px;"></div>
       </a>
       <div style="width: 40px; height: 0.5px; background: rgba(255,255,255,0.2);"></div>
       <a href="/mapa" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; text-decoration: none;">
-        <!-- Imagen futura: mapa -->
         <div style="width: 36px; height: 36px; background: rgba(255,255,255,0.2); border-radius: 8px;"></div>
       </a>
       <div style="width: 40px; height: 0.5px; background: rgba(255,255,255,0.2);"></div>
       <a href="/perfil" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; text-decoration: none;">
-        <!-- Imagen futura: perfil -->
         <div style="width: 36px; height: 36px; background: rgba(255,255,255,0.2); border-radius: 8px;"></div>
       </a>
     </div>
@@ -179,8 +180,7 @@
     const menu = document.getElementById("admin-menu");
     menu.style.display = menu.style.display === "none" ? "flex" : "none";
   }
-
-  function toggleDale() {
+function toggleDale() {
     const menu = document.getElementById("dale-menu");
     const btn = document.getElementById("dale-btn");
     daleOpen = !daleOpen;
@@ -197,3 +197,16 @@
     }
   }
 </script>
+
+<style>
+  @media (max-width: 768px) {
+    #side-menu > div {
+      overflow-y: hidden !important;
+    }
+  }
+  @media (min-width: 769px) {
+    #side-menu > div {
+      overflow-y: scroll !important;
+    }
+  }
+</style>
