@@ -21,6 +21,11 @@
       </div>
 
       <div style="margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 6px; font-weight: bold;">Descuento exclusivo Dale (%)</label>
+        <input type="number" name="brand[discount]" value={@brand.discount || 0} min="0" max="100" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;"/>
+      </div>
+
+      <div style="margin-bottom: 16px;">
         <label style="display: block; margin-bottom: 6px; font-weight: bold;">Modalidad</label>
         <select name="brand[modalidad]" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
           <option value="presencial" selected={@brand.modalidad == "presencial"}>Presencial</option>
