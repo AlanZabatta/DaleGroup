@@ -16,8 +16,9 @@ defmodule DaleAppWeb.MarcasController do
     marca = Repo.get!(Brand, id)
     cupon = Repo.one(from c in Coupon, where: c.brand_id == ^marca.id and c.active == true, limit: 1)
     user_id = get_session(conn, :user_id)
+    current_user = conn.assigns[:current_user]
 
-    if @current_user && @current_user.role == "dueño" && @current_user.id == marca.user_id do
+    if current_user && current_user.role == "dueño" && current_user.id == marca.user_id do
       Products.ensure_brand_slots(marca.id)
     end
 

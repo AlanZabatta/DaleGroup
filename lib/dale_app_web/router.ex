@@ -51,6 +51,9 @@ defmodule DaleAppWeb.Router do
     get "/mis-cupones", PageController, :home
     get "/mapa", PageController, :home
     get "/perfil", PageController, :home
+    get "/perfil", PageController, :home
+    post "/productos/:id/imagen", ProductoController, :upload_imagen
+    post "/productos/:id/nombre", ProductoController, :update_nombre
   end
 
   if Application.compile_env(:dale_app, :dev_routes) do

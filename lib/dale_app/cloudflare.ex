@@ -1,14 +1,14 @@
 defmodule DaleApp.Cloudflare do
-  def upload_image(image_data, filename) do
-    account_id = Application.get_env(:dale_app, :cloudflare)[:account_id]
-    api_token = Application.get_env(:dale_app, :cloudflare)[:api_token]
+  def upload_image(file_path, filename) do
+    account_id = System.get_env("CLOUDFLARE_ACCOUNT_ID")
+    api_token = System.get_env("CLOUDFLARE_API_TOKEN")
 
     url = "https://api.cloudflare.com/client/v4/accounts/#{account_id}/images/v1"
 
     Req.post(url,
       headers: [{"Authorization", "Bearer #{api_token}"}],
       form_multipart: [
-        file: {image_data, filename: filename, content_type: "image/jpeg"}
+        file: {File.read!(file_path), filename: filename, content_type: "image/jpeg"}
       ]
     )
   end
