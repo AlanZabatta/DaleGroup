@@ -117,4 +117,7 @@ if config_env() == :prod do
   #     config :swoosh, :api_client, Swoosh.ApiClient.Req
   #
   # See https://hexdocs.pm/swoosh/Swoosh.html#module-installation for details.
+  config :dale_app, :cloudflare,
+  api_token: System.get_env("cfat_1DWfLrRz5R4z1lLJnFhJ7DBWsM1j74JDQmtXTXBma66146c0"),
+  account_id: System.get_env("b7e1d55c5bca715f8ad3f7220c1e304e")
 end

@@ -22,7 +22,7 @@ defmodule DaleAppWeb.BrandController do
 
     conn
     |> put_flash(:info, "Tienda actualizada.")
-    |> redirect(to: ~p"/mi-tienda")
+    |> redirect(to: ~p"/mi-stand")
   end
 
   def cajeros(conn, _params) do
@@ -39,6 +39,16 @@ defmodule DaleAppWeb.BrandController do
     conn
     |> put_flash(:info, "Cajero eliminado.")
     |> redirect(to: ~p"/mi-tienda/cajeros")
+  end
+
+  def mi_stand(conn, _params) do
+    user_id = get_session(conn, :user_id)
+    brand = Repo.get_by(Brand, user_id: user_id)
+    if brand do
+      redirect(conn, to: ~p"/marcas/#{brand.id}")
+    else
+      redirect(conn, to: ~p"/")
+    end
   end
 
   def unirse(conn, %{"brand_id" => brand_id}) do

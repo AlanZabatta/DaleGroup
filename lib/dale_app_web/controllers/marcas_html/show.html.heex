@@ -1,43 +1,81 @@
-<div style="background-color: white; min-height: 100vh; padding: 24px; max-width: 600px; margin: 0 auto;">
+<%= if @current_user && @current_user.role == "dueño" && @current_user.id == @marca.user_id do %>
+  <a href="/mi-tienda" style="position: fixed; bottom: 110px; left: 20px; background-color: #44BB64; color: white; padding: 10px 16px; border-radius: 20px; text-decoration: none; font-size: 13px; font-weight: bold; z-index: 140; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+    ✏️ Editar mi tienda
+  </a>
+<% end %>
 
+<div style="padding: 24px; max-width: 600px; margin: 0 auto; padding-bottom: 160px;">
+
+  <%# Logo o placeholder %>
   <%= if @marca.logo do %>
-    <img src={@marca.logo} style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%; display: block; margin: 0 auto 16px auto;"/>
+    <img src={@marca.logo} style="width: 160px; height: 90px; object-fit: contain; display: block; margin: 0 auto 12px; border: 1px solid #eee; border-radius: 10px; padding: 8px;"/>
   <% else %>
-    <div style="width: 100px; height: 100px; background-color: #1E5C1E; border-radius: 50%; margin: 0 auto 16px auto;"></div>
+    <div style="width: 160px; height: 90px; border: 1px solid #ddd; border-radius: 10px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;">
+      <span style="color: #ccc; font-size: 12px;">Logo</span>
+    </div>
   <% end %>
 
-  <h1 style="font-size: 24px; font-weight: bold; text-align: center; color: #3B2505; margin-bottom: 8px;"><%= @marca.name %></h1>
+  <%# Badge modalidad %>
+  <div style="text-align: center; margin-bottom: 16px;">
+    <span style="background-color: #44BB64; color: white; padding: 4px 14px; border-radius: 4px; font-size: 13px; font-weight: 500;">
+      <%= case @marca.modalidad do
+        "presencial" -> "En el Local"
+        "digital" -> "Solo Digital"
+        _ -> "Presencial y Digital"
+      end %>
+    </span>
+  </div>
 
-  <%= if @marca.description do %>
-    <p style="text-align: center; color: #666; margin-bottom: 16px;"><%= @marca.description %></p>
-  <% end %>
+  <%# Descuento + Reclamar %>
+  <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+    <%= if @marca.discount && @marca.discount > 0 do %>
+      <div style="background-color: #44BB64; color: white; font-size: 26px; font-weight: bold; padding: 10px 16px; border-radius: 6px; flex-shrink: 0;">
+        <%= @marca.discount %>%
+      </div>
+    <% end %>
+    <%= if @cupon do %>
+      <form action={~p"/claims"} method="post" style="flex: 1;">
+        <input type="hidden" name="_csrf_token" value={get_csrf_token()}/>
+        <input type="hidden" name="coupon_id" value={@cupon.id}/>
+        <input type="hidden" name="brand_id" value={@marca.id}/>
+        <button type="submit" style="width: 100%; background-color: #44BB64; color: white; padding: 14px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;">
+          Reclamar Beneficio
+        </button>
+      </form>
+    <% else %>
+      <div style="flex: 1; background-color: #eee; border-radius: 8px; padding: 14px; text-align: center; color: #999; font-size: 14px;">
+        Sin cupón activo
+      </div>
+    <% end %>
+  </div>
 
+  <%# Direcciones %>
   <%= if @marca.address do %>
-    <p style="text-align: center; margin-bottom: 24px;">📍 <%= @marca.address %></p>
-  <% end %>
-
-  <%= if @cupon do %>
-    <div style="background-color: #1E5C1E; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
-      <p style="color: white; font-size: 14px; margin-bottom: 8px;">Cupón disponible</p>
-      <p style="color: white; font-size: 32px; font-weight: bold;"><%= @cupon.discount %></p>
-      <%= if @cupon.description do %>
-        <p style="color: #ccc; font-size: 14px; margin-top: 8px;"><%= @cupon.description %></p>
-      <% end %>
-    </div>
-
-    <form action={~p"/claims"} method="post">
-      <input type="hidden" name="_csrf_token" value={get_csrf_token()}/>
-      <input type="hidden" name="coupon_id" value={@cupon.id}/>
-      <input type="hidden" name="brand_id" value={@marca.id}/>
-      <button type="submit" style="width: 100%; background-color: #3B2505; color: white; padding: 16px; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer;">
-        Reclamar Beneficio
-      </button>
-    </form>
-  <% else %>
-    <div style="background-color: #eee; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
-      <p style="color: #999; font-size: 18px;">Sin cupón activo por ahora</p>
+    <div style="background-color: #1a1a1a; border-radius: 8px; padding: 12px 16px; margin-bottom: 12px;">
+      <p style="color: white; margin: 0; font-size: 14px;">📍 <%= @marca.address %></p>
     </div>
   <% end %>
 
-  <a href="/marcas" style="display: block; text-align: center; margin-top: 24px; color: #1E5C1E;">← Volver a marcas</a>
+  <%# Botón Agregar al Mapa %>
+  <button style="width: 100%; background-color: #44BB64; color: white; padding: 12px; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; margin-bottom: 24px;">
+    📍 Agregar al Mapa
+  </button>
+
+  <%# Separador %>
+  <div style="border-top: 1px dashed #ddd; margin-bottom: 24px;"></div>
+
+  <%# Grilla de productos - 10 espacios por defecto %>
+  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+    <%= for i <- 1..10 do %>
+      <div style="border: 1px solid #ddd; border-radius: 10px; overflow: hidden; cursor: pointer;">
+        <div style="width: 100%; aspect-ratio: 1; background-color: white; display: flex; align-items: center; justify-content: center;">
+          <span style="color: #ccc; font-size: 12px;">+ Foto</span>
+        </div>
+        <div style="padding: 8px; text-align: center;">
+          <span style="color: #bbb; font-size: 12px;">Pon el nombre acá</span>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
 </div>
