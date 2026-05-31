@@ -53,12 +53,11 @@ defmodule DaleAppWeb.Layouts do
           </a>
 
           <a 
-            href="/#mapa" 
-            target="_blank" 
+            href="/marcas" 
             class="size-14 rounded-full bg-white shadow-xl hover:scale-110 hover:-translate-y-1 transition-all duration-200 overflow-hidden p-1 border-2 border-gray-100"
           >
             <img 
-              src="https://res.cloudinary.com/djziwuaky/image/upload/v1779311607/WhatsApp_Image_2026-05-20_at_6.07.52_PM_1_mcfxcm.jpg" 
+              src="https://res.cloudinary.com/djziwuaky/image/upload/v1780237821/1000029077_preview_rev_1_1_suv2zb.png" 
               alt="Mapa" 
               class="size-full object-contain"
             />

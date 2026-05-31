@@ -11,18 +11,8 @@
       </div>
 
       <div style="margin-bottom: 16px;">
-        <label style="display: block; margin-bottom: 6px; font-weight: bold;">Descripción</label>
-        <textarea name="brand[description]" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; height: 100px;"><%= @brand.description %></textarea>
-      </div>
-
-      <div style="margin-bottom: 16px;">
         <label style="display: block; margin-bottom: 6px; font-weight: bold;">Dirección</label>
         <input type="text" name="brand[address]" value={@brand.address} style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;"/>
-      </div>
-
-      <div style="margin-bottom: 16px;">
-        <label style="display: block; margin-bottom: 6px; font-weight: bold;">Descuento exclusivo Dale (%)</label>
-        <input type="number" name="brand[discount]" value={@brand.discount || 0} min="0" max="100" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;"/>
       </div>
 
       <div style="margin-bottom: 16px;">
