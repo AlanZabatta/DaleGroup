@@ -1,0 +1,30 @@
+<div style="width: 100%; height: calc(100vh - 64px); position: relative;">
+  <div id="map" style="width: 100%; height: 100%;"></div>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+  const map = L.map('map').setView([-34.5875, -58.4370], 14);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
+
+  const marcas = <%= Jason.encode!(Enum.map(@marcas, fn m -> %{
+    name: m.name,
+    address: m.address,
+    lat: m.latitude,
+    lng: m.longitude,
+    id: m.id
+  } end)) |> raw() %>;
+
+  marcas.forEach(function(marca) {
+    if (marca.lat && marca.lng) {
+      L.marker([marca.lat, marca.lng])
+        .addTo(map)
+        .bindPopup(`<b>${marca.name}</b><br>${marca.address}<br><a href="/marcas/${marca.id}">Ver stand</a>`);
+    }
+  });
+</script>

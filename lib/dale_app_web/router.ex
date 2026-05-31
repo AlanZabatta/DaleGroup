@@ -49,7 +49,7 @@ defmodule DaleAppWeb.Router do
     get "/contacto", PageController, :home
     get "/ayuda", PageController, :home
     get "/mis-cupones", PageController, :home
-    get "/mapa", PageController, :home
+    get "/mapa", PageController, :mapa
     get "/perfil", PageController, :home
     get "/perfil", PageController, :home
     post "/productos/:id/imagen", ProductoController, :upload_imagen
