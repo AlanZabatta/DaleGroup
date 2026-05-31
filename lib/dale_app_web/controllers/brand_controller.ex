@@ -16,6 +16,16 @@ defmodule DaleAppWeb.BrandController do
     user_id = get_session(conn, :user_id)
     brand = Repo.get_by(Brand, user_id: user_id)
 
+    brand_params = case Map.get(brand_params, "address") do
+      nil -> brand_params
+      "" -> brand_params
+      address ->
+        case geocode(address) do
+          {:ok, lat, lng} -> Map.merge(brand_params, %{"latitude" => lat, "longitude" => lng})
+          _ -> brand_params
+        end
+    end
+
     brand
     |> Brand.changeset(brand_params)
     |> Repo.update()
@@ -72,6 +82,16 @@ defmodule DaleAppWeb.BrandController do
           |> put_flash(:error, "Error al unirse.")
           |> redirect(to: ~p"/")
       end
+    end
+  end
+
+  defp geocode(address) do
+    url = "https://nominatim.openstreetmap.org/search"
+    case Req.get(url, params: [q: address, format: "json", limit: 1], headers: [{"User-Agent", "DaleGroup/1.0"}]) do
+      {:ok, %{body: [%{"lat" => lat, "lon" => lng} | _]}} ->
+        {:ok, String.to_float(lat), String.to_float(lng)}
+      _ ->
+        {:error, :not_found}
     end
   end
 end
