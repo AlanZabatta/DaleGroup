@@ -12,6 +12,8 @@
     attribution: '© OpenStreetMap contributors'
   }).addTo(map);
 
+  const savedIds = <%= Jason.encode!(@saved_brand_ids) |> raw() %>;
+
   const marcas = <%= Jason.encode!(Enum.map(@marcas, fn m -> %{
     name: m.name,
     address: m.address,
@@ -20,11 +22,31 @@
     id: m.id
   } end)) |> raw() %>;
 
+  const greenIcon = L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [30, 49],
+    iconAnchor: [15, 49],
+    popupAnchor: [1, -34],
+    shadowSize: [49, 49]
+  });
+
+  const blueIcon = L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  });
+
   marcas.forEach(function(marca) {
     if (marca.lat && marca.lng) {
-      L.marker([marca.lat, marca.lng])
+      const isSaved = savedIds.includes(marca.id);
+      const icon = isSaved ? greenIcon : blueIcon;
+      L.marker([marca.lat, marca.lng], {icon: icon})
         .addTo(map)
-        .bindPopup(`<b>${marca.name}</b><br>${marca.address}<br><a href="/marcas/${marca.id}">Ver stand</a>`);
+        .bindPopup('<b>' + marca.name + '</b><br>' + marca.address + '<br><a href="/marcas/' + marca.id + '">Ver stand</a>');
     }
   });
 </script>

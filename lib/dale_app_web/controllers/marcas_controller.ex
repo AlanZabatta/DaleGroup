@@ -5,6 +5,7 @@ defmodule DaleAppWeb.MarcasController do
   alias DaleApp.Coupons.Coupon
   alias DaleApp.Events
   alias DaleApp.Products
+  alias DaleApp.MapSaves
   import Ecto.Query
 
   def index(conn, _params) do
@@ -23,7 +24,15 @@ defmodule DaleAppWeb.MarcasController do
     end
 
     productos = Products.list_brand_products(marca.id)
+    
+    en_mapa = if user_id do
+      saved = MapSaves.list_user_map(user_id)
+      Enum.any?(saved, fn s -> s.brand_id == marca.id end)
+    else
+      false
+    end
+
     Events.track("brand_view", user_id, marca.id, %{brand_name: marca.name})
-    render(conn, :show, marca: marca, cupon: cupon, productos: productos)
+    render(conn, :show, marca: marca, cupon: cupon, productos: productos, en_mapa: en_mapa)
   end
 end

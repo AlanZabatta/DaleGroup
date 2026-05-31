@@ -54,6 +54,10 @@ defmodule DaleAppWeb.Router do
     get "/perfil", PageController, :home
     post "/productos/:id/imagen", ProductoController, :upload_imagen
     post "/productos/:id/nombre", ProductoController, :update_nombre
+    post "/mapa/agregar/:brand_id", MapaController, :agregar
+    delete "/mapa/quitar/:brand_id", MapaController, :quitar
+    post "/mapa/agregar/:brand_id", MapaController, :agregar
+    delete "/mapa/quitar/:brand_id", MapaController, :quitar
   end
 
   if Application.compile_env(:dale_app, :dev_routes) do

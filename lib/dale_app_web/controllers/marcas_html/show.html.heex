@@ -6,7 +6,6 @@
 
 <div style="max-width: 480px; margin: 0 auto; padding: 16px 16px 160px;">
 
-  <%# Logo + badge modalidad %>
   <div style="position: relative; border: 1px solid #ddd; border-radius: 10px; padding: 20px; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; min-height: 100px;">
     <%= if @marca.logo do %>
       <img src={@marca.logo} style="max-height: 80px; max-width: 200px; object-fit: contain;"/>
@@ -22,7 +21,6 @@
     </span>
   </div>
 
-  <%# Descuento + Reclamar %>
   <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
     <%= if @cupon do %>
       <div style="background-color: #44BB64; color: white; font-size: 24px; font-weight: bold; padding: 10px 14px; border-radius: 6px; flex-shrink: 0;">
@@ -32,7 +30,7 @@
         <input type="hidden" name="_csrf_token" value={get_csrf_token()}/>
         <input type="hidden" name="coupon_id" value={@cupon.id}/>
         <input type="hidden" name="brand_id" value={@marca.id}/>
-        <button type="submit" style="width: 100%; background-color: #44BB64; color: white; padding: 14px; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; letter-spacing: 0.5px;">
+        <button type="submit" style="width: 100%; background-color: #44BB64; color: white; padding: 14px; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer;">
           RECLAMAR BENEFICIO
         </button>
       </form>
@@ -43,7 +41,6 @@
     <% end %>
   </div>
 
-  <%# Direcciones %>
   <%= if @marca.address do %>
     <div style="margin-bottom: 8px;">
       <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0;">
@@ -53,30 +50,30 @@
     </div>
   <% end %>
 
-  <%# Botón Agregar al Mapa %>
-  <button style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background-color: #44BB64; color: white; padding: 12px; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; margin-bottom: 20px;">
-    📍 Agregar al Mapa
-  </button>
+  <%= if @current_user do %>
+    <%= if @en_mapa do %>
+      <button id="btn-mapa" onclick={"toggleMapa(#{@marca.id}, true)"} style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background-color: #2d7a2d; color: white; padding: 12px; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; margin-bottom: 20px;">
+        ✅ En el Mapa — Quitar
+      </button>
+    <% else %>
+      <button id="btn-mapa" onclick={"toggleMapa(#{@marca.id}, false)"} style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background-color: #44BB64; color: white; padding: 12px; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; margin-bottom: 20px;">
+        📍 Agregar al Mapa
+      </button>
+    <% end %>
+  <% else %>
+    <a href="/auth/google" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background-color: #44BB64; color: white; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; text-decoration: none; margin-bottom: 20px;">
+      📍 Iniciar sesión para agregar al Mapa
+    </a>
+  <% end %>
 
-  <%# Separador %>
   <div style="border-top: 1px dashed #ddd; margin-bottom: 20px;"></div>
 
-  <%# Grilla de productos %>
   <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
     <%= for producto <- @productos do %>
       <div style="border: 1px solid #eee; border-radius: 10px; overflow: hidden; position: relative;">
-
         <%= if producto.image do %>
           <div style="position: relative;">
             <img src={producto.image} style="width: 100%; aspect-ratio: 1; object-fit: cover; display: block;"/>
-            <%= if producto.original_price do %>
-              <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.5); border-radius: 4px; padding: 2px 6px;">
-                <span style="color: #ccc; font-size: 11px; text-decoration: line-through;"><%= producto.original_price %>$</span>
-              </div>
-              <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.7); border-radius: 4px; padding: 2px 6px;">
-                <span style="color: white; font-size: 12px; font-weight: bold;"><%= producto.price %>$</span>
-              </div>
-            <% end %>
             <%= if @current_user && @current_user.role == "dueño" && @current_user.id == @marca.user_id do %>
               <label style="position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.9); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px;">
                 📷
@@ -92,35 +89,31 @@
               <input type="file" accept="image/*" style="display:none;" onchange={"subirFoto(this, #{producto.id})"} />
             </label>
           <% else %>
-            <div style="width: 100%; aspect-ratio: 1; background-color: #f9f9f9; border: 1px dashed #eee; display: flex; align-items: center; justify-content: center;">
+            <div style="width: 100%; aspect-ratio: 1; background-color: #f9f9f9; display: flex; align-items: center; justify-content: center;">
               <span style="color: #eee; font-size: 28px;">◻</span>
             </div>
           <% end %>
         <% end %>
-
-       <%# Nombre %>
-<div style="padding: 8px; text-align: center; background: white;">
-  <%= if @current_user && @current_user.role == "dueño" && @current_user.id == @marca.user_id do %>
-    <%= if producto.name == "Sin nombre" do %>
-      <span id={"nombre-#{producto.id}"} onclick={"editarNombre(#{producto.id})"} style="font-size: 12px; cursor: pointer; color: #ccc;">
-        <%= producto.name %>
-      </span>
-    <% else %>
-      <span id={"nombre-#{producto.id}"} onclick={"editarNombre(#{producto.id})"} style="font-size: 12px; cursor: pointer; color: #1a1a1a;">
-        <%= producto.name %>
-      </span>
-    <% end %>
-  <% else %>
-    <span style="font-size: 12px; color: #1a1a1a;">
-      <%= if producto.name == "Sin nombre", do: "", else: producto.name %>
-    </span>
-  <% end %>
-</div>
-
+        <div style="padding: 8px; text-align: center; background: white;">
+          <%= if @current_user && @current_user.role == "dueño" && @current_user.id == @marca.user_id do %>
+            <%= if producto.name == "Sin nombre" do %>
+              <span id={"nombre-#{producto.id}"} onclick={"editarNombre(#{producto.id})"} style="font-size: 12px; cursor: pointer; color: #ccc;">
+                <%= producto.name %>
+              </span>
+            <% else %>
+              <span id={"nombre-#{producto.id}"} onclick={"editarNombre(#{producto.id})"} style="font-size: 12px; cursor: pointer; color: #1a1a1a;">
+                <%= producto.name %>
+              </span>
+            <% end %>
+          <% else %>
+            <span style="font-size: 12px; color: #1a1a1a;">
+              <%= if producto.name == "Sin nombre", do: "", else: producto.name %>
+            </span>
+          <% end %>
+        </div>
       </div>
     <% end %>
   </div>
-
 </div>
 
 <script>
@@ -132,30 +125,55 @@
     const formData = new FormData();
     formData.append("imagen", file);
     formData.append("_csrf_token", csrfToken);
-    fetch(`/productos/${productoId}/imagen`, {
-      method: "POST",
-      body: formData
-    })
+    fetch("/productos/" + productoId + "/imagen", {method: "POST", body: formData})
     .then(r => r.json())
-    .then(data => {
-      if (data.ok) location.reload();
-      else alert("Error al subir la imagen");
-    });
+    .then(data => { if (data.ok) location.reload(); else alert("Error al subir la imagen"); });
   }
 
   function editarNombre(productoId) {
-    const span = document.getElementById(`nombre-${productoId}`);
+    const span = document.getElementById("nombre-" + productoId);
     const actual = span.innerText.trim();
     const nuevo = prompt("Nombre del producto:", actual === "Sin nombre" ? "" : actual);
     if (nuevo === null) return;
-    fetch(`/productos/${productoId}/nombre`, {
+    fetch("/productos/" + productoId + "/nombre", {
       method: "POST",
       headers: {"Content-Type": "application/json", "x-csrf-token": csrfToken},
       body: JSON.stringify({nombre: nuevo})
     })
     .then(r => r.json())
-    .then(data => {
-      if (data.ok) span.innerText = nuevo || "Sin nombre";
-    });
+    .then(data => { if (data.ok) span.innerText = nuevo || "Sin nombre"; });
+  }
+
+  function toggleMapa(brandId, enMapa) {
+    const btn = document.getElementById("btn-mapa");
+    if (enMapa) {
+      fetch("/mapa/quitar/" + brandId, {
+        method: "DELETE",
+        headers: {"x-csrf-token": csrfToken, "Content-Type": "application/json"}
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.ok) {
+          btn.innerText = "📍 Agregar al Mapa";
+          btn.style.backgroundColor = "#44BB64";
+          btn.setAttribute("onclick", "toggleMapa(" + brandId + ", false)");
+        }
+      });
+    } else {
+      fetch("/mapa/agregar/" + brandId, {
+        method: "POST",
+        headers: {"x-csrf-token": csrfToken, "Content-Type": "application/json"}
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.ok) {
+          btn.innerText = "✅ En el Mapa — Quitar";
+          btn.style.backgroundColor = "#2d7a2d";
+          btn.setAttribute("onclick", "toggleMapa(" + brandId + ", true)");
+        } else if (data.error) {
+          alert(data.error);
+        }
+      });
+    }
   }
 </script>

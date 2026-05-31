@@ -1,6 +1,5 @@
 defmodule DaleAppWeb.ClaimController do
   use DaleAppWeb, :controller
-
   alias DaleApp.Claims
   alias DaleApp.Repo
   alias DaleApp.Brands.Brand
@@ -8,13 +7,19 @@ defmodule DaleAppWeb.ClaimController do
   def create(conn, %{"coupon_id" => coupon_id, "brand_id" => brand_id}) do
     user_id = get_session(conn, :user_id)
 
-    case Claims.create_claim(user_id, String.to_integer(coupon_id), String.to_integer(brand_id)) do
-      {:ok, claim} ->
-        render(conn, :show, claim: claim)
-      {:error, _} ->
-        conn
-        |> put_flash(:error, "Error al reclamar el cupón.")
-        |> redirect(to: ~p"/marcas/#{brand_id}")
+    if is_nil(user_id) do
+      conn
+      |> put_flash(:error, "Necesitás iniciar sesión para reclamar beneficios.")
+      |> redirect(to: "/auth/google")
+    else
+      case Claims.create_claim(user_id, String.to_integer(coupon_id), String.to_integer(brand_id)) do
+        {:ok, claim} ->
+          render(conn, :show, claim: claim)
+        {:error, _} ->
+          conn
+          |> put_flash(:error, "Error al reclamar el cupón.")
+          |> redirect(to: ~p"/marcas/#{brand_id}")
+      end
     end
   end
 
@@ -36,7 +41,7 @@ defmodule DaleAppWeb.ClaimController do
             case Claims.redeem_claim_admin(claim) do
               {:ok, _} ->
                 brand = Repo.get(Brand, claim.brand_id)
-                render(conn, :result, message: "¡Canjeado! +100 puntos al usuario", success: true, discount: brand && brand.discount)
+                render(conn, :result, message: "Canjeado! +100 puntos al usuario", success: true, discount: brand && brand.discount)
               {:error, :already_redeemed} ->
                 render(conn, :result, message: "Este cupón ya fue canjeado", success: false, discount: nil)
               {:error, :expired} ->
@@ -49,7 +54,7 @@ defmodule DaleAppWeb.ClaimController do
           true ->
             case Claims.redeem_claim(claim, cajero_brand.id) do
               {:ok, _} ->
-                render(conn, :result, message: "¡Canjeado! +100 puntos al usuario", success: true, discount: cajero_brand.discount)
+                render(conn, :result, message: "Canjeado! +100 puntos al usuario", success: true, discount: cajero_brand.discount)
               {:error, :wrong_brand} ->
                 render(conn, :result, message: "Este QR es de otra marca", success: false, discount: nil)
               {:error, :already_redeemed} ->
