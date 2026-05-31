@@ -6,11 +6,25 @@
 
 <div style="max-width: 480px; margin: 0 auto; padding: 16px 16px 160px;">
 
-  <div style="position: relative; border: 1px solid #ddd; border-radius: 10px; padding: 20px; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; min-height: 100px;">
+  <div style="position: relative; border: 1px solid #ddd; border-radius: 10px; padding: 16px; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; min-height: 100px; width: 100%; box-sizing: border-box;">
     <%= if @marca.logo do %>
-      <img src={@marca.logo} style="max-height: 80px; max-width: 200px; object-fit: contain;"/>
+      <img src={@marca.logo} style="max-height: 80px; max-width: 220px; object-fit: contain;"/>
+      <%= if @current_user && @current_user.role == "dueño" && @current_user.id == @marca.user_id do %>
+        <label style="position:absolute;top:8px;right:8px;background:rgba(255,255,255,0.9);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;">
+          📷
+          <input type="file" accept="image/*" style="display:none;" data-brand-id={"#{@marca.id}"} onchange="subirLogo(this, this.dataset.brandId)"/>
+        </label>
+      <% end %>
     <% else %>
-      <span style="color: #ccc; font-size: 14px;">Logo</span>
+      <%= if @current_user && @current_user.role == "dueño" && @current_user.id == @marca.user_id do %>
+        <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:6px;width:220px;height:80px;">
+          <span style="color: #ddd; font-size: 32px;">+</span>
+          <span style="color: #ccc; font-size: 11px;">Subir logo</span>
+          <input type="file" accept="image/*" style="display:none;" data-brand-id={"#{@marca.id}"} onchange="subirLogo(this, this.dataset.brandId)"/>
+        </label>
+      <% else %>
+        <span style="color: #ccc; font-size: 14px;">Logo</span>
+      <% end %>
     <% end %>
     <span style="position: absolute; bottom: 12px; right: 12px; background-color: #44BB64; color: white; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 600;">
       <%= case @marca.modalidad do
@@ -142,6 +156,17 @@
     })
     .then(r => r.json())
     .then(data => { if (data.ok) span.innerText = nuevo || "Sin nombre"; });
+  }
+
+  function subirLogo(input, brandId) {
+    const file = input.files[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append("logo", file);
+    formData.append("_csrf_token", csrfToken);
+    fetch("/marcas/" + brandId + "/logo", {method: "POST", body: formData})
+    .then(r => r.json())
+    .then(data => { if (data.ok) location.reload(); else alert("Error al subir el logo"); });
   }
 
   function toggleMapa(brandId, enMapa) {

@@ -53,6 +53,7 @@ defmodule DaleAppWeb.Router do
     get "/perfil", PageController, :home
     get "/perfil", PageController, :home
     post "/productos/:id/imagen", ProductoController, :upload_imagen
+    post "/marcas/:id/logo", BrandController, :upload_logo
     post "/productos/:id/nombre", ProductoController, :update_nombre
     post "/mapa/agregar/:brand_id", MapaController, :agregar
     delete "/mapa/quitar/:brand_id", MapaController, :quitar

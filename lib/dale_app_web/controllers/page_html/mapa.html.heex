@@ -1,52 +1,206 @@
+<style>
+  @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  #panel-info {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: white;
+    border-radius: 24px 24px 0 0;
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.18);
+    z-index: 2000;
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    padding: 0 20px 32px 20px;
+    height: 45vh;
+    overflow-y: hidden;
+  }
+  #panel-info.visible { transform: translateY(0); }
+  #panel-info.expandido { height: 82vh; overflow-y: auto; }
+  #panel-handle {
+    width: 100%;
+    padding: 16px 0 12px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: grab;
+    touch-action: none;
+  }
+  #panel-handle-bar {
+    width: 40px; height: 4px;
+    background: #e0e0e0; border-radius: 2px;
+  }
+</style>
+
 <div style="width: 100%; height: calc(100vh - 64px); position: relative;">
   <div id="map" style="width: 100%; height: 100%;"></div>
+
+  <div style="position:absolute;top:16px;right:16px;z-index:1000;display:flex;flex-direction:column;gap:8px;">
+    <button onclick="setPaleta('verde')" style="width:36px;height:36px;border-radius:50%;background:#44BB64;border:3px solid white;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3);"></button>
+    <button onclick="setPaleta('rosa')" style="width:36px;height:36px;border-radius:50%;background:#E91E8C;border:3px solid white;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3);"></button>
+    <button onclick="setPaleta('negro')" style="width:36px;height:36px;border-radius:50%;background:#111;border:3px solid #C9A84C;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3);"></button>
+  </div>
+
+  <div id="ubicacion-loading" style="position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:1000;background:rgba(0,0,0,0.75);color:white;padding:8px 18px;border-radius:20px;font-size:13px;font-family:sans-serif;display:flex;align-items:center;gap:8px;">
+    <span style="animation:spin 1s linear infinite;display:inline-block;">📍</span>
+    Buscando tu ubicación...
+  </div>
+</div>
+
+<div id="panel-info">
+  <div id="panel-handle">
+    <div id="panel-handle-bar"></div>
+  </div>
+  <button onclick="cerrarPanel()" style="position:absolute;top:14px;right:16px;width:28px;height:28px;border-radius:50%;background:#f0f0f0;border:none;font-size:14px;cursor:pointer;">✕</button>
+  <div id="panel-contenido"></div>
 </div>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
+<style id="estilo-premium"></style>
+<style id="filtro-mapa">#map { filter: none; transition: filter 0.4s; }</style>
 <script>
-  const map = L.map('map').setView([-34.5875, -58.4370], 14);
+  const map = L.map('map', {zoomControl: true}).setView([-34.5875, -58.4370], 14);
+  const tileOSM   = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'© OpenStreetMap'});
+  const tileNegro = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {attribution:'© CartoDB'});
+  tileOSM.addTo(map);
+  let tilesActual = tileOSM;
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
-  }).addTo(map);
+  const paletas = {
+    verde: { saved:'green',  normal:'blue',   color:'#44BB64', filtro:'none' },
+    rosa:  { saved:'violet', normal:'violet',  color:'#E91E8C', filtro:'hue-rotate(290deg) saturate(2) brightness(1.05)' },
+    negro: { saved:'platinum',   normal:'platinum',    color:'#E8E8E8', filtro:'none' }
+  };
+  let paletaActual = 'verde';
+  let marcasMarkers = [];
+  let userMarker = null;
 
+  const userAvatar = '<%= if @current_user, do: @current_user.avatar, else: "" %>';
   const savedIds = <%= Jason.encode!(@saved_brand_ids) |> raw() %>;
-
   const marcas = <%= Jason.encode!(Enum.map(@marcas, fn m -> %{
-    name: m.name,
-    address: m.address,
-    lat: m.latitude,
-    lng: m.longitude,
-    id: m.id
+    name: m.name, address: m.address,
+    lat: m.latitude, lng: m.longitude,
+    id: m.id, discount: m.discount
   } end)) |> raw() %>;
 
-  const greenIcon = L.icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-    iconSize: [30, 49],
-    iconAnchor: [15, 49],
-    popupAnchor: [1, -34],
-    shadowSize: [49, 49]
-  });
-
-  const blueIcon = L.icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-  });
-
-  marcas.forEach(function(marca) {
-    if (marca.lat && marca.lng) {
-      const isSaved = savedIds.includes(marca.id);
-      const icon = isSaved ? greenIcon : blueIcon;
-      L.marker([marca.lat, marca.lng], {icon: icon})
-        .addTo(map)
-        .bindPopup('<b>' + marca.name + '</b><br>' + marca.address + '<br><a href="/marcas/' + marca.id + '">Ver stand</a>');
+  function makeIcon(colorName) {
+    const valid = ['blue','green','red','orange','yellow','violet','grey','black','gold'];
+    if (colorName === 'platinum') {
+      const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="25" height="41" viewBox="0 0 25 41"><path d="M12.5 0 C5.6 0 0 5.6 0 12.5 C0 22 12.5 41 12.5 41 C12.5 41 25 22 25 12.5 C25 5.6 19.4 0 12.5 0Z" fill="#B0B7C3"/><circle cx="12.5" cy="12.5" r="5" fill="rgba(255,255,255,0.4)"/></svg>';
+      return L.icon({ iconUrl: 'data:image/svg+xml;base64,' + btoa(svg), iconSize:[25,41], iconAnchor:[12,41], popupAnchor:[1,-34] });
     }
+    const c = valid.includes(colorName) ? colorName : 'blue';
+    return L.icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-' + c + '.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+      iconSize:[25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41]
+    });
+  }
+
+  function makeAvatarIcon() {
+    const bc = paletaActual === 'verde' ? '#44BB64' : paletaActual === 'rosa' ? '#E91E8C' : '#E8E8E8';
+    const html = userAvatar
+      ? '<img src="' + userAvatar + '" width="44" height="44" style="border-radius:50%;border:3px solid ' + bc + ';box-shadow:0 2px 12px rgba(0,0,0,0.5);object-fit:cover;display:block;" />'
+      : '<div style="width:44px;height:44px;border-radius:50%;background:' + bc + ';border:3px solid white;display:flex;align-items:center;justify-content:center;color:white;font-size:18px;">👤</div>';
+    return L.divIcon({ html:html, iconSize:[44,44], iconAnchor:[22,22], className:'' });
+  }
+
+  function abrirPanel(marca) {
+    const p = paletas[paletaActual];
+    const isSaved = savedIds.includes(marca.id);
+    const panel = document.getElementById('panel-info');
+    panel.classList.remove('expandido');
+    document.getElementById('panel-contenido').innerHTML =
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">' +
+        '<div style="width:50px;height:50px;border-radius:14px;background:' + p.color + ';display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">🏪</div>' +
+        '<div>' +
+          '<div style="font-size:17px;font-weight:800;color:#1a1a1a;">' + marca.name + '</div>' +
+          '<div style="font-size:13px;color:#999;margin-top:3px;">' + (marca.address || '') + '</div>' +
+        '</div>' +
+      '</div>' +
+      (marca.discount ? '<div style="display:inline-block;background:' + p.color + ';color:white;font-size:13px;font-weight:700;padding:5px 14px;border-radius:20px;margin-bottom:16px;">🏷️ ' + marca.discount + '% OFF Dale</div>' : '') +
+      '<div style="display:flex;gap:10px;">' +
+        '<a href="/marcas/' + marca.id + '" style="flex:1;background:' + p.color + ';color:white;text-align:center;padding:13px;border-radius:14px;font-weight:700;font-size:14px;text-decoration:none;">Ver stand →</a>' +
+        (isSaved ? '<button style="flex:1;background:#f5f5f5;color:#333;border:none;padding:13px;border-radius:14px;font-weight:700;font-size:14px;cursor:pointer;">🗺️ Cómo llegar</button>' : '') +
+      '</div>';
+    panel.classList.add('visible');
+    map.panTo([marca.lat, marca.lng]);
+  }
+
+  function cerrarPanel() {
+    const panel = document.getElementById('panel-info');
+    panel.classList.remove('visible');
+    panel.classList.remove('expandido');
+  }
+
+  function dibujarPins() {
+    marcasMarkers.forEach(function(m) { map.removeLayer(m); });
+    marcasMarkers = [];
+    const p = paletas[paletaActual];
+    marcas.forEach(function(marca) {
+      if (marca.lat && marca.lng) {
+        const isSaved = savedIds.includes(marca.id);
+        const marker = L.marker([marca.lat, marca.lng], {icon: makeIcon(isSaved ? p.saved : p.normal)})
+          .addTo(map).on('click', function() { abrirPanel(marca); });
+        marcasMarkers.push(marker);
+      }
+    });
+  }
+
+  function colocarUserEnMapa(lat, lng) {
+    if (userMarker) map.removeLayer(userMarker);
+    userMarker = L.marker([lat, lng], { icon: makeAvatarIcon(), zIndexOffset: 1000 }).addTo(map);
+    map.setView([lat, lng], 15);
+    document.getElementById('ubicacion-loading').style.display = 'none';
+  }
+
+  function pedirUbicacion() {
+    if (!navigator.geolocation) { document.getElementById('ubicacion-loading').style.display = 'none'; return; }
+    navigator.geolocation.getCurrentPosition(
+      function(pos) { colocarUserEnMapa(pos.coords.latitude, pos.coords.longitude); },
+      function() { document.getElementById('ubicacion-loading').style.display = 'none'; },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+
+  function setPaleta(nueva) {
+    if (nueva === 'negro' && tilesActual !== tileNegro) {
+      map.removeLayer(tilesActual); tileNegro.addTo(map); tilesActual = tileNegro;
+    } else if (nueva !== 'negro' && tilesActual !== tileOSM) {
+      map.removeLayer(tilesActual); tileOSM.addTo(map); tilesActual = tileOSM;
+    }
+    document.getElementById('filtro-mapa').textContent = '#map { filter: ' + paletas[nueva].filtro + '; transition: filter 0.4s; }';
+    paletaActual = nueva;
+    dibujarPins();
+    if (userMarker) { const pos = userMarker.getLatLng(); colocarUserEnMapa(pos.lat, pos.lng); }
+  }
+
+  // Swipe handle
+  const handle = document.getElementById("panel-info");
+  const panel = document.getElementById('panel-info');
+  let startY = 0;
+
+  handle.addEventListener('touchstart', function(e) {
+    startY = e.touches[0].clientY;
+  }, {passive: true});
+
+  handle.addEventListener('touchend', function(e) {
+    const diff = startY - e.changedTouches[0].clientY;
+    if (diff > 30) panel.classList.add('expandido');
+    if (diff < -30) cerrarPanel();
+  }, {passive: true});
+
+  handle.addEventListener('mousedown', function(e) {
+    startY = e.clientY;
+    e.preventDefault();
   });
+  document.addEventListener('mouseup', function(e) {
+    if (startY === 0) return;
+    const diff = startY - e.clientY;
+    if (diff > 30) panel.classList.add('expandido');
+    if (diff < -30) cerrarPanel();
+    startY = 0;
+  });
+
+  dibujarPins();
+  pedirUbicacion();
 </script>
+<style id="estilo-premium"></style>

@@ -94,4 +94,27 @@ defmodule DaleAppWeb.BrandController do
         {:error, :not_found}
     end
   end
+
+
+  def upload_logo(conn, %{"id" => id, "logo" => logo}) do
+    user_id = get_session(conn, :user_id)
+    brand = DaleApp.Repo.get(DaleApp.Brands.Brand, id)
+    if brand.user_id == user_id do
+      case DaleApp.Storage.upload_image(logo.path, logo.filename) do
+        {:ok, %{body: body}} when is_map(body) ->
+          url = body["secure_url"]
+          DaleApp.Repo.update!(Ecto.Changeset.change(brand, %{logo: url}))
+          json(conn, %{ok: true, url: url})
+        {:ok, %{body: body}} when is_binary(body) ->
+          decoded = Jason.decode!(body)
+          url = decoded["secure_url"]
+          DaleApp.Repo.update!(Ecto.Changeset.change(brand, %{logo: url}))
+          json(conn, %{ok: true, url: url})
+        _ ->
+          json(conn, %{ok: false, error: "Error al subir logo"})
+      end
+    else
+      json(conn, %{ok: false})
+    end
+  end
 end
