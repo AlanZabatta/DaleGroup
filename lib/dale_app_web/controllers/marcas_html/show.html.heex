@@ -4,87 +4,103 @@
   </a>
 <% end %>
 
-<div style="max-width: 480px; margin: 0 auto; padding: 16px 16px 160px;">
-
-  <div style="position: relative; border: 1px solid #ddd; border-radius: 10px; padding: 16px; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; min-height: 100px; width: 100%; box-sizing: border-box;">
-    <%= if @marca.logo do %>
-      <img src={@marca.logo} style="max-height: 80px; max-width: 220px; object-fit: contain;"/>
-      <%= if @current_user && @current_user.role == "dueño" && @current_user.id == @marca.user_id do %>
-        <label style="position:absolute;top:8px;right:8px;background:rgba(255,255,255,0.9);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;">
-          📷
-          <input type="file" accept="image/*" style="display:none;" data-brand-id={"#{@marca.id}"} onchange="subirLogo(this, this.dataset.brandId)"/>
-        </label>
-      <% end %>
-    <% else %>
-      <%= if @current_user && @current_user.role == "dueño" && @current_user.id == @marca.user_id do %>
-        <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:6px;width:220px;height:80px;">
-          <span style="color: #ddd; font-size: 32px;">+</span>
-          <span style="color: #ccc; font-size: 11px;">Subir logo</span>
-          <input type="file" accept="image/*" style="display:none;" data-brand-id={"#{@marca.id}"} onchange="subirLogo(this, this.dataset.brandId)"/>
-        </label>
+<!-- BLOQUE LOGO - fuera del contenedor para que quede alineado a la izquierda -->
+<div style="padding: 16px 16px 0; max-width: 480px; margin: 0 auto;">
+  <div style="position: relative; display: inline-block; overflow: visible;">
+    <div style="border: 1px solid #000; padding: 35px 45px; display: inline-flex; align-items: center; justify-content: center; background: white;">
+      <%= if @marca.logo do %>
+        <img src={@marca.logo} style="max-height: 180px; max-width: 180px; object-fit: contain;"/>
+        <%= if @current_user && @current_user.role == "dueño" && @current_user.id == @marca.user_id do %>
+          <label style="position:absolute;top:8px;right:8px;background:rgba(255,255,255,0.9);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;">
+            📷
+            <input type="file" accept="image/*" style="display:none;" data-brand-id={"#{@marca.id}"} onchange="subirLogo(this, this.dataset.brandId)"/>
+          </label>
+        <% end %>
       <% else %>
-        <span style="color: #ccc; font-size: 14px;">Logo</span>
+        <%= if @current_user && @current_user.role == "dueño" && @current_user.id == @marca.user_id do %>
+          <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:6px;width:180px;height:80px;">
+            <span style="color: #ddd; font-size: 32px;">+</span>
+            <span style="color: #ccc; font-size: 11px;">Subir logo</span>
+            <input type="file" accept="image/*" style="display:none;" data-brand-id={"#{@marca.id}"} onchange="subirLogo(this, this.dataset.brandId)"/>
+          </label>
+        <% else %>
+          <span style="color: #ccc; font-size: 14px;">Logo</span>
+        <% end %>
       <% end %>
+    </div>
+
+    <%= if @cupon do %>
+      <div style="position: absolute; bottom: -20px; right: -30px; background-color: #1E5C1E; color: white; font-size: 45px; font-weight: 900; padding: 12px 18px; line-height: 1; font-family: 'Abril Fatface', cursive;">
+        <%= @cupon.discount %>%
+      </div>
     <% end %>
-    <span style="position: absolute; bottom: 12px; right: 12px; background-color: #44BB64; color: white; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+  </div>
+</div>
+
+<!-- BLOQUE VERDE FULL ANCHO -->
+<div style="background-color: #1E5C1E; margin-top: 70px; padding: 50px 24px; width: 100%;">
+
+  <%= if @marca.address do %>
+    <div style="margin-bottom: 20px;">
+      <div style="color: #ffffff; font-size: 14px; font-weight: 700; letter-spacing: 1px; margin-bottom: 6px; font-family: 'Noto Sans', sans-serif;">DIRECCIONES</div>
+     <div style="display: flex; align-items: center; gap: 8px;">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+  <span style="font-size: 16px; color: #ffffff; font-family: 'Noto Sans', sans-serif; font-weight: 600;"><%= @marca.address %></span>
+</div>
+    </div>
+  <% end %>
+
+  <!-- BADGE MODALIDAD -->
+  <div style="margin-bottom: 10px;">
+    <span style="background-color: white; color: #1E5C1E; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 700;">
       <%= case @marca.modalidad do
-        "presencial" -> "En el Local"
+        "presencial" -> "Presencial"
         "digital" -> "Solo Digital"
         _ -> "Presencial y Digital"
       end %>
     </span>
   </div>
 
-  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-    <%= if @cupon do %>
-      <div style="background-color: #44BB64; color: white; font-size: 24px; font-weight: bold; padding: 10px 14px; border-radius: 6px; flex-shrink: 0;">
-        <%= @cupon.discount %>%
-      </div>
-      <form action={~p"/claims"} method="post" style="flex: 1;">
-        <input type="hidden" name="_csrf_token" value={get_csrf_token()}/>
-        <input type="hidden" name="coupon_id" value={@cupon.id}/>
-        <input type="hidden" name="brand_id" value={@marca.id}/>
-        <button type="submit" style="width: 100%; background-color: #44BB64; color: white; padding: 14px; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer;">
-          RECLAMAR BENEFICIO
-        </button>
-      </form>
-    <% else %>
-      <div style="flex: 1; background-color: #eee; border-radius: 8px; padding: 14px; text-align: center; color: #999; font-size: 14px;">
-        Sin cupón activo
-      </div>
-    <% end %>
-  </div>
-
-  <%= if @marca.address do %>
-    <div style="margin-bottom: 8px;">
-      <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0;">
-        <span style="color: #44BB64;">📍</span>
-        <span style="font-size: 13px; color: #333;"><%= @marca.address %></span>
-      </div>
+  <!-- BOTON RECLAMAR -->
+  <%= if @cupon do %>
+    <form action={~p"/claims"} method="post" style="margin-bottom: 10px;">
+      <input type="hidden" name="_csrf_token" value={get_csrf_token()}/>
+      <input type="hidden" name="coupon_id" value={@cupon.id}/>
+      <input type="hidden" name="brand_id" value={@marca.id}/>
+      <button type="submit" style="width: 100%; background-color: white; color: #1E5C1E; padding: 14px; border: none; border-radius: 30px; font-size: 15px; font-weight: bold; cursor: pointer;">
+        RECLAMAR BENEFICIO
+      </button>
+    </form>
+  <% else %>
+    <div style="width: 100%; background-color: rgba(255,255,255,0.2); border-radius: 30px; padding: 14px; text-align: center; color: white; font-size: 14px; margin-bottom: 10px;">
+      Sin cupón activo
     </div>
   <% end %>
 
+  <!-- BOTON MAPA -->
   <%= if @current_user do %>
     <%= if @en_mapa do %>
-      <button id="btn-mapa" onclick={"toggleMapa(#{@marca.id}, true)"} style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background-color: #2d7a2d; color: white; padding: 12px; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; margin-bottom: 20px;">
+      <button id="btn-mapa" onclick={"toggleMapa(#{@marca.id}, true)"} style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background-color: transparent; color: white; padding: 12px; border: 2px solid white; border-radius: 30px; font-size: 14px; font-weight: bold; cursor: pointer;">
         ✅ En el Mapa — Quitar
       </button>
     <% else %>
-      <button id="btn-mapa" onclick={"toggleMapa(#{@marca.id}, false)"} style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background-color: #44BB64; color: white; padding: 12px; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; margin-bottom: 20px;">
-        📍 Agregar al Mapa
+      <button id="btn-mapa" onclick={"toggleMapa(#{@marca.id}, false)"} style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background-color: transparent; color: white; padding: 12px; border: 2px solid white; border-radius: 30px; font-size: 14px; font-weight: bold; cursor: pointer;">
+        📍 Ver en el mapa
       </button>
     <% end %>
   <% else %>
-    <a href="/auth/google" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background-color: #44BB64; color: white; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; text-decoration: none; margin-bottom: 20px;">
-      📍 Iniciar sesión para agregar al Mapa
+    <a href="/auth/google" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background-color: transparent; color: white; padding: 12px; border: 2px solid white; border-radius: 30px; font-size: 14px; font-weight: bold; text-decoration: none;">
+      📍 Iniciar sesión para ver en el mapa
     </a>
   <% end %>
 
-  <div style="border-top: 1px dashed #ddd; margin-bottom: 20px;"></div>
+</div>
 
+<!-- PRODUCTOS -->
+<div style="max-width: 480px; margin: 0 auto; padding: 20px 16px 160px;">
   <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
     <%= for producto <- @productos do %>
-      <div style="border: 1px solid #eee; border-radius: 10px; overflow: hidden; position: relative;">
+      <div style="border-radius: 0; overflow: hidden; position: relative; background: white;">
         <%= if producto.image do %>
           <div style="position: relative;">
             <img src={producto.image} style="width: 100%; aspect-ratio: 1; object-fit: cover; display: block;"/>
@@ -97,13 +113,13 @@
           </div>
         <% else %>
           <%= if @current_user && @current_user.role == "dueño" && @current_user.id == @marca.user_id do %>
-            <label style="width: 100%; aspect-ratio: 1; background-color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-direction: column; gap: 4px;">
+            <label style="width: 100%; aspect-ratio: 1; background-color: #f5f5f5; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-direction: column; gap: 4px;">
               <span style="color: #ddd; font-size: 32px;">+</span>
               <span style="color: #ccc; font-size: 11px;">Subir foto</span>
               <input type="file" accept="image/*" style="display:none;" onchange={"subirFoto(this, #{producto.id})"} />
             </label>
           <% else %>
-            <div style="width: 100%; aspect-ratio: 1; background-color: #f9f9f9; display: flex; align-items: center; justify-content: center;">
+            <div style="width: 100%; aspect-ratio: 1; background-color: #f5f5f5; display: flex; align-items: center; justify-content: center;">
               <span style="color: #eee; font-size: 28px;">◻</span>
             </div>
           <% end %>
@@ -179,8 +195,10 @@
       .then(r => r.json())
       .then(data => {
         if (data.ok) {
-          btn.innerText = "📍 Agregar al Mapa";
-          btn.style.backgroundColor = "#44BB64";
+          btn.innerText = "📍 Ver en el mapa";
+          btn.style.backgroundColor = "transparent";
+          btn.style.color = "white";
+          btn.style.border = "2px solid white";
           btn.setAttribute("onclick", "toggleMapa(" + brandId + ", false)");
         }
       });
@@ -193,7 +211,9 @@
       .then(data => {
         if (data.ok) {
           btn.innerText = "✅ En el Mapa — Quitar";
-          btn.style.backgroundColor = "#2d7a2d";
+          btn.style.backgroundColor = "transparent";
+          btn.style.color = "white";
+          btn.style.border = "2px solid white";
           btn.setAttribute("onclick", "toggleMapa(" + brandId + ", true)");
         } else if (data.error) {
           alert(data.error);
