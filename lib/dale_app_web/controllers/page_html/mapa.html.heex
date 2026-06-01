@@ -53,6 +53,7 @@
   <div id="panel-contenido"></div>
 </div>
 
+<div id="user-avatar-data" data-avatar={if @current_user, do: @current_user.avatar, else: ""} style="display:none;"></div>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style id="estilo-premium"></style>
@@ -67,18 +68,24 @@
   const paletas = {
     verde: { saved:'green',  normal:'blue',   color:'#44BB64', filtro:'none' },
     rosa:  { saved:'violet', normal:'violet',  color:'#E91E8C', filtro:'hue-rotate(290deg) saturate(2) brightness(1.05)' },
-    negro: { saved:'platinum',   normal:'platinum',    color:'#E8E8E8', filtro:'none' }
+    negro: { saved:'platinum', normal:'platinum', color:'#E8E8E8', filtro:'none' }
   };
   let paletaActual = 'verde';
   let marcasMarkers = [];
   let userMarker = null;
 
-  const userAvatar = '<%= if @current_user, do: @current_user.avatar, else: "" %>';
+  const userAvatar = document.getElementById('user-avatar-data').dataset.avatar;
   const savedIds = <%= Jason.encode!(@saved_brand_ids) |> raw() %>;
   const marcas = <%= Jason.encode!(Enum.map(@marcas, fn m -> %{
     name: m.name, address: m.address,
     lat: m.latitude, lng: m.longitude,
     id: m.id, discount: m.discount
+  } end)) |> raw() %>;
+  const locations = <%= Jason.encode!(Enum.map(@locations, fn l -> %{
+    brand_id: l.brand_id,
+    address: l.address,
+    lat: l.latitude,
+    lng: l.longitude
   } end)) |> raw() %>;
 
   function makeIcon(colorName) {
@@ -135,11 +142,24 @@
     marcasMarkers.forEach(function(m) { map.removeLayer(m); });
     marcasMarkers = [];
     const p = paletas[paletaActual];
+
     marcas.forEach(function(marca) {
       if (marca.lat && marca.lng) {
         const isSaved = savedIds.includes(marca.id);
         const marker = L.marker([marca.lat, marca.lng], {icon: makeIcon(isSaved ? p.saved : p.normal)})
           .addTo(map).on('click', function() { abrirPanel(marca); });
+        marcasMarkers.push(marker);
+      }
+    });
+
+    locations.forEach(function(loc) {
+      if (loc.lat && loc.lng) {
+        const isSaved = savedIds.includes(loc.brand_id);
+        const marca = marcas.find(function(m) { return m.id === loc.brand_id; });
+        const marker = L.marker([loc.lat, loc.lng], {icon: makeIcon(isSaved ? p.saved : p.normal)})
+          .addTo(map).on('click', function() {
+            if (marca) abrirPanel(Object.assign({}, marca, {address: loc.address}));
+          });
         marcasMarkers.push(marker);
       }
     });
@@ -173,7 +193,6 @@
     if (userMarker) { const pos = userMarker.getLatLng(); colocarUserEnMapa(pos.lat, pos.lng); }
   }
 
-  // Swipe handle
   const handle = document.getElementById("panel-info");
   const panel = document.getElementById('panel-info');
   let startY = 0;
@@ -203,4 +222,4 @@
   dibujarPins();
   pedirUbicacion();
 </script>
-<style id="estilo-premium"></style>
+ENDOFFILE

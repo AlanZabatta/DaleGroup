@@ -4,6 +4,7 @@ defmodule DaleAppWeb.BrandController do
   alias DaleApp.Repo
   alias DaleApp.Brands.Brand
   alias DaleApp.Accounts
+  import Ecto.Query
 
   def mi_tienda(conn, _params) do
     user_id = get_session(conn, :user_id)
@@ -16,19 +17,40 @@ defmodule DaleAppWeb.BrandController do
     user_id = get_session(conn, :user_id)
     brand = Repo.get_by(Brand, user_id: user_id)
 
-    brand_params = case Map.get(brand_params, "address") do
-      nil -> brand_params
-      "" -> brand_params
-      address ->
-        case geocode(address) do
+    address = Map.get(brand_params, "address", "")
+    direcciones = address |> String.split("|") |> Enum.map(&String.trim/1) |> Enum.reject(&(&1 == ""))
+
+    # Geocodificar primera dirección para el pin principal
+    brand_params = case direcciones do
+      [primera | _] ->
+        case geocode(primera) do
           {:ok, lat, lng} -> Map.merge(brand_params, %{"latitude" => lat, "longitude" => lng})
           _ -> brand_params
         end
+      _ -> brand_params
     end
 
     brand
     |> Brand.changeset(brand_params)
     |> Repo.update()
+
+    # Borrar locations anteriores y recrear
+    Repo.delete_all(from l in DaleApp.Brands.BrandLocation, where: l.brand_id == ^brand.id)
+
+    Enum.each(direcciones, fn dir ->
+      case geocode(dir) do
+        {:ok, lat, lng} ->
+          %DaleApp.Brands.BrandLocation{}
+          |> DaleApp.Brands.BrandLocation.changeset(%{
+            brand_id: brand.id,
+            address: dir,
+            latitude: lat,
+            longitude: lng
+          })
+          |> Repo.insert()
+        _ -> :ok
+      end
+    end)
 
     conn
     |> put_flash(:info, "Tienda actualizada.")
