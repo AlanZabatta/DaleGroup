@@ -4,12 +4,11 @@
   </a>
 <% end %>
 
-<!-- BLOQUE LOGO - fuera del contenedor para que quede alineado a la izquierda -->
 <div style="padding: 16px 16px 0; max-width: 480px; margin: 0 auto;">
   <div style="position: relative; display: inline-block; overflow: visible;">
-    <div style="border: 1px solid #000; padding: 35px 45px; display: inline-flex; align-items: center; justify-content: center; background: white;">
+    <div style="border: 1px solid #000; padding: 30px 70px; display: inline-flex; align-items: center; justify-content: center; background: white;">
       <%= if @marca.logo do %>
-        <img src={@marca.logo} style="max-height: 180px; max-width: 180px; object-fit: contain;"/>
+        <img src={@marca.logo} style="max-height: 80px; max-width: 180px; object-fit: contain;"/>
         <%= if @current_user && @current_user.role == "dueño" && @current_user.id == @marca.user_id do %>
           <label style="position:absolute;top:8px;right:8px;background:rgba(255,255,255,0.9);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;">
             📷
@@ -28,7 +27,6 @@
         <% end %>
       <% end %>
     </div>
-
     <%= if @cupon do %>
       <div style="position: absolute; bottom: -20px; right: -30px; background-color: #1E5C1E; color: white; font-size: 45px; font-weight: 900; padding: 12px 18px; line-height: 1; font-family: 'Abril Fatface', cursive;">
         <%= @cupon.discount %>%
@@ -37,10 +35,8 @@
   </div>
 </div>
 
-<!-- BLOQUE VERDE FULL ANCHO -->
 <div style="background-color: #1E5C1E; margin-top: 80px; padding: 50px 24px; width: 100%;">
-
- <%= if @marca.address do %>
+  <%= if @marca.address do %>
     <div style="margin-bottom: 20px;">
       <div style="color: #ffffff; font-size: 14px; font-weight: 700; letter-spacing: 1px; margin-bottom: 10px; font-family: 'Noto Sans', sans-serif;">DIRECCIONES</div>
       <%= for dir <- String.split(@marca.address, "|") do %>
@@ -51,8 +47,7 @@
       <% end %>
     </div>
   <% end %>
-<div style="height: 20px;"></div>
-<!-- BOTON RECLAMAR -->
+  <div style="height: 20px;"></div>
   <%= if @cupon do %>
     <form action={~p"/claims"} method="post" style="margin-bottom: 10px;">
       <input type="hidden" name="_csrf_token" value={get_csrf_token()}/>
@@ -61,7 +56,7 @@
       <button type="submit" style="width: 50%; background-color: white; color: #1E5C1E; padding: 14px; border: none; border-radius: 30px; font-size: 15px; font-weight: bold; cursor: pointer;">
         CANJEAR BENEFICIO
       </button>
-   </form>
+    </form>
     <div style="margin-top: 8px; margin-bottom: 10px; margin-left: 20px;">
       <span style="color: white; font-size: 13px; font-family: 'Noto Sans', sans-serif; font-style: italic;">
         <%= case @marca.modalidad do
@@ -76,15 +71,13 @@
       Sin cupón activo
     </div>
   <% end %>
-
-  <!-- BOTON MAPA -->
   <%= if @current_user do %>
     <%= if @en_mapa do %>
       <button id="btn-mapa" onclick={"toggleMapa(#{@marca.id}, true)"} style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 38%; background-color: white; color: #1E5C1E; padding: 12px; border: none; border-radius: 30px; font-size: 14px; font-weight: bold; cursor: pointer;">
         ✅ En el Mapa — Quitar
       </button>
     <% else %>
-      <button id="btn-mapa" onclick={"toggleMapa(#{@marca.id}, false)"} style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 38%; nd-color: white; color: #1E5C1E; padding: 12px; border: none; border-radius: 30px; font-size: 14px; font-weight: bold; cursor: pointer;">
+      <button id="btn-mapa" onclick={"toggleMapa(#{@marca.id}, false)"} style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 38%; background-color: white; color: #1E5C1E; padding: 12px; border: none; border-radius: 30px; font-size: 14px; font-weight: bold; cursor: pointer;">
         📍 Ver en el mapa
       </button>
     <% end %>
@@ -93,61 +86,90 @@
       📍 Iniciar sesión para ver en el mapa
     </a>
   <% end %>
-
 </div>
 
 <!-- PRODUCTOS -->
-<div style="max-width: 480px; margin: 0 auto; padding: 20px 16px 160px;">
-  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-    <%= for producto <- @productos do %>
-      <div style="border-radius: 0; overflow: hidden; position: relative; background: white;">
-        <%= if producto.image do %>
-          <div style="position: relative;">
-            <img src={producto.image} style="width: 100%; aspect-ratio: 1; object-fit: cover; display: block;"/>
+<div style="margin: 0 auto; padding: 60px 0 160px 40px; position: relative; overflow: hidden; max-width: 520px;">
+
+  <div id="parallax-texto" style="position: absolute; left: -30px; top: 100px; z-index: 0; pointer-events: none; user-select: none; transform: rotate(-90deg); transform-origin: left top;">
+    <span style="font-size: 110px; font-weight: 900; color: #e8e8e8; white-space: nowrap; letter-spacing: -4px; display: block;">
+      <%= @marca.name %> &nbsp; <%= @marca.name %> &nbsp; <%= @marca.name %>
+    </span>
+  </div>
+
+  <div style="position: relative; z-index: 1; display: flex; gap: 6px; align-items: flex-start; padding-right: 16px;">
+
+    <!-- COLUMNA IZQUIERDA -->
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+      <%= for {producto, index} <- Enum.with_index(@productos), rem(index, 2) == 0, producto.image != nil || (@current_user != nil && @current_user.role == "dueño" && @current_user.id == @marca.user_id) do %>
+        <div style="display: flex; flex-direction: column;">
+          <div style="position: relative; overflow: hidden; background: #f0f0f0; aspect-ratio: 1/1;">
+            <%= if producto.image do %>
+              <img src={producto.image} style="width: 100%; height: 100%; object-fit: cover; display: block;"/>
+            <% else %>
+              <%= if @current_user && @current_user.role == "dueño" && @current_user.id == @marca.user_id do %>
+                <label style="width: 100%; height: 100%; min-height: 100px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-direction: column; gap: 4px;">
+                  <span style="color: #aaa; font-size: 24px;">+</span>
+                  <span style="color: #aaa; font-size: 10px;">Subir foto</span>
+                  <input type="file" accept="image/*" style="display:none;" onchange={"subirFoto(this, #{producto.id})"} />
+                </label>
+              <% end %>
+            <% end %>
             <%= if @current_user && @current_user.role == "dueño" && @current_user.id == @marca.user_id do %>
-              <label style="position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.9); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px;">
+              <label style="position: absolute; top: 6px; right: 6px; background: rgba(255,255,255,0.85); border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 10px;">
                 📷
                 <input type="file" accept="image/*" style="display:none;" onchange={"subirFoto(this, #{producto.id})"} />
               </label>
             <% end %>
           </div>
-        <% else %>
-          <%= if @current_user && @current_user.role == "dueño" && @current_user.id == @marca.user_id do %>
-            <label style="width: 100%; aspect-ratio: 1; background-color: #f5f5f5; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-direction: column; gap: 4px;">
-              <span style="color: #ddd; font-size: 32px;">+</span>
-              <span style="color: #ccc; font-size: 11px;">Subir foto</span>
-              <input type="file" accept="image/*" style="display:none;" onchange={"subirFoto(this, #{producto.id})"} />
-            </label>
-          <% else %>
-            <div style="width: 100%; aspect-ratio: 1; background-color: #f5f5f5; display: flex; align-items: center; justify-content: center;">
-              <span style="color: #eee; font-size: 28px;">◻</span>
-            </div>
-          <% end %>
-        <% end %>
-        <div style="padding: 8px; text-align: center; background: white;">
-          <%= if @current_user && @current_user.role == "dueño" && @current_user.id == @marca.user_id do %>
-            <%= if producto.name == "Sin nombre" do %>
-              <span id={"nombre-#{producto.id}"} onclick={"editarNombre(#{producto.id})"} style="font-size: 12px; cursor: pointer; color: #ccc;">
-                <%= producto.name %>
-              </span>
-            <% else %>
-              <span id={"nombre-#{producto.id}"} onclick={"editarNombre(#{producto.id})"} style="font-size: 12px; cursor: pointer; color: #1a1a1a;">
-                <%= producto.name %>
-              </span>
-            <% end %>
-          <% else %>
-            <span style="font-size: 12px; color: #1a1a1a;">
-              <%= if producto.name == "Sin nombre", do: "", else: producto.name %>
-            </span>
-          <% end %>
+         
         </div>
-      </div>
-    <% end %>
+      <% end %>
+    </div>
+
+    <!-- COLUMNA DERECHA -->
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+      <%= for {producto, index} <- Enum.with_index(@productos), rem(index, 2) == 1, producto.image != nil || (@current_user != nil && @current_user.role == "dueño" && @current_user.id == @marca.user_id) do %>
+        <%
+          fila = div(index, 2)
+          alto = if rem(fila, 2) == 0, do: "aspect-ratio: 1/0.85;", else: "aspect-ratio: 1/1.3;"
+        %>
+        <div style="display: flex; flex-direction: column;">
+          <div style={"position: relative; overflow: hidden; background: #f0f0f0; #{alto}"}>
+            <%= if producto.image do %>
+              <img src={producto.image} style="width: 100%; height: 100%; object-fit: cover; display: block;"/>
+            <% else %>
+              <%= if @current_user && @current_user.role == "dueño" && @current_user.id == @marca.user_id do %>
+                <label style="width: 100%; height: 100%; min-height: 100px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-direction: column; gap: 4px;">
+                  <span style="color: #aaa; font-size: 24px;">+</span>
+                  <span style="color: #aaa; font-size: 10px;">Subir foto</span>
+                  <input type="file" accept="image/*" style="display:none;" onchange={"subirFoto(this, #{producto.id})"} />
+                </label>
+              <% end %>
+            <% end %>
+            <%= if @current_user && @current_user.role == "dueño" && @current_user.id == @marca.user_id do %>
+              <label style="position: absolute; top: 6px; right: 6px; background: rgba(255,255,255,0.85); border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 10px;">
+                📷
+                <input type="file" accept="image/*" style="display:none;" onchange={"subirFoto(this, #{producto.id})"} />
+              </label>
+            <% end %>
+          </div>
+          
+        </div>
+      <% end %>
+    </div>
+
   </div>
 </div>
 
 <script>
   const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content");
+
+  const parallaxTexto = document.getElementById('parallax-texto');
+  window.addEventListener('scroll', function() {
+    if (!parallaxTexto) return;
+    parallaxTexto.style.top = (100 + window.scrollY * 0.4) + 'px';
+  });
 
   function subirFoto(input, productoId) {
     const file = input.files[0];
@@ -163,7 +185,7 @@
   function editarNombre(productoId) {
     const span = document.getElementById("nombre-" + productoId);
     const actual = span.innerText.trim();
-    const nuevo = prompt("Nombre del producto:", actual === "Sin nombre" ? "" : actual);
+    const nuevo = prompt("Nombre del producto:", actual === "✏️ nombre" ? "" : actual);
     if (nuevo === null) return;
     fetch("/productos/" + productoId + "/nombre", {
       method: "POST",
@@ -171,7 +193,7 @@
       body: JSON.stringify({nombre: nuevo})
     })
     .then(r => r.json())
-    .then(data => { if (data.ok) span.innerText = nuevo || "Sin nombre"; });
+    .then(data => { if (data.ok) span.innerText = nuevo || "✏️ nombre"; });
   }
 
   function subirLogo(input, brandId) {
@@ -197,8 +219,8 @@
         if (data.ok) {
           btn.innerText = "📍 Ver en el mapa";
           btn.style.backgroundColor = "white";
-         btn.style.color = "#1E5C1E";
-          btn.style.border = "2px solid white";
+          btn.style.color = "#1E5C1E";
+          btn.style.border = "none";
           btn.setAttribute("onclick", "toggleMapa(" + brandId + ", false)");
         }
       });
@@ -211,9 +233,9 @@
       .then(data => {
         if (data.ok) {
           btn.innerText = "✅ En el Mapa — Quitar";
-          btn.style.backgroundColor = "transparent";
-          btn.style.color = "white";
-          btn.style.border = "2px solid white";
+          btn.style.backgroundColor = "white";
+          btn.style.color = "#1E5C1E";
+          btn.style.border = "none";
           btn.setAttribute("onclick", "toggleMapa(" + brandId + ", true)");
         } else if (data.error) {
           alert(data.error);
