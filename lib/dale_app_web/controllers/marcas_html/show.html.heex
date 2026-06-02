@@ -38,39 +38,39 @@
 </div>
 
 <!-- BLOQUE VERDE FULL ANCHO -->
-<div style="background-color: #1E5C1E; margin-top: 70px; padding: 50px 24px; width: 100%;">
+<div style="background-color: #1E5C1E; margin-top: 80px; padding: 50px 24px; width: 100%;">
 
-  <%= if @marca.address do %>
+ <%= if @marca.address do %>
     <div style="margin-bottom: 20px;">
-      <div style="color: #ffffff; font-size: 14px; font-weight: 700; letter-spacing: 1px; margin-bottom: 6px; font-family: 'Noto Sans', sans-serif;">DIRECCIONES</div>
-     <div style="display: flex; align-items: center; gap: 8px;">
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-  <span style="font-size: 16px; color: #ffffff; font-family: 'Noto Sans', sans-serif; font-weight: 600;"><%= @marca.address %></span>
-</div>
+      <div style="color: #ffffff; font-size: 14px; font-weight: 700; letter-spacing: 1px; margin-bottom: 10px; font-family: 'Noto Sans', sans-serif;">DIRECCIONES</div>
+      <%= for dir <- String.split(@marca.address, "|") do %>
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+          <span style="font-size: 15px; color: #ffffff; font-family: 'Noto Sans', sans-serif; font-weight: 600;"><%= String.trim(dir) %></span>
+        </div>
+      <% end %>
     </div>
   <% end %>
-
-  <!-- BADGE MODALIDAD -->
-  <div style="margin-bottom: 10px;">
-    <span style="background-color: white; color: #1E5C1E; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 700;">
-      <%= case @marca.modalidad do
-        "presencial" -> "Presencial"
-        "digital" -> "Solo Digital"
-        _ -> "Presencial y Digital"
-      end %>
-    </span>
-  </div>
-
-  <!-- BOTON RECLAMAR -->
+<div style="height: 20px;"></div>
+<!-- BOTON RECLAMAR -->
   <%= if @cupon do %>
     <form action={~p"/claims"} method="post" style="margin-bottom: 10px;">
       <input type="hidden" name="_csrf_token" value={get_csrf_token()}/>
       <input type="hidden" name="coupon_id" value={@cupon.id}/>
       <input type="hidden" name="brand_id" value={@marca.id}/>
-      <button type="submit" style="width: 100%; background-color: white; color: #1E5C1E; padding: 14px; border: none; border-radius: 30px; font-size: 15px; font-weight: bold; cursor: pointer;">
-        RECLAMAR BENEFICIO
+      <button type="submit" style="width: 50%; background-color: white; color: #1E5C1E; padding: 14px; border: none; border-radius: 30px; font-size: 15px; font-weight: bold; cursor: pointer;">
+        CANJEAR BENEFICIO
       </button>
-    </form>
+   </form>
+    <div style="margin-top: 8px; margin-bottom: 10px; margin-left: 20px;">
+      <span style="color: white; font-size: 13px; font-family: 'Noto Sans', sans-serif; font-style: italic;">
+        <%= case @marca.modalidad do
+          "presencial" -> "Válido solo en el local"
+          "digital" -> "Válido en el sitio digital de la marca"
+          _ -> "Válido en el local y el sitio digital de la marca"
+        end %>
+      </span>
+    </div>
   <% else %>
     <div style="width: 100%; background-color: rgba(255,255,255,0.2); border-radius: 30px; padding: 14px; text-align: center; color: white; font-size: 14px; margin-bottom: 10px;">
       Sin cupón activo
@@ -80,11 +80,11 @@
   <!-- BOTON MAPA -->
   <%= if @current_user do %>
     <%= if @en_mapa do %>
-      <button id="btn-mapa" onclick={"toggleMapa(#{@marca.id}, true)"} style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background-color: transparent; color: white; padding: 12px; border: 2px solid white; border-radius: 30px; font-size: 14px; font-weight: bold; cursor: pointer;">
+      <button id="btn-mapa" onclick={"toggleMapa(#{@marca.id}, true)"} style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 38%; background-color: white; color: #1E5C1E; padding: 12px; border: none; border-radius: 30px; font-size: 14px; font-weight: bold; cursor: pointer;">
         ✅ En el Mapa — Quitar
       </button>
     <% else %>
-      <button id="btn-mapa" onclick={"toggleMapa(#{@marca.id}, false)"} style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background-color: transparent; color: white; padding: 12px; border: 2px solid white; border-radius: 30px; font-size: 14px; font-weight: bold; cursor: pointer;">
+      <button id="btn-mapa" onclick={"toggleMapa(#{@marca.id}, false)"} style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 38%; nd-color: white; color: #1E5C1E; padding: 12px; border: none; border-radius: 30px; font-size: 14px; font-weight: bold; cursor: pointer;">
         📍 Ver en el mapa
       </button>
     <% end %>
@@ -196,8 +196,8 @@
       .then(data => {
         if (data.ok) {
           btn.innerText = "📍 Ver en el mapa";
-          btn.style.backgroundColor = "transparent";
-          btn.style.color = "white";
+          btn.style.backgroundColor = "white";
+         btn.style.color = "#1E5C1E";
           btn.style.border = "2px solid white";
           btn.setAttribute("onclick", "toggleMapa(" + brandId + ", false)");
         }
