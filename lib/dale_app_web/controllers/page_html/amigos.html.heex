@@ -1,0 +1,393 @@
+<!-- PUBLICACIONES -->
+<div style="width: 100%; box-sizing: border-box; padding: 0 32px; margin-top: 48px;">
+  <%= for pub <- @publicaciones do %>
+    <div style="position:relative; width:100%; max-width:400px; min-height:calc(min(100vw - 64px, 400px) * 5 / 3); overflow:visible; background:white; margin-top:20px; margin-bottom:20px;">
+      <div style="width:100%; height:100%; display:flex; flex-direction:column; overflow:visible; position:relative;">
+        <div style="background:white; border:1px solid #186904; position:relative; height:90px; display:flex; align-items:center; padding:0 12px 0 80px; overflow:visible;">
+          <div style="position:absolute; left:20px; top:5px; width:75px; height:75px; border-radius:50%; overflow:hidden; z-index:10; box-shadow:0 2px 8px rgba(0,0,0,0.3); border:2px solid #186904;">
+            <%= if pub.user.avatar do %>
+              <img src={pub.user.avatar} style="width:100%; height:100%; object-fit:cover; display:block;"/>
+            <% end %>
+          </div>
+          <div style="position:relative; left:25px; top:0px; display:flex; flex-direction:column; gap:6px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="color:#111; font-size:18px; font-weight:200; font-family:'Noto Sans',sans-serif;">@<%= pub.user.username %></span>
+              <%= if @current_user && @current_user.role == "admin" do %>
+                <button data-pubid={"#{pub.id}"} onclick="borrarPublicacion(this.getAttribute('data-pubid'), this)" style="background:none; border:none; cursor:pointer; padding:0;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                </button>
+              <% end %>
+            </div>
+            <%= if pub.user_id != @current_user.id do %>
+  <button onclick="toggleSeguir(this)" style="background:#186904; color:white; border:none; border-radius:6px; padding:5px 18px; font-size:13px; font-weight:600; font-family:'Noto Sans',sans-serif; cursor:pointer; width:fit-content;">Seguir</button>
+<% else %>
+  <button style="background:white; color:#186904; border:1.5px solid #186904; border-radius:6px; padding:5px 18px; font-size:13px; font-weight:600; font-family:'Noto Sans',sans-serif; cursor:default; width:fit-content;">Sos vos</button>
+<% end %>
+          </div>
+        </div>
+        <div style="height:3px;"></div>
+        <div style="flex:none; background:white; border:1px solid #186904; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px; padding-bottom:12px;">
+          <div style="width:320px; height:360px; background:white; border-radius:4px; margin-left:auto; margin-right:auto; align-self:center; margin-top:35px; overflow:hidden;">
+            <% urls = String.split(pub.imagen_url, ",") %>
+<% n = length(urls) %>
+<div id={"carousel-#{pub.id}"} style="position:relative; width:100%; height:100%; overflow:hidden;">
+  <div id={"track-#{pub.id}"} style="display:flex; height:100%; transition:transform 0.3s ease;">
+    <%= for url <- urls do %>
+      <div style="min-width:100%; height:100%; flex-shrink:0; overflow:hidden;">
+        <img src={url} style="width:100%; height:100%; object-fit:cover; display:block;"/>
+      </div>
+    <% end %>
+  </div>
+  <%= if n > 1 do %>
+    <button onclick={"carouselAmigoPrev('#{pub.id}', #{n})"} style="position:absolute; left:4px; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.4); border:none; color:white; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:14px;">‹</button>
+    <button onclick={"carouselAmigoNext('#{pub.id}', #{n})"} style="position:absolute; right:4px; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.4); border:none; color:white; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:14px;">›</button>
+    <div id={"dots-#{pub.id}"} style="position:absolute; bottom:8px; left:50%; transform:translateX(-50%); display:flex; gap:5px; align-items:center; background:rgba(0,0,0,0.3); border-radius:10px; padding:3px 8px;">
+      <%= for i <- 0..(n-1) do %>
+        <div id={"dot-#{pub.id}-#{i}"} style={"width:#{if i==0, do: "18px", else: "7px"}; height:7px; border-radius:4px; background:#{if i==0, do: "#186904", else: "white"}; transition:all 0.3s;"}></div>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+          </div>
+        <div style="position:relative; margin:0 auto; width:320px; display:flex; align-items:center; justify-content:space-between; padding:10px 0;">
+          <div style="display:flex; gap:16px; align-items:center;">
+            <div style="display:flex; align-items:center; gap:4px; cursor:pointer;" phx-no-format id={"like-btn-#{pub.id}"} data-id={"#{pub.id}"} data-liked={"#{MapSet.member?(@mis_likes, pub.id)}"} onclick="toggleLike(this)"><svg width="30" height="30" viewBox="0 0 24 24" fill={if MapSet.member?(@mis_likes, pub.id), do: "#186904", else: "none"} stroke={if MapSet.member?(@mis_likes, pub.id), do: "#186904", else: "#333"} stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span style="font-size:12px; color:#666;"><%= Map.get(@likes_conteo, pub.id, 0) %></span></div>
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="cursor:pointer;" id={"comentario-btn-#{pub.id}"} data-pubid={"#{pub.id}"} onclick="toggleComentarios(this.getAttribute('data-pubid'))"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          </div>
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div style="position:relative; margin:0 auto; width:320px; word-break:break-word;">
+          <% desc = pub.descripcion || "" %>
+          <% corta = String.length(desc) <= 100 %>
+          <p id={"desc-#{pub.id}"} style="font-size:15px; color:#111; margin:0 0 4px; font-family:'Noto Sans',sans-serif; word-break:break-word; overflow-wrap:anywhere;">
+            <span style="font-weight:700;">@<%= pub.user.username %></span>
+            <%= if corta do %>
+              <%= desc %>
+            <% else %>
+              <span id={"desc-text-#{pub.id}"}><%= String.slice(desc, 0, 100) %><span id={"desc-dots-#{pub.id}"}>...</span></span><span id={"desc-full-#{pub.id}"} style="display:none;"><%= desc %></span> <span id={"desc-ver-#{pub.id}"} onclick={"verMas('#{pub.id}')"} style="color:#186904; font-weight:600; cursor:pointer; font-size:13px;">Ver más</span>
+            <% end %>
+          </p>
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+          <p style="font-size:11px; color:#aaa; margin:4px 0 0; font-family:'Noto Sans',sans-serif;"><%= Calendar.strftime(pub.inserted_at, "%d de %B") %></p>
+          <%= if @current_user && (@current_user.role == "admin" || @current_user.role == "dueño") do %>
+            <button data-pubid={"#{pub.id}"} onclick="borrarPublicacion(this.getAttribute('data-pubid'), this)" style="background:none; border:none; cursor:pointer; padding:0; margin-top:4px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+              </svg>
+            </button>
+          <% end %>
+        </div>
+          
+        </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<script>
+  const csrfLike = document.querySelector("meta[name='csrf-token']")?.getAttribute("content");
+
+  function animarCorazones(el) {
+    const rect = el.closest('[style*="aspect-ratio"]').getBoundingClientRect();
+    for (let i = 0; i < 6; i++) {
+      setTimeout(() => {
+        const heart = document.createElement('div');
+        heart.innerHTML = '<svg viewBox="0 0 24 24" fill="#186904" width="100%" height="100%"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+        heart.style.cssText = `position:fixed; width:${16 + Math.random()*14}px; height:${16 + Math.random()*14}px; font-size:0; left:${rect.left + Math.random()*rect.width}px; top:${rect.bottom - 60}px; pointer-events:none; z-index:99999; transition:all 1.2s ease-out; opacity:1;`;
+        document.body.appendChild(heart);
+        setTimeout(() => {
+          heart.style.transform = `translateY(-${80 + Math.random()*120}px) rotate(${-20 + Math.random()*40}deg)`;
+          heart.style.opacity = '0';
+        }, 50);
+        setTimeout(() => heart.remove(), 1300);
+      }, i * 80);
+    }
+  }
+
+  function toggleLike(el) { const pubId = el.getAttribute("data-id");
+    fetch('/publicaciones/' + pubId + '/like', {
+      method: 'POST',
+      headers: { 'x-csrf-token': csrfLike, 'content-type': 'application/json' },
+      body: JSON.stringify({})
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        const svg = el.querySelector('svg');
+        const span = el.querySelector('span');
+        if (data.accion === 'liked') {
+          svg.style.fill = '#186904';
+          svg.style.stroke = '#186904';
+          animarCorazones(el);
+        } else {
+          svg.style.fill = 'none';
+          svg.style.stroke = '#333';
+        }
+        span.textContent = data.conteo;
+      }
+    });
+  }
+</script>
+
+<script>
+  const csrfComentario = document.querySelector("meta[name='csrf-token']")?.getAttribute("content");
+
+  function toggleComentarios(pubId) {
+    const seccion = document.getElementById('comentarios-' + pubId);
+    if (seccion.style.display === 'none' || seccion.style.display === '') {
+      seccion.style.display = 'block';
+      cargarComentarios(pubId);
+    } else {
+      seccion.style.display = 'none';
+    }
+  }
+
+  function cargarComentarios(pubId) {
+    fetch('/publicaciones/' + pubId + '/comentarios')
+      .then(r => r.json())
+      .then(data => {
+        if (data.ok) renderComentarios(pubId, data.comentarios);
+      });
+  }
+
+  function renderComentarios(pubId, comentarios) {
+    const lista = document.getElementById('lista-comentarios-' + pubId);
+    lista.innerHTML = comentarios.map(c => `
+      <div style="display:flex; gap:8px; align-items:flex-start; margin-bottom:8px;">
+        <div style="width:32px; height:32px; border-radius:50%; overflow:hidden; flex-shrink:0; background:#eee;">
+          ${c.avatar ? `<img src="${c.avatar}" style="width:100%; height:100%; object-fit:cover;"/>` : ''}
+        </div>
+        <div>
+          <span style="font-size:12px; font-weight:700; color:#111; font-family:'Noto Sans',sans-serif;">@${c.username}</span>
+          <span style="font-size:12px; color:#444; font-family:'Noto Sans',sans-serif;"> ${c.contenido}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function enviarComentario(pubId) {
+    const input = document.getElementById('input-comentario-' + pubId);
+    const contenido = input.value.trim();
+    if (!contenido) return;
+    fetch('/publicaciones/' + pubId + '/comentarios', {
+      method: 'POST',
+      headers: { 'x-csrf-token': csrfComentario, 'content-type': 'application/json' },
+      body: JSON.stringify({ contenido: contenido, publicacion_id: pubId })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        input.value = '';
+        renderComentarios(pubId, data.comentarios);
+      }
+    });
+  }
+</script>
+
+
+<!-- MODAL COMENTARIOS -->
+<div id="modal-comentarios" style="display:none; position:fixed; bottom:0; left:0; right:0; height:75vh; background:white; border:4px solid #186904; border-radius:16px 16px 0 0; z-index:99999; flex-direction:column;">
+  <div style="padding:16px 20px; border-bottom:1px solid #eee; display:flex; align-items:center; justify-content:space-between;">
+    <span id="comentarios-titulo" style="font-size:16px; font-weight:700; color:#111; font-family:'Noto Sans',sans-serif;">Comentarios</span>
+    <button onclick="cerrarComentarios()" style="background:none; border:none; font-size:22px; color:#186904; cursor:pointer;">✕</button>
+  </div>
+  <div id="lista-comentarios-modal" style="flex:1; overflow-y:auto; padding:16px 20px;">
+  </div>
+  <div style="padding:12px 16px; border-top:1px solid #eee; display:flex; gap:8px;">
+    <input id="input-comentario-modal" type="text" placeholder="Comentá..." maxlength="500" style="flex:1; border:1.5px solid #186904; border-radius:20px; padding:8px 14px; font-size:14px; font-family:'Noto Sans',sans-serif; outline:none; background:white;"/>
+    <button onclick="enviarComentarioModal()" style="background:#186904; color:white; border:none; border-radius:20px; padding:8px 16px; font-size:14px; font-weight:600; cursor:pointer; font-family:'Noto Sans',sans-serif;">Enviar</button>
+  </div>
+</div>
+<div id="modal-comentarios-overlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.4); z-index:99998; pointer-events:none;"></div>
+
+<script>
+  let pubIdActual = null;
+
+  function toggleComentarios(pubId) {
+    pubIdActual = pubId;
+    document.getElementById('modal-comentarios').style.display = 'flex';
+    document.getElementById('modal-comentarios-overlay').style.display = 'block';
+    document.getElementById('navbar').style.display = 'none'; document.getElementById('bottom-bar').style.display = 'none'; const adminBtn = document.querySelector('[onclick="toggleAdmin()"]'); if(adminBtn) adminBtn.style.display = 'none'; const floatBtns = document.querySelector('[style*="bottom: 120px"]'); if(floatBtns) floatBtns.style.display = 'none';
+    cargarComentarios(pubId);
+  }
+
+  function cerrarComentarios() {
+    document.getElementById('modal-comentarios').style.display = 'none';
+    document.getElementById('modal-comentarios-overlay').style.display = 'none';
+    document.getElementById('navbar').style.display = ''; document.getElementById('bottom-bar').style.display = 'flex'; const adminBtn2 = document.querySelector('[onclick="toggleAdmin()"]'); if(adminBtn2) adminBtn2.style.display = ''; const floatBtns2 = document.querySelector('[style*="bottom: 120px"]'); if(floatBtns2) floatBtns2.style.display = '';
+    pubIdActual = null;
+  }
+
+  function cargarComentarios(pubId) {
+    fetch('/publicaciones/' + pubId + '/comentarios')
+      .then(r => r.json())
+      .then(data => {
+        if (data.ok) {
+          document.getElementById('comentarios-titulo').textContent = 'Comentarios [' + data.comentarios.length + ']';
+          renderComentariosModal(data.comentarios);
+        }
+      });
+  }
+
+  function renderComentariosModal(comentarios) {
+    const lista = document.getElementById('lista-comentarios-modal');
+    if (comentarios.length === 0) {
+      lista.innerHTML = '<p style="color:#aaa; text-align:center; font-family:\'Noto Sans\',sans-serif; font-size:13px; margin-top:20px;">Todavia no hay comentarios.</p>';
+      return;
+    }
+    lista.innerHTML = comentarios.map(c => `
+      <div style="margin-bottom:14px; position:relative; padding-right:54px;">
+        <div style="background:#186904; border-radius:12px; padding:10px 14px; display:inline-flex; gap:10px; align-items:flex-start; max-width:100%;">
+          <div style="width:48px; height:48px; border-radius:50%; overflow:hidden; flex-shrink:0; background:#eee; border:2px solid white;">
+            ${c.avatar ? `<img src="${c.avatar}" style="width:100%; height:100%; object-fit:cover;"/>` : ''}
+          </div>
+          <div>
+            <div style="font-size:15px; font-weight:700; color:white; font-family:'Noto Sans',sans-serif;">@${c.username}</div>
+            <div style="font-size:14px; color:white; margin-top:2px; font-family:'Noto Sans',sans-serif; word-break:break-word;">${c.contenido}</div>
+          </div>
+        </div>
+        <div id="like-btn-comentario-${c.id}" onclick="toggleLikeComentario(${c.id})" style="position:absolute; right:0; bottom:4px; display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; width:38px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="${c.liked ? '#186904' : 'none'}" stroke="${c.liked ? '#186904' : '#999'}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <span style="font-size:11px; color:#999; pointer-events:none;">${c.likes_count}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function toggleLikeComentario(comentarioId) {
+    const csrf = document.querySelector("meta[name='csrf-token']")?.getAttribute("content");
+    fetch('/comentarios/' + comentarioId + '/like', {
+      method: 'POST',
+      headers: { 'x-csrf-token': csrf, 'content-type': 'application/json' },
+      body: JSON.stringify({})
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        cargarComentarios(pubIdActual);
+      }
+    });
+  }
+
+  function enviarComentarioModal() {
+    if (!pubIdActual) return;
+    const input = document.getElementById('input-comentario-modal');
+    const contenido = input.value.trim();
+    if (!contenido) return;
+    fetch('/publicaciones/' + pubIdActual + '/comentarios', {
+      method: 'POST',
+      headers: { 'x-csrf-token': csrfComentario, 'content-type': 'application/json' },
+      body: JSON.stringify({ contenido: contenido, publicacion_id: pubIdActual })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        input.value = '';
+        document.getElementById('comentarios-titulo').textContent = 'Comentarios [' + data.comentarios.length + ']';
+        renderComentariosModal(data.comentarios);
+      }
+    });
+  }
+</script>
+<script>
+  function toggleSeguir(btn) {
+    if (btn.textContent === 'Seguir') {
+      btn.textContent = 'Siguiendo';
+      btn.style.background = 'white';
+      btn.style.color = '#186904';
+      btn.style.border = '1.5px solid #186904';
+    } else {
+      btn.textContent = 'Seguir';
+      btn.style.background = '#186904';
+      btn.style.color = 'white';
+      btn.style.border = 'none';
+    }
+  }
+</script>
+<script>
+  const carouselIndexAmigos = {};
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[id^="carousel-"]').forEach(el => {
+      const pubId = el.id.replace('carousel-', '');
+      const n = el.querySelectorAll('[id^="track-"] > div').length;
+      if (n > 1) {
+        let startX = 0;
+        el.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; }, {passive: true});
+        el.addEventListener('touchend', (e) => {
+          const diff = startX - e.changedTouches[0].clientX;
+          if (Math.abs(diff) > 40) {
+            if (diff > 0) carouselAmigoNext(pubId, n);
+            else carouselAmigoPrev(pubId, n);
+          }
+        }, {passive: true});
+      }
+    });
+  });
+
+  function carouselAmigoPrev(pubId, n) {
+    if (!carouselIndexAmigos[pubId]) carouselIndexAmigos[pubId] = 0;
+    if (carouselIndexAmigos[pubId] > 0) {
+      carouselIndexAmigos[pubId]--;
+      actualizarCarouselAmigo(pubId, n);
+    }
+  }
+
+  function carouselAmigoNext(pubId, n) {
+    if (!carouselIndexAmigos[pubId]) carouselIndexAmigos[pubId] = 0;
+    if (carouselIndexAmigos[pubId] < n - 1) {
+      carouselIndexAmigos[pubId]++;
+      actualizarCarouselAmigo(pubId, n);
+    }
+  }
+
+  function actualizarCarouselAmigo(pubId, n) {
+    const carousel = document.getElementById('carousel-' + pubId);
+    if (carousel && !carousel._swipeInit) {
+      carousel._swipeInit = true;
+      let startX = 0;
+      carousel.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; }, {passive: true});
+      carousel.addEventListener('touchend', (e) => {
+        const diff = startX - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 80) {
+          if (diff > 0) carouselAmigoNext(pubId, n);
+          else carouselAmigoPrev(pubId, n);
+        }
+      }, {passive: true});
+    }
+    const idx = carouselIndexAmigos[pubId];
+    const track = document.getElementById('track-' + pubId);
+    if (track) track.style.transform = `translateX(-${idx * 100}%)`;
+    for (let i = 0; i < n; i++) {
+      const dot = document.getElementById('dot-' + pubId + '-' + i);
+      if (dot) {
+        dot.style.width = i === idx ? '18px' : '7px';
+        dot.style.background = i === idx ? '#186904' : 'white';
+      }
+    }
+  }
+</script>
+<script>
+  function verMas(pubId) {
+    document.getElementById('desc-text-' + pubId).style.display = 'none';
+    document.getElementById('desc-dots-' + pubId).style.display = 'none';
+    document.getElementById('desc-full-' + pubId).style.display = 'inline';
+    document.getElementById('desc-ver-' + pubId).style.display = 'none';
+  }
+</script>
+<script>
+  function borrarPublicacion(id, btn) {
+    if (!confirm('¿Borrar esta publicación?')) return;
+    fetch('/publicaciones/' + id, {
+      method: 'DELETE',
+      headers: { 'x-csrf-token': csrfLike, 'content-type': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        btn.closest('[style*="aspect-ratio"]').remove();
+      }
+    });
+  }
+</script>

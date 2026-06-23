@@ -1,0 +1,106 @@
+<style>
+  @keyframes slideInFromLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+  @keyframes slideInFromRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+  .slide-in-left { animation: slideInFromLeft 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
+  .slide-in-right { animation: slideInFromRight 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
+  .filter-active { background: #1E5C1E !important; color: white !important; }
+</style>
+
+<div id="nav-arrows" style="display: none; position: fixed; top: 50%; transform: translateY(-50%); width: 100%; max-width: 480px; left: 50%; margin-left: -240px; pointer-events: none; z-index: 100;">
+  <button onclick="navTo('/', 'right')" style="pointer-events: all; position: absolute; left: -48px; background: none; border: none; cursor: pointer; opacity: 0.4; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='0.4'">
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="15" stroke="#888" stroke-width="1.5"/><polyline points="18,10 12,16 18,22" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+</div>
+
+<div id="page-content" style="max-width: 480px; margin: 0 auto;">
+
+  <div style="background: white; border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; display: flex; width: 100%;">
+    <button style="flex: 1; background: none; border: none; border-right: 1px solid #ddd; padding: 10px 4px; font-family: 'Noto Sans', sans-serif; font-size: 12px; color: #999; cursor: pointer; letter-spacing: 0.5px;">Categorías</button>
+    <button onclick="toggleOrden(this)" id="btn-orden" style={"flex: 1; background: #{if @orden == "mayor_menor", do: "#1E5C1E", else: "none"}; border: none; border-right: 1px solid #ddd; padding: 10px 4px; font-family: 'Noto Sans', sans-serif; font-size: 12px; color: #{if @orden == "mayor_menor", do: "white", else: "#999"}; cursor: pointer; letter-spacing: 0.5px;"}>Mayor a menor</button>
+    <button style="flex: 1; background: none; border: none; padding: 10px 4px; font-family: 'Noto Sans', sans-serif; font-size: 12px; color: #999; cursor: pointer; letter-spacing: 0.5px;">Filtros</button>
+  </div>
+
+  <div style="display: flex; justify-content: center; gap: 6px; padding: 12px 0 0;">
+    <div style="width: 7px; height: 7px; border-radius: 50%; background: #ccc;"></div>
+    <div style="width: 7px; height: 7px; border-radius: 50%; background: #ccc;"></div>
+    <div style="width: 7px; height: 7px; border-radius: 50%; background: #999;"></div>
+  </div>
+
+  <div style="padding: 12px 0 80px;">
+    <%= for brand <- @todas_las_marcas do %>
+      <div style="margin: 0 16px 24px;">
+        <a href={"/marcas/#{brand.id}"} style="display: block; text-decoration: none; border-radius: 12px; overflow: hidden; position: relative; background: #f0f0f0; aspect-ratio: 16/7; box-shadow: 0 2px 12px rgba(0,0,0,0.08);">
+          <%= if brand.cover_image do %>
+            <img src={brand.cover_image} style="width: 100%; height: 100%; object-fit: cover; display: block;"/>
+          <% else %>
+            <div style="width: 100%; height: 100%; background: #e8e8e8; display: flex; align-items: center; justify-content: center;">
+              <span style="color: #ccc; font-size: 14px; font-family: 'Noto Sans', sans-serif;">Sin imagen</span>
+            </div>
+          <% end %>
+          <%= if brand.cupon_activo do %>
+            <div style="position: absolute; bottom: 12px; left: 12px; background: #1e7a37; color: white; padding: 6px 14px; font-size: 24px; font-family: 'Abril Fatface', cursive;">
+              <%= brand.cupon_activo.discount %> off
+            </div>
+          <% end %>
+          <%= if brand.logo do %>
+            <div style="position: absolute; top: 12px; right: 12px; background: white; border-radius: 8px; padding: 4px 6px; width: 130px; height: 76px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+              <img src={brand.logo} style="max-width: 100%; max-height: 100%; object-fit: contain; display: block;"/>
+            </div>
+          <% end %>
+        </a>
+        <div style="padding: 8px 4px 0;">
+          <span style="font-size: 15px; font-weight: 400; color: #000; font-family: 'Abril Fatface', cursive;">• <%= String.capitalize(brand.name) %></span>
+          <span style="font-size: 15px; font-weight: 400; color: #000; font-family: 'Abril Fatface', cursive;"> • <%= String.capitalize(brand.modalidad) %></span>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+</div>
+
+<script>
+  function navTo(url, from) {
+    sessionStorage.setItem('slide_from', from);
+    window.location.href = url;
+  }
+
+  function toggleOrden(btn) {
+    const activo = '<%= @orden %>' === 'mayor_menor';
+    if (activo) {
+      window.location.href = '/tiendas';
+    } else {
+      window.location.href = '/tiendas?orden=mayor_menor';
+    }
+  }
+
+  (function() {
+    const page = document.getElementById('page-content');
+    const arrows = document.getElementById('nav-arrows');
+    const came = sessionStorage.getItem('slide_from');
+    if (came === 'right') page.classList.add('slide-in-right');
+    else page.classList.add('slide-in-left');
+    sessionStorage.removeItem('slide_from');
+    if (!('ontouchstart' in window)) arrows.style.display = 'block';
+
+    let startX = 0, startY = 0, isHorizontal = null;
+    document.addEventListener('touchstart', function(e) {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      isHorizontal = null;
+    }, { passive: true });
+    document.addEventListener('touchmove', function(e) {
+      if (isHorizontal === null) {
+        const dx = Math.abs(e.touches[0].clientX - startX);
+        const dy = Math.abs(e.touches[0].clientY - startY);
+        if (dx > 8 || dy > 8) isHorizontal = dx > dy;
+      }
+      if (isHorizontal) e.preventDefault();
+    }, { passive: false });
+    document.addEventListener('touchend', function(e) {
+      if (!isHorizontal) return;
+      const diffX = startX - e.changedTouches[0].clientX;
+      if (Math.abs(diffX) < 40) return;
+      if (diffX < 0) navTo('/', 'right');
+    }, { passive: true });
+  })();
+</script>

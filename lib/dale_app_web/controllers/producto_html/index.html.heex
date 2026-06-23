@@ -1,0 +1,248 @@
+<script>
+  window.mostrarAviso = function(texto) {
+    const modal = document.getElementById('aviso-modal');
+    document.getElementById('aviso-texto').textContent = texto;
+    modal.style.display = 'block';
+    setTimeout(() => { modal.style.display = 'none'; }, 3000);
+  };
+  window.alert = window.mostrarAviso;
+</script>
+
+<div id="confirmar-modal" style="display:none; position:fixed; inset:0; z-index:9998; background:rgba(0,0,0,0.4); align-items:center; justify-content:center;">
+  <div style="background:white; border-radius:12px; padding:24px; max-width:300px; width:90%; text-align:center;">
+    <p style="font-family:'Noto Sans',sans-serif; font-size:13px; font-weight:700; color:#1E5C1E; margin:0 0 8px; text-transform:uppercase; letter-spacing:1px;">Aviso</p>
+    <p style="font-family:'Noto Sans',sans-serif; font-size:14px; color:#111; margin:0 0 20px;">¿Borrar este producto?</p>
+    <div style="display:flex; gap:10px;">
+      <button onclick="cancelarBorrar()" style="flex:1; padding:10px; border:1.5px solid #ddd; border-radius:8px; background:white; cursor:pointer; font-size:14px;">Cancelar</button>
+      <button onclick="confirmarBorrar()" style="flex:1; padding:10px; border:none; border-radius:8px; background:#c0392b; color:white; cursor:pointer; font-size:14px; font-weight:600;">Borrar</button>
+    </div>
+  </div>
+</div>
+
+<div id="aviso-modal" style="display:none; position:fixed; top:80px; left:50%; transform:translateX(-50%); z-index:9999; background:white; border-radius:12px; padding:20px 24px; min-width:260px; max-width:340px; box-shadow:0 8px 32px rgba(0,0,0,0.15); border-top: 3px solid #1E5C1E;">
+  <p style="font-family:'Noto Sans',sans-serif; font-size:13px; font-weight:700; color:#1E5C1E; margin:0 0 6px; letter-spacing:1px; text-transform:uppercase;">Aviso</p>
+  <p id="aviso-texto" style="font-family:'Noto Sans',sans-serif; font-size:14px; color:#111; margin:0;"></p>
+</div>
+<div id="vista-lista" style="max-width: 480px; margin: 0 auto; padding: 24px 16px; font-family: 'Noto Sans', sans-serif; background: white; min-height: 100vh;">
+  <a href="/mi-tienda" style="color: #1E5C1E; font-size: 14px;">← Mi Tienda</a>
+  <h1 style="font-size: 22px; font-weight: bold; color: #3B2505; margin: 16px 0 24px;">Mis Productos</h1>
+
+  <button onclick="abrirNuevo()" style="width: 100%; display: flex; align-items: center; gap: 12px; padding: 16px; border: 1.5px solid #111; border-radius: 10px; background: white; cursor: pointer; font-size: 15px; font-weight: 500; color: #111; margin-bottom: 24px;">
+    <span style="font-size: 28px; line-height: 1; font-weight: 300;">+</span>
+    Agregar nuevo producto
+  </button>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+    <%= for producto <- @productos do %>
+      <%= if producto.active and producto.image do %>
+        <div style="border-radius: 12px; overflow: hidden; border: 0.5px solid #eee; position: relative;">
+          <button onclick={"borrarProducto(#{producto.id})"} style="position: absolute; top: 6px; right: 6px; z-index: 10; background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 26px; height: 26px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center;">🗑</button>
+          <div style="aspect-ratio: 3/4; background: #f0f0f0; overflow: hidden;">
+            <img src={producto.image} style="width: 100%; height: 100%; object-fit: cover;"/>
+          </div>
+          <div style="background: white; padding: 8px 10px;">
+            <p style="font-size: 12px; font-weight: 500; margin: 0; color: #111;"><%= producto.name %></p>
+            <p style="font-size: 11px; color: #999; margin: 2px 0 0; text-decoration: line-through;">$<%= producto.original_price %></p>
+            <p style="font-size: 13px; font-weight: 600; color: #1E5C1E; margin: 0;">$<%= producto.price %></p>
+            <p style="font-size: 11px; color: #888; margin: 2px 0 0;"><%= @brand.name %></p>
+          </div>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+</div>
+
+<!-- VISTA NUEVO PRODUCTO -->
+<div id="vista-nuevo" style="display: none; max-width: 480px; margin: 0 auto; padding: 24px 16px; font-family: 'Noto Sans', sans-serif; background: white; min-height: 100vh;">
+  <button onclick="cerrarNuevo()" style="background: none; border: none; color: #1E5C1E; font-size: 14px; cursor: pointer; padding: 0; margin-bottom: 16px;">← Volver</button>
+  <h1 style="font-size: 22px; font-weight: bold; color: #3B2505; margin: 0 0 24px;">Nuevo Producto</h1>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
+
+    <!-- PREVIEW -->
+    <div style="border-radius: 12px; overflow: hidden; border: 0.5px solid #eee; position: relative;">
+      <div style="aspect-ratio: 3/4; background: #f0f0f0; position: relative; border-radius: 0; overflow: hidden;">
+        <img id="preview-img" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;"/>
+        <div id="preview-placeholder" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; cursor: pointer;" onclick="document.getElementById('file-input').click()">
+          <span style="font-size: 32px; color: #ccc;">+</span>
+          <span style="font-size: 12px; color: #aaa;">Subir foto</span>
+        </div>
+        <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="previsualizarImagen(this)"/>
+      </div>
+      <div style="background: white; padding: 8px 10px;">
+        <p id="prev-nombre" style="font-size: 12px; font-weight: 500; margin: 0; color: #111; min-height: 16px;"></p>
+        <p id="prev-precio-original" style="font-size: 11px; color: #999; margin: 2px 0 0; text-decoration: line-through; min-height: 14px;"></p>
+        <p id="prev-precio-descuento" style="font-size: 13px; font-weight: 600; color: #1E5C1E; margin: 0; min-height: 16px;"></p>
+        <p style="font-size: 11px; color: #888; margin: 2px 0 0;"><%= if @brand, do: @brand.name, else: "" %></p>
+      </div>
+    </div>
+
+    <!-- FORMULARIO -->
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <input id="input-nombre" type="text" placeholder="Nombre de la prenda" oninput="actualizarPreview()" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Noto Sans', sans-serif; font-size: 13px; box-sizing: border-box;"/>
+      <input id="input-precio-original" type="number" placeholder="Precio original" oninput="actualizarPreview()" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Noto Sans', sans-serif; font-size: 13px; box-sizing: border-box;"/>
+      <textarea id="input-descripcion" placeholder="Descripción (máx. 100 palabras)" oninput="actualizarPreview(); contarPalabras(this)" maxlength="600" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Noto Sans', sans-serif; font-size: 13px; box-sizing: border-box; resize: none; height: 80px;"></textarea>
+      <span id="contador-palabras" style="font-size: 11px; color: #aaa;">0/100 palabras</span>
+    </div>
+  </div>
+
+  <!-- TALLES -->
+  <div style="margin-bottom: 20px;">
+    <p style="font-size: 13px; font-weight: 500; color: #333; margin: 0 0 8px;">Seleccionar talles</p>
+    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+      <%= for talle <- ["XS", "S", "M", "L", "XL", "XXL"] do %>
+        <button type="button" data-talle={talle} onclick="toggleTalle(this)" style="padding: 6px 14px; border-radius: 6px; border: 1.5px solid #ddd; background: white; color: #666; cursor: pointer; font-size: 13px; font-family: 'Noto Sans', sans-serif;">
+          <%= talle %>
+        </button>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- CATEGORÍAS -->
+  <div style="margin-bottom: 24px;">
+    <p style="font-size: 13px; font-weight: 500; color: #333; margin: 0 0 8px;">Categorías</p>
+    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+      <%= for cat <- ["Hombre", "Mujer"] do %>
+        <button type="button" data-cat={cat} onclick="toggleCat(this)" style="padding: 6px 14px; border-radius: 20px; border: 1.5px solid #ddd; background: white; color: #666; cursor: pointer; font-size: 13px; font-family: 'Noto Sans', sans-serif;">
+          <%= cat %>
+        </button>
+      <% end %>
+    </div>
+  </div>
+
+  <button onclick="guardarProducto()" style="width: 100%; background: #1E5C1E; color: white; border: none; border-radius: 10px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans', sans-serif;">
+    Guardar producto
+  </button>
+</div>
+
+<script>
+  const brandId = "<%= if @brand, do: @brand.id, else: "" %>";
+  const csrfToken = document.querySelector("meta[name='csrf-token']")?.getAttribute("content");
+  const descuento = parseInt("<%= if @brand && @brand.discount, do: @brand.discount, else: 0 %>");
+  let imagenBlob = null;
+  let tallesSeleccionados = [];
+  let catsSeleccionadas = [];
+
+  function abrirNuevo() {
+    document.getElementById('vista-lista').style.display = 'none';
+    document.getElementById('vista-nuevo').style.display = 'block';
+  }
+
+  function cerrarNuevo() {
+    document.getElementById('vista-nuevo').style.display = 'none';
+    document.getElementById('vista-lista').style.display = 'block';
+  }
+
+  function previsualizarImagen(input) {
+    const file = input.files[0];
+    if (!file) return;
+    imagenBlob = file;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = document.getElementById('preview-img');
+      img.src = e.target.result;
+      img.style.display = 'block';
+      document.getElementById('preview-placeholder').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+    actualizarPreview();
+  }
+
+  function actualizarPreview() {
+    const nombre = document.getElementById('input-nombre').value;
+    const precioOriginal = parseInt(document.getElementById('input-precio-original').value) || 0;
+    document.getElementById('prev-nombre').textContent = nombre;
+    if (precioOriginal > 0) {
+      const precioFinal = Math.round(precioOriginal * (1 - descuento / 100));
+      document.getElementById('prev-precio-original').textContent = '$' + precioOriginal.toLocaleString();
+      document.getElementById('prev-precio-descuento').textContent = '$' + precioFinal.toLocaleString();
+    } else {
+      document.getElementById('prev-precio-original').textContent = '';
+      document.getElementById('prev-precio-descuento').textContent = '';
+    }
+  }
+
+  function contarPalabras(el) {
+    const palabras = el.value.trim().split(" ").filter(w => w).length;
+    document.getElementById("contador-palabras").textContent = palabras + "/100 palabras";
+    if (palabras > 100) el.style.borderColor = "red";
+    else el.style.borderColor = "#ccc";
+  }
+
+  function toggleTalle(btn) {
+    const talle = btn.getAttribute('data-talle');
+    if (tallesSeleccionados.includes(talle)) {
+      tallesSeleccionados = tallesSeleccionados.filter(t => t !== talle);
+      btn.style.background = 'white'; btn.style.color = '#666'; btn.style.borderColor = '#ddd';
+    } else {
+      tallesSeleccionados.push(talle);
+      btn.style.background = '#1E5C1E'; btn.style.color = 'white'; btn.style.borderColor = '#1E5C1E';
+    }
+  }
+
+  function toggleCat(btn) {
+    const cat = btn.getAttribute('data-cat');
+    if (catsSeleccionadas.includes(cat)) {
+      catsSeleccionadas = catsSeleccionadas.filter(c => c !== cat);
+      btn.style.background = 'white'; btn.style.color = '#666'; btn.style.borderColor = '#ddd';
+    } else {
+      catsSeleccionadas.push(cat);
+      btn.style.background = '#1E5C1E'; btn.style.color = 'white'; btn.style.borderColor = '#1E5C1E';
+    }
+  }
+
+  let productoABorrar = null;
+
+  function borrarProducto(id) {
+    productoABorrar = id;
+    document.getElementById('confirmar-modal').style.display = 'flex';
+  }
+
+  async function confirmarBorrar() {
+    document.getElementById('confirmar-modal').style.display = 'none';
+    const res = await fetch("/mi-tienda/productos/" + productoABorrar, {
+      method: "DELETE",
+      headers: { "x-csrf-token": csrfToken, "content-type": "application/json" }
+    });
+    const data = await res.json();
+    if (data.ok) window.location.reload();
+  }
+
+  function cancelarBorrar() {
+    document.getElementById('confirmar-modal').style.display = 'none';
+    productoABorrar = null;
+  }
+
+  async function guardarProducto() {
+    const nombre = document.getElementById('input-nombre').value;
+    const precioOriginal = parseInt(document.getElementById('input-precio-original').value) || 0;
+    if (!nombre || !precioOriginal || !imagenBlob) {
+      window.mostrarAviso('Completá nombre, precio e imagen.');
+      return;
+    }
+    const precioFinal = Math.round(precioOriginal * (1 - descuento / 100));
+    const formData = new FormData();
+    formData.append('_csrf_token', csrfToken);
+    formData.append('nombre', nombre);
+    formData.append('precio_original', precioOriginal);
+    formData.append('precio_final', precioFinal);
+    formData.append('descripcion', document.getElementById('input-descripcion').value);
+    formData.append('talles', tallesSeleccionados.join(','));
+    formData.append('categorias', catsSeleccionadas.join(','));
+    const res = await fetch('/mi-tienda/productos/crear', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (data.ok) { const btn = document.querySelector("button[onclick='guardarProducto()']"); btn.textContent = "Subiendo imagen..."; btn.disabled = true;
+      const imgForm = new FormData();
+      imgForm.append('_csrf_token', csrfToken);
+      imgForm.append('imagen', imagenBlob, 'producto.jpg');
+      await fetch('/productos/' + data.id + '/imagen', { method: 'POST', body: imgForm });
+      setTimeout(() => window.location.reload(), 2500);
+    } else {
+      window.mostrarAviso('Error al guardar.');
+    }
+  }
+</script>
+
+
+
+

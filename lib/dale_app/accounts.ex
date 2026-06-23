@@ -8,7 +8,7 @@ defmodule DaleApp.Accounts do
     case Repo.get_by(User, email: email) do
       nil ->
         %User{}
-        |> User.changeset(params)
+        |> User.changeset(Map.put(params, :username, generate_username()))
         |> Repo.insert()
 
       user ->
@@ -65,4 +65,25 @@ defmodule DaleApp.Accounts do
   def list_cajeros(brand_id) do
     Repo.all(from u in User, where: u.cajero_brand_id == ^brand_id)
   end
+
+  def generate_username do
+    code = generate_code()
+    username = "User" <> code
+    if Repo.get_by(User, username: username) do
+      generate_username()
+    else
+      username
+    end
+  end
+
+  defp generate_code do
+    digits = for _ <- 1..7, do: Enum.random(1..9)
+    counts = Enum.frequencies(digits)
+    if Enum.any?(counts, fn {_d, c} -> c > 2 end) do
+      generate_code()
+    else
+      Enum.join(digits)
+    end
+  end
+
 end

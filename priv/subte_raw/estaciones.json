@@ -1,0 +1,2320 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-06-21T16:42:33Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+
+{
+  "type": "node",
+  "id": 256241985,
+  "lat": -34.6269680,
+  "lon": -58.4264040,
+  "tags": {
+    "name": "Avenida La Plata",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "8.1",
+    "start_date": "1966-04-24",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "no",
+    "wikidata": "Q3297028",
+    "wikipedia": "es:Avenida La Plata (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 256242013,
+  "lat": -34.6254799,
+  "lon": -58.4161163,
+  "tags": {
+    "name": "Boedo",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "7",
+    "start_date": "1960-07-09",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3296722",
+    "wikipedia": "es:Boedo (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 256242125,
+  "lat": -34.6273936,
+  "lon": -58.3811172,
+  "tags": {
+    "name": "Constitución",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "4.3",
+    "start_date": "1934-11-09",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q2995069",
+    "wikipedia": "es:Constitución (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 256242143,
+  "lat": -34.6222364,
+  "lon": -58.3799317,
+  "tags": {
+    "name": "San Juan",
+    "network": "Subte de Buenos Aires",
+    "network:wikidata": "Q497044",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "3.7",
+    "start_date": "1934-11-09",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3296610",
+    "wikipedia": "es:San Juan (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 256242144,
+  "lat": -34.6181099,
+  "lon": -58.3814646,
+  "tags": {
+    "name": "Independencia - Santa Mama Antula",
+    "network": "Subte de Buenos Aires",
+    "network:wikidata": "Q497044",
+    "operator": "Emova Movilidad S.A.",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "2.6",
+    "start_date": "1966-04-24",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "no",
+    "wikidata": "Q3296818"
+  }
+},
+{
+  "type": "node",
+  "id": 256242160,
+  "lat": -34.6180915,
+  "lon": -58.3801357,
+  "tags": {
+    "name": "Independencia (C)",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "3.4",
+    "start_date": "1934-11-09",
+    "station": "subway",
+    "subway": "yes",
+    "train": "yes",
+    "wikidata": "Q3150020",
+    "wikipedia": "es:Independencia (línea C del Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 256242251,
+  "lat": -34.6047690,
+  "lon": -58.3795115,
+  "tags": {
+    "name": "Diagonal Norte",
+    "network": "Subte de Buenos Aires",
+    "old_name": "Carlos Pellegrini;Eva Perón",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "1.72",
+    "start_date": "1934-11-09",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q5244669",
+    "wikipedia": "es:Diagonal Norte (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 256244943,
+  "lat": -34.6017393,
+  "lon": -58.3781082,
+  "tags": {
+    "name": "Lavalle",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "1.2",
+    "start_date": "1936-02-06",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q5244845"
+  }
+},
+{
+  "type": "node",
+  "id": 310353386,
+  "lat": -34.6089745,
+  "lon": -58.3806319,
+  "tags": {
+    "name": "Avenida de Mayo",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "2.2",
+    "start_date": "1934-11-09",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "no",
+    "wikidata": "Q3296371",
+    "wikipedia": "es:Avenida de Mayo (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 1085915755,
+  "lat": -34.5965140,
+  "lon": -58.3720955,
+  "tags": {
+    "name": "Catalinas",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "0.7",
+    "start_date": "2019-06-03",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3296762",
+    "wikipedia": "es:Catalinas (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 1085915826,
+  "lat": -34.5921903,
+  "lon": -58.3761678,
+  "tags": {
+    "name": "Retiro (E)",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "0",
+    "start_date": "2019-06-03",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q8882794",
+    "wikipedia": "es:Retiro (línea E del subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 1283928026,
+  "lat": -34.5785676,
+  "lon": -58.3855975,
+  "tags": {
+    "FIXME": "check position",
+    "name": "Padre Mujica",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway"
+  }
+},
+{
+  "type": "node",
+  "id": 1342173711,
+  "lat": -34.5955108,
+  "lon": -58.3827550,
+  "tags": {
+    "name": "Cerrito",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 1342173719,
+  "lat": -34.5928622,
+  "lon": -58.3755149,
+  "tags": {
+    "name": "Retiro (G)",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 1342175545,
+  "lat": -34.5957594,
+  "lon": -58.3872014,
+  "tags": {
+    "name": "Uruguay (G)",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 1342175555,
+  "lat": -34.5958853,
+  "lon": -58.3932477,
+  "tags": {
+    "name": "Callao",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 1342175590,
+  "lat": -34.5945390,
+  "lon": -58.4023003,
+  "tags": {
+    "name": "Pueyrredón (G)",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 1342179121,
+  "lat": -34.5977914,
+  "lon": -58.4232081,
+  "tags": {
+    "name": "Gascón",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 1342179122,
+  "lat": -34.6073576,
+  "lon": -58.4456226,
+  "tags": {
+    "name": "Cid Campeador",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 1342179124,
+  "lat": -34.6020862,
+  "lon": -58.4320880,
+  "tags": {
+    "name": "Estado de Israel",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 1342179125,
+  "lat": -34.5980905,
+  "lon": -58.4066013,
+  "tags": {
+    "name": "Jean Jaures",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 1342179126,
+  "lat": -34.5979050,
+  "lon": -58.4158481,
+  "tags": {
+    "name": "Mario Bravo",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 1342179132,
+  "lat": -34.6047693,
+  "lon": -58.4372957,
+  "tags": {
+    "name": "Parque Centenario",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 1343796355,
+  "lat": -34.6519859,
+  "lon": -58.4163653,
+  "tags": {
+    "name": "Nueva Pompeya (construcción paralizada)",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "wikidata": "Q6046685",
+    "wikipedia": "es:Nueva Pompeya (línea H del Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 1343796359,
+  "lat": -34.6484435,
+  "lon": -58.4162704,
+  "tags": {
+    "name": "Sáenz (construcción paralizada)",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "wikidata": "Q6136977",
+    "wikipedia": "es:Sáenz (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 2913144407,
+  "lat": -34.6140945,
+  "lon": -58.4407146,
+  "tags": {
+    "name": "Aranguren",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2913144408,
+  "lat": -34.6271445,
+  "lon": -58.3812957,
+  "tags": {
+    "name": "Constitución (F)",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2913144409,
+  "lat": -34.6045239,
+  "lon": -58.3922157,
+  "tags": {
+    "name": "Corrientes (F)",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2913144410,
+  "lat": -34.5998448,
+  "lon": -58.4385675,
+  "tags": {
+    "name": "Corrientes (I)",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2913144412,
+  "lat": -34.5997073,
+  "lon": -58.3928346,
+  "tags": {
+    "name": "Córdoba (F)",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2913144413,
+  "lat": -34.5942825,
+  "lon": -58.4298944,
+  "tags": {
+    "name": "Córdoba (I)",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2913144414,
+  "lat": -34.6077085,
+  "lon": -58.4451540,
+  "tags": {
+    "name": "Diaz Vélez",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2913144415,
+  "lat": -34.6294610,
+  "lon": -58.4428148,
+  "tags": {
+    "name": "Directorio",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2913144416,
+  "lat": -34.5901198,
+  "lon": -58.3939636,
+  "tags": {
+    "name": "Junín",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2913144417,
+  "lat": -34.6157923,
+  "lon": -58.3915527,
+  "tags": {
+    "name": "México",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2913144418,
+  "lat": -34.6263272,
+  "lon": -58.4403520,
+  "tags": {
+    "name": "Pedro Goyena",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2913144419,
+  "lat": -34.5816248,
+  "lon": -58.4207562,
+  "tags": {
+    "name": "Plaza Italia (F)",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2913144420,
+  "lat": -34.5874429,
+  "lon": -58.3974007,
+  "tags": {
+    "name": "Pueyrredon (F)",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2913144421,
+  "lat": -34.6089368,
+  "lon": -58.3918879,
+  "tags": {
+    "name": "Rivadavia (F)",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2913144422,
+  "lat": -34.6204106,
+  "lon": -58.4412692,
+  "tags": {
+    "name": "Rivadavia (I)",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2913144424,
+  "lat": -34.6228737,
+  "lon": -58.3914101,
+  "tags": {
+    "name": "San Juan",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2913144425,
+  "lat": -34.5959610,
+  "lon": -58.3932128,
+  "tags": {
+    "name": "Santa Fe (F)",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2913144426,
+  "lat": -34.5820018,
+  "lon": -58.4208770,
+  "tags": {
+    "name": "Serrano",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2913144427,
+  "lat": -34.6270575,
+  "lon": -58.3870425,
+  "tags": {
+    "name": "Sáenz Peña",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2913144428,
+  "lat": -34.5834862,
+  "lon": -58.4019915,
+  "tags": {
+    "name": "Sánchez de Bustamante",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2913144429,
+  "lat": -34.6045890,
+  "lon": -58.4373456,
+  "tags": {
+    "fixme": "check position of the planned station",
+    "name": "Warnes",
+    "proposed": "station",
+    "railway": "proposed",
+    "station": "subway",
+    "subway": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 3447885516,
+  "lat": -34.5950235,
+  "lon": -58.3778987,
+  "tags": {
+    "name": "General San Martín",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "0.4",
+    "start_date": "1937-08-17",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3296358",
+    "wikipedia": "es:General San Martín (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3449220575,
+  "lat": -34.6181052,
+  "lon": -58.4359552,
+  "tags": {
+    "name": "Acoyte",
+    "network": "Subte de Buenos Aires",
+    "old_name": "José María Moreno",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "6.2",
+    "start_date": "1914-07-14",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "yes",
+    "wikidata": "Q3351989",
+    "wikipedia": "es:Acoyte (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3449220576,
+  "lat": -34.6264544,
+  "lon": -58.4561066,
+  "tags": {
+    "name": "Carabobo",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "8.2",
+    "start_date": "2008-12-22",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "yes",
+    "wikidata": "Q937473",
+    "wikipedia": "es:Carabobo (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3449220577,
+  "lat": -34.6117062,
+  "lon": -58.4215177,
+  "tags": {
+    "name": "Castro Barros",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "4.7",
+    "start_date": "1914-04-01",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3352006",
+    "wikipedia": "es:Castro Barros (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3449220578,
+  "lat": -34.6108281,
+  "lon": -58.4155501,
+  "tags": {
+    "name": "Loria",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "4.1",
+    "start_date": "1914-04-01",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q2843844",
+    "wikipedia": "es:Loria (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3449220579,
+  "lat": -34.6097461,
+  "lon": -58.4063571,
+  "tags": {
+    "name": "Plaza Miserere",
+    "network": "Subte de Buenos Aires;Sarmiento",
+    "official_name": "Plaza de Miserere",
+    "old_name": "Plaza Once",
+    "operator": "Metrovías;Trenes Argentinos",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "3.2",
+    "start_date": "1913-12-01",
+    "station": "subway",
+    "subway": "yes",
+    "train": "yes",
+    "wikidata": "Q3174567",
+    "wikipedia": "es:Estación Plaza de Miserere"
+  }
+},
+{
+  "type": "node",
+  "id": 3449220580,
+  "lat": -34.6205897,
+  "lon": -58.4413922,
+  "tags": {
+    "name": "Primera Junta",
+    "network": "Subte de Buenos Aires",
+    "old_name": "Caballito",
+    "operator": "Emova Movilidad S.A.",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "6.7",
+    "start_date": "1914-07-14",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "limited",
+    "wikidata": "Q3351980",
+    "wikipedia": "es:Primera Junta (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3449220581,
+  "lat": -34.6235590,
+  "lon": -58.4486390,
+  "tags": {
+    "name": "Puan",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "7.5",
+    "start_date": "2008-12-23",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "yes",
+    "wikidata": "Q3294847"
+  }
+},
+{
+  "type": "node",
+  "id": 3449220582,
+  "lat": -34.6152413,
+  "lon": -58.4294920,
+  "tags": {
+    "name": "Río de Janeiro",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "5.6",
+    "start_date": "1914-04-01",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3352487",
+    "wikipedia": "es:Río de Janeiro (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3449220583,
+  "lat": -34.6290748,
+  "lon": -58.4634771,
+  "tags": {
+    "name": "San José de Flores",
+    "network": "Subte de Buenos Aires",
+    "old_name": "Flores",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "9",
+    "start_date": "2013-09-27",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3295262",
+    "wikipedia": "es:San José de Flores (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3449220584,
+  "lat": -34.6309440,
+  "lon": -58.4704936,
+  "tags": {
+    "name": "San Pedrito",
+    "network": "Subte de Buenos Aires",
+    "old_name": "Nazca",
+    "operator": "Emova Movilidad S.A.",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "9.7",
+    "start_date": "2013-09-27",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3295246",
+    "wikipedia": "es:San Pedrito (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3449235011,
+  "lat": -34.6092208,
+  "lon": -58.3925644,
+  "tags": {
+    "name": "Congreso - Raúl Alfonsín",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "2",
+    "start_date": "1913-12-01",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3352074",
+    "wikipedia": "es:Congreso (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3449235012,
+  "lat": -34.6091227,
+  "lon": -58.3826462,
+  "tags": {
+    "name": "Lima",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "1",
+    "start_date": "1913-12-01",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3352964"
+  }
+},
+{
+  "type": "node",
+  "id": 3449235013,
+  "lat": -34.6085776,
+  "lon": -58.3745001,
+  "tags": {
+    "name": "Perú",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "0.3",
+    "start_date": "1913-12-01",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3352537",
+    "wikipedia": "es:Perú (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3449235014,
+  "lat": -34.6088397,
+  "lon": -58.3785726,
+  "tags": {
+    "name": "Piedras",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "0.7",
+    "start_date": "1913-12-01",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3352542",
+    "wikipedia": "es:Piedras (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3449235015,
+  "lat": -34.6087980,
+  "lon": -58.3711432,
+  "tags": {
+    "name": "Plaza de Mayo",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "0",
+    "start_date": "1913-12-01",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "yes",
+    "wikidata": "Q3232735",
+    "wikipedia": "es:Plaza de Mayo (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3449235016,
+  "lat": -34.6094069,
+  "lon": -58.3867508,
+  "tags": {
+    "name": "Sáenz Peña",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "1.4",
+    "start_date": "1913-12-01",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3352550",
+    "wikipedia": "es:Sáenz Peña (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3449341470,
+  "lat": -34.6096461,
+  "lon": -58.3985172,
+  "tags": {
+    "name": "Pasco",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "1",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "2.5",
+    "start_date": "1913-12-01",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3352082",
+    "wikipedia": "es:Pasco (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3449341473,
+  "lat": -34.6098814,
+  "lon": -58.4008551,
+  "tags": {
+    "name": "Alberti",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "1",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "2.7",
+    "start_date": "1913-12-01",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3352291"
+  }
+},
+{
+  "type": "node",
+  "id": 3475502523,
+  "lat": -34.5882510,
+  "lon": -58.4112129,
+  "tags": {
+    "name": "Bulnes",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "4.3",
+    "start_date": "1938-12-29",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "no",
+    "wikidata": "Q3296614",
+    "wikipedia": "es:Bulnes (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3475502524,
+  "lat": -34.5996372,
+  "lon": -58.3926756,
+  "tags": {
+    "fixme": "verificar nombre oficial",
+    "name": "Callao (D)",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "2",
+    "start_date": "1938-03-29",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3296609",
+    "wikipedia": "es:Callao (línea D del subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3475502526,
+  "lat": -34.6075700,
+  "lon": -58.3742905,
+  "tags": {
+    "name": "Catedral",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "Florida",
+    "start_date": "1937-06-03",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3296612",
+    "wikipedia": "es:Catedral (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3475502530,
+  "lat": -34.5997479,
+  "lon": -58.3977392,
+  "tags": {
+    "name": "Facultad de Medicina",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "2.4",
+    "start_date": "1938-06-10",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3296545",
+    "wikipedia": "es:Facultad de Medicina (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3475502534,
+  "lat": -34.5752014,
+  "lon": -58.4346817,
+  "tags": {
+    "name": "Ministro Carranza",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "7",
+    "start_date": "1987-12-29",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3296565",
+    "wikipedia": "es:Ministro Carranza (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3475502536,
+  "lat": -34.5784903,
+  "lon": -58.4256173,
+  "tags": {
+    "name": "Palermo",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "6",
+    "start_date": "1940-02-23",
+    "station": "subway",
+    "subway": "yes",
+    "train": "yes",
+    "wheelchair": "no",
+    "wikidata": "Q3296629",
+    "wikipedia": "es:Palermo (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3475502538,
+  "lat": -34.5814551,
+  "lon": -58.4211107,
+  "tags": {
+    "name": "Plaza Italia",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "5.5",
+    "start_date": "1938-12-29",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "no",
+    "wikidata": "Q3296631",
+    "wikimedia_commons": "Category:Plaza Italia (Subte de Buenos Aires)",
+    "wikipedia": "es:Plaza Italia (línea D del subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3475502797,
+  "lat": -34.5851659,
+  "lon": -58.4158912,
+  "tags": {
+    "name": "Scalabrini Ortiz",
+    "network": "Subte de Buenos Aires",
+    "old_name": "Canning;2 de Abril",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "4.8",
+    "start_date": "1938-12-29",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "no",
+    "wikidata": "Q3296546",
+    "wikipedia": "es:Scalabrini Ortiz (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3475502800,
+  "lat": -34.6014395,
+  "lon": -58.3848777,
+  "tags": {
+    "name": "Tribunales - Teatro Colón",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "1.5",
+    "start_date": "1937-06-03",
+    "station": "subway",
+    "subway": "yes",
+    "train": "yes",
+    "wheelchair": "yes",
+    "wikidata": "Q3296608",
+    "wikipedia": "es:Tribunales (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3475502801,
+  "lat": -34.6044364,
+  "lon": -58.3802711,
+  "tags": {
+    "name": "9 de Julio",
+    "network": "Subte de Buenos Aires",
+    "old_name": "Carlos Pellegrini;Eva Perón",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "0.7",
+    "start_date": "1937-06-03",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q4646451",
+    "wikipedia": "es:9 de Julio (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3475506076,
+  "lat": -34.5558009,
+  "lon": -58.4622186,
+  "tags": {
+    "name": "Congreso de Tucumán",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "10.3",
+    "start_date": "2000-04-27",
+    "station": "subway",
+    "subway": "yes",
+    "train": "yes",
+    "wikidata": "Q3296559",
+    "wikipedia": "es:Congreso de Tucumán (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3475506077,
+  "lat": -34.5662560,
+  "lon": -58.4520698,
+  "tags": {
+    "name": "José Hernández",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "8.8",
+    "start_date": "1997-11-13",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "yes",
+    "wikidata": "Q3296708",
+    "wikipedia": "es:José Hernández (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3905676972,
+  "lat": -34.6041224,
+  "lon": -58.4053431,
+  "tags": {
+    "name": "Corrientes",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "2.8",
+    "start_date": "2010-12-06",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q5172974"
+  }
+},
+{
+  "type": "node",
+  "id": 3905676973,
+  "lat": -34.5991974,
+  "lon": -58.4039401,
+  "tags": {
+    "name": "Córdoba",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "2.1",
+    "start_date": "2015-12-18",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "yes",
+    "wikidata": "Q5796926",
+    "wikipedia": "es:Córdoba (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3905676975,
+  "lat": -34.6091557,
+  "lon": -58.4060183,
+  "tags": {
+    "name": "Once - 30 de Diciembre",
+    "name:etymology:wikidata": "Q800594;Q1786733",
+    "network": "Subte de Buenos Aires",
+    "old_name": "Once",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "3.5",
+    "start_date": "2007-10-18",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "yes",
+    "wikidata": "Q871946",
+    "wikipedia": "es:Once-30 de Diciembre (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3962440379,
+  "lat": -34.6354349,
+  "lon": -58.3990398,
+  "tags": {
+    "name": "Caseros",
+    "network": "Subte de Buenos Aires",
+    "network:wikidata": "Q497044",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "6.4",
+    "start_date": "2007-10-18",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "yes",
+    "wikidata": "Q5048425",
+    "wikipedia": "es:Caseros (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3962440380,
+  "lat": -34.6416988,
+  "lon": -58.4126594,
+  "tags": {
+    "name": "Hospitales - Ringo Bonavena",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "7.8",
+    "start_date": "2013-05-27",
+    "station": "subway",
+    "wikidata": "Q5488820",
+    "wikipedia": "es:Hospitales - Ringo Bonavena (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3962440381,
+  "lat": -34.6230697,
+  "lon": -58.4023299,
+  "tags": {
+    "name": "Humberto I",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "4.9",
+    "start_date": "2007-10-18",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "yes",
+    "wikidata": "Q8876899",
+    "wikipedia": "es:Humberto I (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3962440382,
+  "lat": -34.6293073,
+  "lon": -58.4010012,
+  "tags": {
+    "name": "Inclán-Mezquita Al Ahmad",
+    "network": "Subte de Buenos Aires",
+    "network:wikidata": "Q497044",
+    "old_name": "Inclán",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "5.6",
+    "start_date": "2007-10-18",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "yes",
+    "wikidata": "Q5549804",
+    "wikipedia": "es:Inclán-Mezquita Al Ahmad (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3962440383,
+  "lat": -34.6384945,
+  "lon": -58.4063149,
+  "tags": {
+    "name": "Parque Patricios",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "7",
+    "start_date": "2011-10-04",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "yes",
+    "wikidata": "Q8875911",
+    "wikipedia": "es:Parque Patricios (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 3962443157,
+  "lat": -34.6152097,
+  "lon": -58.4047370,
+  "tags": {
+    "name": "Venezuela",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "4",
+    "start_date": "2007-10-18",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "yes",
+    "wikidata": "Q8875751",
+    "wikipedia": "es:Venezuela (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 4308386687,
+  "lat": -34.5947089,
+  "lon": -58.4024287,
+  "tags": {
+    "name": "Santa Fe - Carlos Jáuregui",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "1.6",
+    "start_date": "2016-07",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q8880874",
+    "wikipedia": "es:Santa Fe - Carlos Jáuregui (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 4407302011,
+  "lat": -34.6033487,
+  "lon": -58.3745624,
+  "tags": {
+    "name": "Florida",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "1",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "0.5",
+    "start_date": "1931-12-01",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "no",
+    "wikidata": "Q3295272",
+    "wikipedia": "es:Florida (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 4601987135,
+  "lat": -34.5875522,
+  "lon": -58.3972196,
+  "tags": {
+    "name": "Las Heras",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "0.6",
+    "start_date": "2015-12-18",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "yes",
+    "wikidata": "Q5843740",
+    "wikipedia": "es:Las Heras (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 4603095547,
+  "lat": -34.6223517,
+  "lon": -58.3852048,
+  "tags": {
+    "name": "San José",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "4.3",
+    "start_date": "1966-04-24",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3296640",
+    "wikipedia": "es:San José (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 4706146861,
+  "lat": -34.6227394,
+  "lon": -58.3914497,
+  "tags": {
+    "name": "Entre Ríos - Rodolfo Walsh",
+    "network": "Subte de Buenos Aires",
+    "old_name": "Entre Ríos",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "4.9",
+    "start_date": "1944-06-20",
+    "station": "subway",
+    "train": "yes",
+    "wikidata": "Q3296635",
+    "wikipedia": "es:Entre Ríos - Rodolfo Walsh (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 4723478047,
+  "lat": -34.5917642,
+  "lon": -58.4474918,
+  "tags": {
+    "name": "Dorrego",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "7,6",
+    "start_date": "1930-10-17",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "no",
+    "wikidata": "Q3296107",
+    "wikipedia": "es:Dorrego (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 4812753920,
+  "lat": -34.5871827,
+  "lon": -58.4551513,
+  "tags": {
+    "name": "Federico Lacroze",
+    "network": "Subte de Buenos Aires",
+    "old_name": "Chacarita",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "8.4",
+    "start_date": "1930-10-17",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3067921",
+    "wikipedia": "es:Federico Lacroze (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 4826398079,
+  "lat": -34.5840830,
+  "lon": -58.4663718,
+  "tags": {
+    "name": "Tronador - Villa Ortúzar",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "9.3",
+    "short_name": "Tronador - Va. Ortúzar",
+    "start_date": "2003-08-09",
+    "station": "subway",
+    "toilets": "yes",
+    "train": "yes",
+    "wheelchair": "yes",
+    "wikidata": "Q5244836",
+    "wikipedia": "es:Tronador-Villa Ortúzar (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 4829965194,
+  "lat": -34.6044510,
+  "lon": -58.3927552,
+  "tags": {
+    "name": "Callao (B)",
+    "network": "Subte de Buenos Aires",
+    "official_name": "Callao - Maestro Alfredo Bravo",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "2",
+    "start_date": "1930-10-17",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q5021782",
+    "wikipedia": "es:Callao - Maestro Alfredo Bravo (línea B del subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 4865564991,
+  "lat": -34.5812088,
+  "lon": -58.4743442,
+  "tags": {
+    "name": "Los Incas - Parque Chas",
+    "network": "Subte de Buenos Aires",
+    "old_name": "Los Incas",
+    "operator": "Emova Movilidad S.A.",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "10.4",
+    "short_name": "Los Incas - Pque. Chas",
+    "start_date": "2003-08-09",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "yes",
+    "wikidata": "Q3098774"
+  }
+},
+{
+  "type": "node",
+  "id": 4868679923,
+  "lat": -34.6040430,
+  "lon": -58.3870845,
+  "tags": {
+    "name": "Uruguay",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "1.6",
+    "start_date": "1931-06-22",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "yes",
+    "wikidata": "Q3296159",
+    "wikipedia": "es:Uruguay (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 4871207944,
+  "lat": -34.5990344,
+  "lon": -58.4396927,
+  "tags": {
+    "name": "Malabia - Osvaldo Pugliese",
+    "network": "Subte de Buenos Aires",
+    "old_name": "Canning;Malabia",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "6.4",
+    "short_name": "Malabia",
+    "start_date": "1930-10-17",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "no",
+    "wikidata": "Q5244756",
+    "wikipedia": "es:Malabia - Osvaldo Pugliese (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 5042032828,
+  "lat": -34.5779686,
+  "lon": -58.4807356,
+  "tags": {
+    "name": "Echeverría",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "11.1",
+    "start_date": "2013-07-26",
+    "station": "subway",
+    "subway": "yes",
+    "train": "yes",
+    "wikidata": "Q5244687",
+    "wikipedia": "es:Echeverría (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 5171746559,
+  "lat": -34.6282576,
+  "lon": -58.3805698,
+  "tags": {
+    "addr:city": "Ciudad Autónoma de Buenos Aires",
+    "addr:country": "AR",
+    "addr:housenumber": "1128",
+    "addr:postcode": "C1138",
+    "addr:street": "Avenida Brasil",
+    "name": "Plaza Constitución",
+    "network": "Subte de Buenos Aires",
+    "network:wikidata": "Q497044",
+    "not:network:wikidata": "Q2962337",
+    "operator": "Trenes Argentinos",
+    "platforms": "14",
+    "public_transport": "station",
+    "railway": "station",
+    "short_name": "Constitución",
+    "start_date": "1865-08-14",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q800596",
+    "wikipedia": "es:Estación Constitución"
+  }
+},
+{
+  "type": "node",
+  "id": 5206871927,
+  "lat": -34.6097375,
+  "lon": -58.3741113,
+  "tags": {
+    "name": "Bolívar",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "2.3",
+    "start_date": "1966-04-24",
+    "station": "subway",
+    "subway": "yes",
+    "train": "yes",
+    "wheelchair": "yes",
+    "wikidata": "Q586432",
+    "wikipedia": "es:Bolívar (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 5206871928,
+  "lat": -34.6129580,
+  "lon": -58.3776468,
+  "tags": {
+    "name": "Belgrano",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "2.9",
+    "start_date": "1966-04-24",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3296660",
+    "wikipedia": "es:Belgrano (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 5267306822,
+  "lat": -34.6036824,
+  "lon": -58.3812708,
+  "tags": {
+    "name": "Carlos Pellegrini",
+    "name:fr": "Carlos Pelegrini (B)",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "1",
+    "start_date": "1931-06-22",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3294899",
+    "wikipedia": "es:Carlos Pellegrini (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 5267306824,
+  "lat": -34.6029769,
+  "lon": -58.3697268,
+  "tags": {
+    "name": "Leandro N. Alem",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "0",
+    "start_date": "1931-12-01",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3295076",
+    "wikipedia": "es:Leandro N. Alem (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 5271314475,
+  "lat": -34.5739773,
+  "lon": -58.4868061,
+  "tags": {
+    "name": "Juan Manuel de Rosas",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "11.9",
+    "short_name": "Rosas",
+    "start_date": "2013-07-26",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "yes",
+    "wikidata": "Q5841304",
+    "wikipedia": "es:Juan Manuel de Rosas (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 5271314476,
+  "lat": -34.6021483,
+  "lon": -58.4311317,
+  "tags": {
+    "name": "Ángel Gallardo",
+    "network": "Subte de Buenos Aires",
+    "old_name": "Río de Janeiro",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "5.6",
+    "start_date": "1930-10-17",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3295996",
+    "wikipedia": "es:Ángel Gallardo (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 5271314477,
+  "lat": -34.6032012,
+  "lon": -58.4208126,
+  "tags": {
+    "name": "Medrano - Almagro",
+    "network": "Subte de Buenos Aires",
+    "old_name": "Medrano",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "4.7",
+    "start_date": "1930-10-17",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3296001"
+  }
+},
+{
+  "type": "node",
+  "id": 5271314478,
+  "lat": -34.6040822,
+  "lon": -58.4113533,
+  "tags": {
+    "name": "Carlos Gardel",
+    "network": "Subte de Buenos Aires",
+    "old_name": "Agüero",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "3.8",
+    "start_date": "1930-10-17",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3296188",
+    "wikipedia": "es:Carlos Gardel (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 5271314479,
+  "lat": -34.6045673,
+  "lon": -58.4054021,
+  "tags": {
+    "name": "Pueyrredón (B)",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "3.2",
+    "start_date": "1931-06-22",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "no",
+    "wikidata": "Q7258854",
+    "wikipedia": "es:Pueyrredón (línea B del Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 5271314480,
+  "lat": -34.6046438,
+  "lon": -58.3994148,
+  "tags": {
+    "name": "Pasteur - AMIA",
+    "name:etymology:wikidata": "Q2867880",
+    "network": "Subte de Buenos Aires",
+    "old_name": "Pasteur",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "2.7",
+    "start_date": "1930-10-17",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3295552",
+    "wikipedia": "es:Pasteur - AMIA (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 5272710067,
+  "lat": -34.5913025,
+  "lon": -58.3741803,
+  "tags": {
+    "name": "Retiro (C)",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "0",
+    "start_date": "1936-02-06",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q5244852",
+    "wikipedia": "es:Retiro (línea C del subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 5272846982,
+  "lat": -34.5917097,
+  "lon": -58.4070715,
+  "tags": {
+    "name": "Agüero",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "3.8",
+    "start_date": "1938-09-05",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3296607",
+    "wikipedia": "es:Agüero (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 5272972076,
+  "lat": -34.5624355,
+  "lon": -58.4563786,
+  "tags": {
+    "name": "Juramento",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "9.4",
+    "start_date": "1999-06-21",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "yes",
+    "wikidata": "Q3296554",
+    "wikipedia": "es:Juramento (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 5272972081,
+  "lat": -34.5702528,
+  "lon": -58.4443609,
+  "tags": {
+    "name": "Olleros",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "8",
+    "start_date": "1997-05-31",
+    "station": "subway",
+    "subway": "yes",
+    "wheelchair": "yes",
+    "wikidata": "Q3296710",
+    "wikipedia": "es:Olleros (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 5278916451,
+  "lat": -34.6238418,
+  "lon": -58.4027603,
+  "tags": {
+    "name": "Jujuy",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "5.9",
+    "start_date": "1944-06-20",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3098742",
+    "wikipedia": "es:Jujuy (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 5278916461,
+  "lat": -34.6232137,
+  "lon": -58.3975718,
+  "tags": {
+    "name": "Pichincha",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "5.4",
+    "start_date": "1944-06-20",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q969818",
+    "wikipedia": "es:Pichincha (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 5278923154,
+  "lat": -34.6246886,
+  "lon": -58.4097487,
+  "tags": {
+    "name": "General Urquiza",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "6.5",
+    "short_name": "General Urquiza",
+    "start_date": "1944-06-20",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3296723",
+    "wikipedia": "es:General Urquiza (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 5281196398,
+  "lat": -34.6429239,
+  "lon": -58.4616760,
+  "tags": {
+    "name": "Plaza de los Virreyes - Eva Perón",
+    "network": "Subte de Buenos Aires",
+    "old_name": "Plaza de los Virreyes",
+    "operator": "Emova Movilidad S.A.",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "12",
+    "start_date": "1986-05-08",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3297032",
+    "wikipedia": "es:Plaza de los Virreyes - Eva Perón (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 5281196403,
+  "lat": -34.6398165,
+  "lon": -58.4580134,
+  "tags": {
+    "name": "Varela",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "11.1",
+    "start_date": "1985-10-31",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3296869",
+    "wikipedia": "es:Varela (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 5281196408,
+  "lat": -34.6363065,
+  "lon": -58.4501913,
+  "tags": {
+    "name": "Medalla Milagrosa",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "10.5",
+    "start_date": "1985-11-27",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q2839438",
+    "wikipedia": "es:Medalla Milagrosa (Subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 5281196417,
+  "lat": -34.6314574,
+  "lon": -58.4423592,
+  "tags": {
+    "name": "Emilio Mitre",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "9.5",
+    "start_date": "1985-10-07",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3297031",
+    "wikipedia": "es:Emilio Mitre (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 5281196822,
+  "lat": -34.6280256,
+  "lon": -58.4338861,
+  "tags": {
+    "name": "José María Moreno",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "8.8",
+    "start_date": "1973-06-23",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3296864",
+    "wikipedia": "es:José María Moreno (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 5624730306,
+  "lat": -34.5830687,
+  "lon": -58.3910479,
+  "tags": {
+    "name": "Facultad de Derecho - Julieta Lanteri",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "platforms": "2",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "0.6",
+    "start_date": "2018-05-17",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q6079537",
+    "wikipedia": "es:Facultad de Derecho (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 6517436882,
+  "lat": -34.6037000,
+  "lon": -58.3702237,
+  "tags": {
+    "name": "Correo Central",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "1.5",
+    "start_date": "2019-06-03",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q3296867",
+    "wikipedia": "es:Correo Central (subte de Buenos Aires)"
+  }
+},
+{
+  "type": "node",
+  "id": 7684209870,
+  "lat": -34.5949245,
+  "lon": -58.4031408,
+  "tags": {
+    "name": "Pueyrredón (D)",
+    "network": "Subte de Buenos Aires",
+    "operator": "Emova Movilidad S.A.",
+    "public_transport": "station",
+    "railway": "station",
+    "railway:position": "3.2",
+    "start_date": "1938-09-05",
+    "station": "subway",
+    "subway": "yes",
+    "train": "yes",
+    "wikidata": "Q3296551",
+    "wikipedia": "es:Pueyrredón (línea D del Subte de Buenos Aires)"
+  }
+}
+
+  ]
+}

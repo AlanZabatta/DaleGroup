@@ -1,0 +1,369 @@
+<div style="width: 100%; box-sizing: border-box; padding: 0 16px;">
+
+  <%= if @current_user do %>
+    <div style="margin-top: 32px; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+      <div style="position: relative; width: 80px; height: 80px; cursor: pointer;" onclick="document.getElementById('foto-input').click()">
+        <%= if @current_user.avatar do %>
+          <img src={@current_user.avatar} id="foto-preview" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #186904;"/>
+        <% else %>
+          <div id="foto-preview" style="width: 80px; height: 80px; border-radius: 50%; background: #f0f0f0; border: 2px solid #186904; display: flex; align-items: center; justify-content: center; font-size: 32px;">👤</div>
+        <% end %>
+        <div style="position: absolute; bottom: 0; right: 0; background: #186904; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
+          <span style="color: white; font-size: 12px;">📷</span>
+        </div>
+        <input type="file" id="foto-input" accept="image/*" style="display: none;" onchange="subirFotoPerfil(this)"/>
+      </div>
+      <p style="font-size: 18px; font-weight: 700; color: #111; margin: 0; font-family: 'Noto Sans', sans-serif;"><%= @current_user.username %></p>
+      <p style="font-size: 13px; color: #999; margin: 0; font-family: 'Noto Sans', sans-serif;"><%= @current_user.name %></p>
+    </div>
+
+    <div style="margin-top: 32px; display: flex; justify-content: center; gap: 40px;">
+      <div style="text-align: center;">
+        <p style="font-size: 22px; font-weight: 700; color: #186904; margin: 0; font-family: 'Noto Sans', sans-serif;"><%= length(@amigos) %></p>
+        <p style="font-size: 12px; color: #999; margin: 4px 0 0; font-family: 'Noto Sans', sans-serif;">Amigos</p>
+      </div>
+      <div style="text-align: center;">
+        <p style="font-size: 22px; font-weight: 700; color: #186904; margin: 0; font-family: 'Noto Sans', sans-serif;"><%= length(@favoritos) %></p>
+        <p style="font-size: 12px; color: #999; margin: 4px 0 0; font-family: 'Noto Sans', sans-serif;">Favoritos</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 24px; display: flex; justify-content: center;">
+      <button onclick="abrirSelectorFotos()" style="display: flex; align-items: center; gap: 8px; padding: 10px 24px; border: 1.5px solid #186904; border-radius: 20px; background: white; color: #186904; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans', sans-serif;">
+        <span style="font-size: 16px;">📸</span> Subir foto
+      </button>
+    </div>
+
+    <div style="margin-top: 32px; padding: 14px; background: #f7f7f7; border-radius: 10px;">
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div>
+          <p style="font-size: 11px; color: #999; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 1px; font-family: 'Noto Sans', sans-serif;">Tu usuario</p>
+          <p id="username-display" style="font-size: 16px; font-weight: 700; color: #186904; margin: 0; font-family: 'Noto Sans', sans-serif;"><%= @current_user.username %></p>
+        </div>
+        <button onclick="abrirEditorUsername()" style="padding: 6px 14px; border: 1.5px solid #186904; border-radius: 16px; background: white; color: #186904; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans', sans-serif;">Cambiar</button>
+      </div>
+      <div id="editor-username" style="display: none; margin-top: 12px;">
+        <div style="display: flex; gap: 8px;">
+          <input id="nuevo-username" type="text" placeholder="Nuevo nombre" maxlength="20" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Noto Sans', sans-serif; font-size: 13px;"/>
+          <button onclick="guardarUsername()" style="padding: 8px 14px; border: none; border-radius: 6px; background: #186904; color: white; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans', sans-serif;">Guardar</button>
+        </div>
+        <p id="username-error" style="font-size: 12px; color: #c0392b; margin: 6px 0 0; font-family: 'Noto Sans', sans-serif; display: none;"></p>
+        <p style="font-size: 11px; color: #999; margin: 6px 0 0; font-family: 'Noto Sans', sans-serif;">4-20 caracteres, solo letras, números y _. Los usuarios pueden cambiar su nombre 1 vez cada 7 días.</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 24px; margin-bottom: 40px;">
+      <p style="font-size: 12px; font-weight: 600; color: #333; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 1px; font-family: 'Noto Sans', sans-serif;">Tus amigos</p>
+      <%= if @amigos == [] do %>
+        <p style="font-size: 13px; color: #999; font-family: 'Noto Sans', sans-serif;">Todavía no agregaste amigos.</p>
+      <% else %>
+        <%= for a <- @amigos do %>
+          <div style="padding: 10px 0; border-bottom: 1px solid #eee; font-size: 14px; font-family: 'Noto Sans', sans-serif; color: #111;">
+            <%= a.username %>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+
+</div>
+
+<script>
+  const csrfTokenPerfil = document.querySelector("meta[name='csrf-token']")?.getAttribute("content");
+
+  function abrirEditorUsername() {
+    const editor = document.getElementById('editor-username');
+    editor.style.display = editor.style.display === 'none' ? 'block' : 'none';
+  }
+
+  async function guardarUsername() {
+    const username = document.getElementById('nuevo-username').value.trim();
+    const errorEl = document.getElementById('username-error');
+    const res = await fetch('/perfil/username', {
+      method: 'POST',
+      headers: { 'x-csrf-token': csrfTokenPerfil, 'content-type': 'application/json' },
+      body: JSON.stringify({ username: username })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      document.getElementById('username-display').textContent = data.username;
+      document.getElementById('editor-username').style.display = 'none';
+      document.getElementById('nuevo-username').value = '';
+      errorEl.style.display = 'none';
+    } else {
+      errorEl.textContent = data.error;
+      errorEl.style.display = 'block';
+    }
+  }
+
+  async function subirFotoPerfil(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const preview = document.getElementById('foto-preview');
+      if (preview.tagName === 'IMG') preview.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+    const formData = new FormData();
+    formData.append('_csrf_token', csrfTokenPerfil);
+    formData.append('foto', file);
+    const res = await fetch('/perfil/foto', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (!data.ok) alert('Error al subir la foto');
+  }
+</script>
+
+<!-- CROPPER JS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+<!-- MODAL CROPPER -->
+<div id="pub-cropper-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.92); z-index:100000; flex-direction:column;">
+  <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 16px;">
+    <button onclick="cerrarCropperPub()" style="background:none; border:none; color:white; font-size:22px; cursor:pointer;">&#x2715;</button>
+    <p style="color:white; font-size:15px; font-weight:700; margin:0; font-family:'Noto Sans',sans-serif;">Ajustá la foto</p>
+    <button onclick="confirmarCropPub()" style="background:none; border:none; color:#44BB64; font-size:15px; font-weight:700; cursor:pointer; font-family:'Noto Sans',sans-serif;">Listo ✓</button>
+  </div>
+  <div style="flex:1; display:flex; align-items:center; justify-content:center; overflow:hidden; padding:0 16px;">
+    <img id="pub-cropper-img" style="max-width:100%; max-height:100%;"/>
+  </div>
+  <p style="color:#aaa; text-align:center; font-size:12px; padding:12px; font-family:'Noto Sans',sans-serif;">Pellizca para hacer zoom · Arrastrá para encuadrar</p>
+</div>
+
+<!-- MODAL NUEVA PUBLICACION -->
+<div id="foto-selector-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:white; z-index:99999; flex-direction:column;">
+
+  <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 16px; border-bottom:1px solid #eee;">
+    <button onclick="cerrarSelectorFotos()" style="background:none; border:none; color:#186904; font-size:22px; font-weight:700; cursor:pointer; line-height:1;">&#x2715;</button>
+    <p style="font-size:15px; font-weight:600; color:#111; margin:0; font-family:'Noto Sans',sans-serif; position:absolute; left:50%; transform:translateX(-50%);">Nueva publicacion</p>
+    <button id="btn-siguiente-pub" onclick="irAPaso2()" style="background:none; border:none; color:#186904; font-size:14px; font-weight:700; cursor:pointer; font-family:'Noto Sans',sans-serif;">Siguiente →</button>
+  </div>
+
+  <div style="flex:1; overflow-y:auto; padding:48px 32px 16px;">
+    <div style="position:relative; width:100%; max-width:400px; min-height:calc(min(100vw - 64px, 400px) * 5 / 3); overflow:visible; background:white; margin-top:20px; margin-bottom:20px;">
+      <div id="foto-placeholder" style="width:100%; height:100%; display:flex; flex-direction:column; overflow:visible; position:relative;">
+        <div style="background:white; border:1px solid #186904; position:relative; height:90px; display:flex; align-items:center; padding:0 12px 0 80px; overflow:visible;">
+          <div style="position:absolute; left:20px; top:5px; width:75px; height:75px; border-radius:50%; overflow:hidden; z-index:10; box-shadow:0 2px 8px rgba(0,0,0,0.3); border:2px solid #186904;">
+            <%= if @current_user && @current_user.avatar do %>
+              <img src={@current_user.avatar} style="width:100%; height:100%; object-fit:cover; display:block;"/>
+            <% end %>
+          </div>
+          <div style="position:relative; left:25px; top:0px; display:flex; flex-direction:column; gap:6px;">
+            <span style="color:#111; font-size:18px; font-weight:200; font-family:'Noto Sans',sans-serif;">@<%= if @current_user, do: @current_user.username, else: "" %></span>
+            <button style="background:#186904; color:white; border:none; border-radius:6px; padding:5px 18px; font-size:13px; font-weight:600; font-family:'Noto Sans',sans-serif; cursor:pointer; width:fit-content;">Seguir</button>
+          </div>
+        </div>
+        <div style="height:3px;"></div>
+        <div style="background:white; border:1px solid #186904;">
+        <div id="pub-placeholder-zona" style="display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px;" onclick="document.getElementById('input-fotos').click()">
+          <div style="width:320px; height:360px; background:white; border-radius:4px; margin-left:auto; margin-right:auto; align-self:center; margin-top:35px; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px;">
+            <span style="font-size:36px; color:#ddd;">📷</span>
+            <p style="font-size:12px; color:#bbb; margin:0; font-family:'Noto Sans',sans-serif;">Tocá para agregar foto</p>
+          </div>
+        </div>
+        <div id="pub-preview-zona" ontouchstart="carouselTouchStart(event)" ontouchend="carouselTouchEnd(event)" style="display:none; width:320px; height:360px; overflow:hidden; cursor:pointer; margin:35px auto 0;" onclick="document.getElementById('input-fotos').click()">
+          <img id="pub-preview-img" style="width:100%; height:100%; object-fit:cover; display:block;"/>
+        </div>
+        <div style="position:relative; margin:0 auto; width:320px; display:flex; align-items:center; justify-content:space-between; padding:10px 0;">
+          <div style="display:flex; gap:16px; align-items:center;">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          </div>
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div style="position:relative; margin:0 auto; width:320px;">
+          <p style="font-size:15px; font-weight:700; color:#111; margin:0 0 4px; font-family:'Noto Sans',sans-serif;">@<%= if @current_user, do: @current_user.username, else: "" %></p>
+          <textarea id="pub-descripcion-input" maxlength="1000" placeholder="Escribí algo..." oninput="autoResizeDesc(this)" style="width:100%; border:none; outline:none; resize:none; font-size:13px; font-family:'Noto Sans',sans-serif; color:#444; background:transparent; min-height:20px; height:20px; box-sizing:border-box; overflow:hidden;"></textarea>
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <input type="file" id="input-fotos" accept="image/*" style="display:none;" onchange="elegirFotoPub(this)"/>
+</div>
+
+<script>
+  let pubCropperInstance = null;
+  let pubImagenesBlobs = [];
+  let pubCarouselIndex = 0;
+
+  function irAPaso2() {
+    document.getElementById("foto-selector-modal").style.display = "none";
+    document.getElementById("pub-paso2-modal").style.display = "flex";
+  }
+
+  function abrirSelectorFotos() {
+    document.getElementById('foto-selector-modal').style.display = 'flex';
+    document.getElementById('navbar').style.display = 'none';
+    document.getElementById('input-fotos').click();
+  }
+
+  function cerrarSelectorFotos() {
+    document.getElementById('foto-selector-modal').style.display = 'none';
+    document.getElementById('pub-placeholder-zona').style.display = 'flex';
+    document.getElementById('pub-placeholder-zona').querySelector('div').style.display = 'flex';
+    document.getElementById('pub-preview-zona').style.display = 'none';
+    document.getElementById('pub-descripcion-input').value = '';
+    document.getElementById('pub-descripcion-input').style.height = '20px';
+    pubImagenesBlobs = [];
+    pubCarouselIndex = 0;
+    document.getElementById('input-fotos').value = '';
+    document.getElementById('navbar').style.display = '';
+  }
+
+  function autoResizeDesc(el) {
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+  }
+
+  function elegirFotoPub(input) {
+    const file = input.files[0];
+    if (!file) return;
+    document.getElementById('foto-selector-modal').style.display = 'flex';
+    document.getElementById('navbar').style.display = 'none';
+    const url = URL.createObjectURL(file);
+    const imgEl = document.getElementById('pub-cropper-img');
+    imgEl.src = url;
+    document.getElementById('pub-cropper-modal').style.display = 'flex';
+    setTimeout(() => {
+      if (pubCropperInstance) { pubCropperInstance.destroy(); pubCropperInstance = null; }
+      pubCropperInstance = new Cropper(imgEl, {
+        aspectRatio: 4 / 5,
+        viewMode: 1,
+        dragMode: 'move',
+        autoCropArea: 1,
+        restore: false,
+        guides: false,
+        center: false,
+        highlight: false,
+        cropBoxMovable: false,
+        cropBoxResizable: false,
+        toggleDragModeOnDblclick: false,
+      });
+    }, 200);
+  }
+
+  function cerrarCropperPub() {
+    if (pubCropperInstance) { pubCropperInstance.destroy(); pubCropperInstance = null; }
+    document.getElementById('pub-cropper-modal').style.display = 'none';
+    document.getElementById('input-fotos').value = '';
+    document.getElementById('navbar').style.display = '';
+  }
+
+  function confirmarCropPub() {
+    if (!pubCropperInstance) return;
+    if (pubImagenesBlobs.length >= 4) {
+      window.mostrarAviso && window.mostrarAviso("Máximo 4 fotos");
+      return;
+    }
+    const canvas = pubCropperInstance.getCroppedCanvas({ width: 1200, height: 1500 });
+    canvas.toBlob(blob => {
+      pubImagenesBlobs.push(blob);
+      pubCropperInstance.destroy();
+      pubCropperInstance = null;
+      document.getElementById('pub-cropper-modal').style.display = 'none';
+      document.getElementById('pub-placeholder-zona').querySelector('div').style.display = 'none';
+      document.getElementById('pub-preview-zona').style.display = 'block';
+      renderCarousel();
+    }, 'image/jpeg', 0.9);
+  }
+
+  function renderCarousel() {
+    const zona = document.getElementById('pub-preview-zona');
+    zona.ontouchstart = (e) => { touchStartX = e.touches[0].clientX; };
+    zona.ontouchend = (e) => {
+      const diff = touchStartX - e.changedTouches[0].clientX;
+      if (Math.abs(diff) > 40) { if (diff > 0) carouselNext(); else carouselPrev(); }
+    };
+    const n = pubImagenesBlobs.length;
+    zona.innerHTML = `
+      <div style="position:relative; width:100%; height:100%; overflow:hidden;">
+        <div id="carousel-track" style="display:flex; height:100%; transition:transform 0.3s ease; transform:translateX(-${pubCarouselIndex * 100}%);" ontouchstart="carouselTouchStart(event)" ontouchend="carouselTouchEnd(event)">
+          ${pubImagenesBlobs.map((blob, i) => `
+            <div style="min-width:100%; height:100%; overflow:hidden; flex-shrink:0;">
+              <img src="${URL.createObjectURL(blob)}" style="width:100%; height:100%; object-fit:cover; display:block;"/>
+            </div>
+          `).join('')}
+        </div>
+        ${n > 1 ? `
+        <button onclick="carouselPrev()" style="position:absolute; left:4px; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.4); border:none; color:white; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:14px;">‹</button>
+        <button onclick="carouselNext()" style="position:absolute; right:4px; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.4); border:none; color:white; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:14px;">›</button>
+        ` : ''}
+        <div style="position:absolute; bottom:8px; left:50%; transform:translateX(-50%); display:flex; gap:5px; align-items:center; background:rgba(0,0,0,0.3); border-radius:10px; padding:3px 8px;">
+          ${pubImagenesBlobs.map((_, i) => `<div style="width:${i===pubCarouselIndex?'18px':'7px'}; height:7px; border-radius:4px; background:${i===pubCarouselIndex?'#186904':'white'}; transition:all 0.3s;"></div>`).join('')}
+        </div>
+      </div>
+      ${n < 4 ? `<button onclick="document.getElementById('input-fotos').click()" style="position:absolute; bottom:-44px; left:50%; transform:translateX(-50%); background:#186904; color:white; border:none; border-radius:20px; padding:8px 20px; font-size:13px; font-weight:600; cursor:pointer; font-family:'Noto Sans',sans-serif; white-space:nowrap;">+ Agregar otra foto</button>` : ''}
+    `;
+  }
+
+  let touchStartX = 0;
+  function carouselTouchStart(e) { touchStartX = e.touches[0].clientX; }
+  function carouselTouchEnd(e) {
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) {
+      if (diff > 0) carouselNext();
+      else carouselPrev();
+    }
+  }
+
+  function carouselPrev() {
+    if (pubCarouselIndex > 0) {
+      pubCarouselIndex--;
+      renderCarousel();
+    }
+  }
+
+  function carouselNext() {
+    if (pubCarouselIndex < pubImagenesBlobs.length - 1) {
+      pubCarouselIndex++;
+      renderCarousel();
+    }
+  }
+</script>
+
+<!-- MODAL PASO 2 -->
+<div id="pub-paso2-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:white; z-index:99999; flex-direction:column;">
+  <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 16px; border-bottom:1px solid #eee;">
+    <button onclick="volverAPaso1()" style="background:none; border:none; color:#186904; font-size:22px; font-weight:700; cursor:pointer; line-height:1;">←</button>
+    <p style="font-size:15px; font-weight:600; color:#111; margin:0; font-family:'Noto Sans',sans-serif; position:absolute; left:50%; transform:translateX(-50%);">Nueva publicacion</p>
+    <button onclick="subirPublicacion()" style="background:none; border:none; color:#186904; font-size:14px; font-weight:700; cursor:pointer; font-family:'Noto Sans',sans-serif;">Subir</button>
+  </div>
+  <div style="flex:1; overflow-y:auto; padding:48px 32px 100px; background:white;">
+  </div>
+</div>
+
+<script>
+  function volverAPaso1() {
+    document.getElementById('pub-paso2-modal').style.display = 'none';
+    document.getElementById('foto-selector-modal').style.display = 'flex';
+  }
+
+  function subirPublicacion() {
+    if (pubImagenesBlobs.length === 0) { window.mostrarAviso && window.mostrarAviso("Primero agregá una foto"); return; }
+    const descripcion = document.getElementById("pub-descripcion-input").value;
+    const formData = new FormData();
+    formData.append("_csrf_token", csrfTokenPerfil);
+    pubImagenesBlobs.forEach((blob, i) => {
+      formData.append("imagenes[]", blob, "publicacion_" + i + ".jpg");
+    });
+    formData.append("descripcion", descripcion);
+    fetch("/publicaciones/crear", { method: "POST", body: formData })
+      .then(r => r.json())
+      .then(data => {
+        if (data.ok) {
+          document.getElementById("pub-paso2-modal").style.display = "none";
+          document.getElementById("foto-selector-modal").style.display = "none";
+          document.getElementById("navbar").style.display = "";
+          pubImagenesBlobs = [];
+          pubCarouselIndex = 0;
+          window.mostrarAviso && window.mostrarAviso("Publicacion subida!");
+        } else {
+          window.mostrarAviso && window.mostrarAviso("Error: " + data.error);
+        }
+      });
+  }
+</script>

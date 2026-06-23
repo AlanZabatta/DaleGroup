@@ -502,4 +502,42 @@ defmodule DaleAppWeb.CoreComponents do
   def translate_errors(errors, field) when is_list(errors) do
     for {^field, {msg, opts}} <- errors, do: translate_error({msg, opts})
   end
+  attr :pub, :map, required: true
+  def publicacion_card(assigns) do
+    ~H"""
+    <div style="position:relative; width:100%; max-width:400px; aspect-ratio:3/5; overflow:visible; background:white; margin-top:20px; margin-bottom:600px;">
+      <div style="width:100%; height:100%; display:flex; flex-direction:column; overflow:visible; position:relative;">
+        <div style="background:white; border:1px solid #186904; position:relative; height:75px; display:flex; align-items:center; padding:0 12px 0 100px; overflow:visible;">
+          <div style="position:absolute; left:-22px; top:-28px; width:80px; height:80px; border-radius:50%; overflow:hidden; z-index:10; box-shadow:0 2px 8px rgba(0,0,0,0.3); border:2px solid #186904;">
+            <%= if @pub.user.avatar do %>
+              <img src={@pub.user.avatar} style="width:100%; height:100%; object-fit:cover; display:block;"/>
+            <% end %>
+          </div>
+          <div style="position:relative; left:15px; top:0px; display:flex; flex-direction:column; gap:6px;">
+            <span style="color:#111; font-size:18px; font-weight:200; font-family:'Noto Sans',sans-serif;">@<%= @pub.user.username %></span>
+            <button style="background:#186904; color:white; border:none; border-radius:6px; padding:5px 18px; font-size:13px; font-weight:600; font-family:'Noto Sans',sans-serif; cursor:pointer; width:fit-content;">Seguir</button>
+          </div>
+        </div>
+        <div style="height:40px;"></div>
+        <div style="flex:1; background:white; border:1px solid #186904; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px;">
+          <div style="width:320px; height:300px; background:white; border-radius:4px; margin-left:auto; margin-right:auto; align-self:flex-start; margin-top:-90px; overflow:hidden;">
+            <img src={@pub.imagen_url} style="width:100%; height:100%; object-fit:cover; display:block;"/>
+          </div>
+        </div>
+        <div style="position:absolute; top:465px; left:50%; transform:translateX(-50%); width:320px; display:flex; align-items:center; justify-content:space-between; padding:10px 0;">
+          <div style="display:flex; gap:16px; align-items:center;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          </div>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div style="position:absolute; top:515px; left:50%; transform:translateX(-50%); width:320px;">
+          <p style="font-size:13px; color:#111; margin:0 0 4px; font-family:'Noto Sans',sans-serif;"><span style="font-weight:700;">@<%= @pub.user.username %></span> <%= @pub.descripcion %></p>
+          <p style="font-size:11px; color:#aaa; margin:4px 0 0; font-family:'Noto Sans',sans-serif;"><%= Calendar.strftime(@pub.inserted_at, "%d de %B") %></p>
+        </div>
+      </div>
+    </div>
+    """
+  end
 end

@@ -21,12 +21,60 @@
           <option value="ambos" selected={@brand.modalidad == "ambos"}>Presencial y Digital</option>
         </select>
       </div>
+
+      <!-- CATEGORÍAS -->
+      <div style="margin-bottom: 24px;">
+        <label style="display: block; margin-bottom: 10px; font-weight: bold;">Categorías</label>
+        <p style="font-size: 13px; color: #888; margin-bottom: 12px;">Seleccioná las que mejor describen tu marca.</p>
+        <input type="hidden" name="brand[categorias]" id="categorias-hidden" value={Enum.join(@brand.categorias || [], ",")}/>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <%= for cat <- ["Hombre", "Mujer", "Casual", "Elegante", "Street", "Sport", "Ropa", "Accesorios", "Calzado"] do %>
+            <% activa = cat in (@brand.categorias || []) %>
+            <button type="button"
+              data-cat={cat}
+              onclick="toggleCategoria(this)"
+              style={"padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 13px; font-family: sans-serif; transition: all 0.2s; border: 1.5px solid #{if activa, do: "#1E5C1E", else: "#ddd"}; background: #{if activa, do: "#1E5C1E", else: "white"}; color: #{if activa, do: "white", else: "#666"};"}>
+              <%= cat %>
+            </button>
+          <% end %>
+        </div>
+      </div>
+
       <button type="submit" style="width: 100%; background-color: #1E5C1E; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; margin-bottom: 12px;">
         Guardar cambios
       </button>
     </form>
-    <a href="/mi-tienda/cupon" style="display: block; text-align: center; background-color: #3B2505; color: white; padding: 12px; border-radius: 6px; text-decoration: none; margin-bottom: 12px;">
+
+    <!-- LOGO -->
+    <div style="margin-bottom: 16px;">
+      <label style="display: block; margin-bottom: 6px; font-weight: bold;">Logo de la tienda</label>
+      <%= if @brand.logo do %>
+        <img src={@brand.logo} style="height: 60px; object-fit: contain; border: 1px solid #eee; border-radius: 8px; margin-bottom: 8px; display: block;"/>
+      <% end %>
+      <label style="display: inline-block; background-color: #1E5C1E; color: white; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold;">
+        📷 Cambiar logo
+        <input type="file" accept="image/*" style="display:none;" data-brand-id={"#{@brand.id}"} data-tipo="logo" data-ax="2" data-ay="1" onchange="abrirCropperFromInput(this)" />
+      </label>
+    </div>
+
+    <!-- FOTO DE PUBLICACIÓN -->
+    <div style="margin-bottom: 16px;">
+      <label style="display: block; margin-bottom: 6px; font-weight: bold;">Foto de publicación</label>
+      <p style="font-size: 13px; color: #888; margin-bottom: 10px;">Esta foto aparece en la página principal como card de tu marca.</p>
+      <%= if @brand.cover_image do %>
+        <img src={@brand.cover_image} style="width: 100%; aspect-ratio: 16/7; object-fit: cover; border-radius: 8px; margin-bottom: 8px;"/>
+      <% end %>
+      <label style="display: inline-block; background-color: #44BB64; color: white; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold;">
+        📷 Cargar foto de publicación
+        <input type="file" accept="image/*" style="display:none;" data-brand-id={"#{@brand.id}"} data-tipo="cover" data-ax="16" data-ay="7" onchange="abrirCropperFromInput(this)" />
+      </label>
+    </div>
+
+    <a href="/mi-tienda/cupon" style="display: block; text-align: center; background-color: #3B2505; color: white; padding:12px; border-radius: 6px; text-decoration: none; margin-bottom: 12px;">
       Gestionar cupón
+    </a>
+    <a href="/mi-tienda/productos" style="display: block; text-align: center; background-color: #1E5C1E; color: white; padding: 12px; border-radius: 6px; text-decoration: none; margin-bottom: 12px;">
+      Gestionar productos
     </a>
     <a href="/mi-tienda/cajeros" style="display: block; text-align: center; background-color: #533AB7; color: white; padding: 12px; border-radius: 6px; text-decoration: none; margin-bottom: 12px;">
       Gestionar cajeros (<%= length(@cajeros) %>)
@@ -37,14 +85,31 @@
   <a href="/" style="display: inline-block; margin-top: 24px; color: #1E5C1E;">← Volver al inicio</a>
 </div>
 
+<!-- MODAL CROPPER -->
+<div id="cropper-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center;">
+  <div style="background:white; border-radius:16px; padding:20px; max-width:600px; width:95%; max-height:95vh; display:flex; flex-direction:column; gap:16px;">
+    <h3 style="margin:0; font-size:18px; color:#1a1a1a;">Ajustá la imagen</h3>
+    <p style="margin:0; font-size:12px; color:#888;">La imagen se sube en alta calidad — la vista previa puede verse pixelada.</p>
+    <div style="overflow:hidden; height:40vh;">
+      <img id="cropper-img" style="display:block; max-width:100%;"/>
+    </div>
+    <div style="display:flex; gap:10px; flex-shrink:0;">
+      <button onclick="window.dale_confirmarCrop()" style="flex:1; background:#1E5C1E; color:white; padding:14px; border:none; border-radius:8px; font-size:15px; font-weight:bold; cursor:pointer;">✅ Confirmar</button>
+      <button onclick="window.dale_cerrarCropper()" style="flex:1; background:#f0f0f0; color:#333; padding:14px; border:none; border-radius:8px; font-size:15px; cursor:pointer;">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
 <script>
+  // DIRECCIONES
   const addressHidden = document.getElementById('address-hidden');
   const container = document.getElementById('direcciones-container');
   const current = addressHidden ? (addressHidden.value || '') : '';
   const dirs = current.split('|').filter(d => d.trim() !== '');
-
   if (dirs.length === 0) dirs.push('');
-
   dirs.forEach(dir => crearInput(dir));
 
   function crearInput(valor) {
@@ -66,13 +131,109 @@
     container.appendChild(wrapper);
   }
 
-  function agregarDireccion() {
-    crearInput('');
-  }
+  function agregarDireccion() { crearInput(''); }
 
   function actualizarHidden() {
     const inputs = container.querySelectorAll('input');
     const valores = Array.from(inputs).map(i => i.value.trim()).filter(v => v !== '');
     addressHidden.value = valores.join('|');
   }
+
+  // CATEGORÍAS
+  const categoriasHidden = document.getElementById('categorias-hidden');
+  let seleccionadas = categoriasHidden.value ? categoriasHidden.value.split(',').filter(c => c !== '') : [];
+
+  function toggleCategoria(btn) {
+    const cat = btn.getAttribute('data-cat');
+    if (seleccionadas.includes(cat)) {
+      seleccionadas = seleccionadas.filter(c => c !== cat);
+      btn.style.background = 'white';
+      btn.style.color = '#666';
+      btn.style.borderColor = '#ddd';
+    } else {
+      seleccionadas.push(cat);
+      btn.style.background = '#1E5C1E';
+      btn.style.color = 'white';
+      btn.style.borderColor = '#1E5C1E';
+    }
+    categoriasHidden.value = seleccionadas.join(',');
+  }
+
+  // CROPPER
+  let cropperInstance = null;
+  let cropTipo = null;
+  let cropBrandId = null;
+  let cropOriginalFile = null;
+  let cropOriginalImage = null;
+
+  function abrirCropperFromInput(input) {
+    const brandId = input.dataset.brandId;
+    const tipo = input.dataset.tipo;
+    const ax = parseInt(input.dataset.ax);
+    const ay = parseInt(input.dataset.ay);
+    abrirCropper(input, tipo, ax, ay, brandId);
+  }
+
+  function abrirCropper(input, tipo, ax, ay, brandId) {
+    const file = input.files[0];
+    if (!file) return;
+    cropTipo = tipo;
+    cropBrandId = brandId;
+    cropOriginalFile = file;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      cropOriginalImage = new Image();
+      cropOriginalImage.src = e.target.result;
+      const img = document.getElementById('cropper-img');
+      img.src = e.target.result;
+      const modal = document.getElementById('cropper-modal');
+      modal.style.display = 'flex';
+      if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+      img.onload = function() {
+        cropperInstance = new Cropper(img, {
+          aspectRatio: ax / ay,
+          viewMode: 1,
+          autoCropArea: 0.9,
+          movable: true,
+          zoomable: true,
+          rotatable: false,
+          scalable: false,
+          checkOrientation: true
+        });
+      };
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
+  }
+
+  window.dale_cerrarCropper = function() {
+    const modal = document.getElementById('cropper-modal');
+    modal.style.display = 'none';
+    if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+    cropOriginalImage = null;
+    cropOriginalFile = null;
+  };
+
+  window.dale_confirmarCrop = function() {
+    if (!cropperInstance || !cropOriginalImage) return;
+    const cropData = cropperInstance.getData(true);
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(cropData.width);
+    canvas.height = Math.round(cropData.height);
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(cropOriginalImage, Math.round(cropData.x), Math.round(cropData.y), Math.round(cropData.width), Math.round(cropData.height), 0, 0, Math.round(cropData.width), Math.round(cropData.height));
+    canvas.toBlob(function(blob) {
+      const endpoint = cropTipo === 'logo' ? 'logo' : 'cover';
+      const fieldName = cropTipo === 'logo' ? 'logo' : 'cover';
+      const formData = new FormData();
+      formData.append(fieldName, blob, cropTipo + '.png');
+      formData.append('_csrf_token', document.querySelector("meta[name='csrf-token']").getAttribute("content"));
+      fetch('/marcas/' + cropBrandId + '/' + endpoint, { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+          if (data.ok) { window.dale_cerrarCropper(); location.reload(); }
+          else alert('Error al subir la imagen');
+        });
+    }, 'image/png');
+  };
 </script>

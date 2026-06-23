@@ -17,10 +17,19 @@ defmodule DaleAppWeb.BrandController do
     user_id = get_session(conn, :user_id)
     brand = Repo.get_by(Brand, user_id: user_id)
 
+    # Convertir categorias de string CSV a lista
+    brand_params = case Map.get(brand_params, "categorias") do
+      nil -> Map.put(brand_params, "categorias", [])
+      "" -> Map.put(brand_params, "categorias", [])
+      cats when is_binary(cats) ->
+        lista = cats |> String.split(",") |> Enum.map(&String.trim/1) |> Enum.reject(&(&1 == ""))
+        Map.put(brand_params, "categorias", lista)
+      _ -> brand_params
+    end
+
     address = Map.get(brand_params, "address", "")
     direcciones = address |> String.split("|") |> Enum.map(&String.trim/1) |> Enum.reject(&(&1 == ""))
 
-    # Geocodificar primera dirección para el pin principal
     brand_params = case direcciones do
       [primera | _] ->
         case geocode(primera) do
@@ -34,7 +43,6 @@ defmodule DaleAppWeb.BrandController do
     |> Brand.changeset(brand_params)
     |> Repo.update()
 
-    # Borrar locations anteriores y recrear
     Repo.delete_all(from l in DaleApp.Brands.BrandLocation, where: l.brand_id == ^brand.id)
 
     Enum.each(direcciones, fn dir ->
@@ -67,7 +75,6 @@ defmodule DaleAppWeb.BrandController do
   def remove_cajero(conn, %{"id" => id}) do
     user = Accounts.get_user(id)
     Accounts.remove_cajero(user)
-
     conn
     |> put_flash(:info, "Cajero eliminado.")
     |> redirect(to: ~p"/mi-tienda/cajeros")
@@ -117,12 +124,24 @@ defmodule DaleAppWeb.BrandController do
     end
   end
 
+  defp build_crop_params(params) do
+    x = Map.get(params, "crop_x")
+    y = Map.get(params, "crop_y")
+    w = Map.get(params, "crop_w")
+    h = Map.get(params, "crop_h")
+    if x && y && w && h do
+      [{"x", x}, {"y", y}, {"width", w}, {"height", h}, {"crop", "crop"}]
+    else
+      []
+    end
+  end
 
-  def upload_logo(conn, %{"id" => id, "logo" => logo}) do
+  def upload_logo(conn, %{"id" => id, "logo" => logo} = params) do
     user_id = get_session(conn, :user_id)
     brand = DaleApp.Repo.get(DaleApp.Brands.Brand, id)
     if brand.user_id == user_id do
-      case DaleApp.Storage.upload_image(logo.path, logo.filename) do
+      crop_params = build_crop_params(params)
+      case DaleApp.Storage.upload_image(logo.path, logo.filename, crop_params) do
         {:ok, %{body: body}} when is_map(body) ->
           url = body["secure_url"]
           DaleApp.Repo.update!(Ecto.Changeset.change(brand, %{logo: url}))
@@ -134,6 +153,29 @@ defmodule DaleAppWeb.BrandController do
           json(conn, %{ok: true, url: url})
         _ ->
           json(conn, %{ok: false, error: "Error al subir logo"})
+      end
+    else
+      json(conn, %{ok: false})
+    end
+  end
+
+  def upload_cover(conn, %{"id" => id, "cover" => cover} = params) do
+    user_id = get_session(conn, :user_id)
+    brand = DaleApp.Repo.get(DaleApp.Brands.Brand, id)
+    if brand.user_id == user_id do
+      crop_params = build_crop_params(params)
+      case DaleApp.Storage.upload_image(cover.path, cover.filename, crop_params) do
+        {:ok, %{body: body}} when is_map(body) ->
+          url = body["secure_url"]
+          DaleApp.Repo.update!(Ecto.Changeset.change(brand, %{cover_image: url}))
+          json(conn, %{ok: true, url: url})
+        {:ok, %{body: body}} when is_binary(body) ->
+          decoded = Jason.decode!(body)
+          url = decoded["secure_url"]
+          DaleApp.Repo.update!(Ecto.Changeset.change(brand, %{cover_image: url}))
+          json(conn, %{ok: true, url: url})
+        _ ->
+          json(conn, %{ok: false, error: "Error al subir cover"})
       end
     else
       json(conn, %{ok: false})

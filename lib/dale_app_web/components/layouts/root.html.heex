@@ -13,7 +13,7 @@
   </head>
   <body class="antialiased" style="background-color: #3B2505; margin: 0; padding: 0;">
 
-    <div style="background-color: white; min-height: 100vh; width: 100%; margin: 0 auto; position: relative; overflow: hidden;">
+    <div id="app-wrapper" style="background-color: white; min-height: 100vh; width: 100%; margin: 0 auto; position: relative; overflow: visible;">
 
       <svg style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;" viewBox="0 0 400 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
         <circle cx="480" cy="80" r="340" fill="none" stroke="#1E5C1E" stroke-width="0.8" opacity="0.35"/>
@@ -23,7 +23,7 @@
         <circle cx="350" cy="450" r="200" fill="none" stroke="#1E5C1E" stroke-width="0.6" opacity="0.22"/>
       </svg>
 
-      <div id="navbar" style="position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255,255,255,0.92); backdrop-filter: blur(8px); border-bottom: 1px solid #f0f0f0; transition: transform 0.3s ease;">
+      <div id="navbar" style="position: fixed; top: 0; left: 0; right: 0; z-index: 5000; background: rgba(255,255,255,0.92); backdrop-filter: blur(8px); border-bottom: 1px solid #f0f0f0; transition: transform 0.3s ease;">
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; max-width: 900px; margin: 0 auto;">
           <button onclick="toggleMenu()" style="background: none; border: none; cursor: pointer; padding: 4px;">
             <div style="width: 24px; height: 2px; background: #1a1a1a; margin-bottom: 6px; border-radius: 2px;"></div>
@@ -87,28 +87,16 @@
       </div>
       <div id="menu-overlay" onclick="toggleMenu()" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 199;"></div>
 
-      <div style="position: relative; z-index: 1; padding-top: 64px;">
+      <div style="position: relative; z-index: 1; padding-top: 64px; padding-bottom: 140px;">
         {@inner_content}
       </div>
 
-      <div style="position: fixed; bottom: 28px; right: 28px; display: flex; flex-direction: column; align-items: flex-end; gap: 12px; z-index: 150;">
-        <div id="dale-menu" style="display: flex; flex-direction: column; align-items: center; background-color: #1E5C1E; border-radius: 40px; padding: 12px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.25); gap: 4px; width: 84px; opacity: 0; transform: scale(0.7) translateY(20px); transform-origin: bottom right; pointer-events: none; transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.34,1.56,0.64,1);">
-          <a href="/mis-cupones" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; text-decoration: none;">
-            <div style="width: 36px; height: 36px; background: rgba(255,255,255,0.2); border-radius: 8px;"></div>
-          </a>
-          <div style="width: 40px; height: 0.5px; background: rgba(255,255,255,0.2);"></div>
-          <a href="/mapa" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; text-decoration: none;">
-            <img src="https://res.cloudinary.com/djziwuaky/image/upload/v1780237821/1000029077_preview_rev_1_1_suv2zb.png" style="width: 76px; height: 76px; object-fit: contain; border-radius: 8px;"/>
-          </a>
-          <div style="width: 40px; height: 0.5px; background: rgba(255,255,255,0.2);"></div>
-          <a href="/perfil" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; text-decoration: none;">
-            <div style="width: 36px; height: 36px; background: rgba(255,255,255,0.2); border-radius: 8px;"></div>
-          </a>
-        </div>
+      <!-- BOTONES FLOTANTES -->
+      <div style="position: fixed; bottom: 120px; right: 20px; display: flex; flex-direction: column; align-items: flex-end; gap: 12px; z-index: 150; pointer-events: none;">
 
-        <div style="display: flex; flex-direction: row; align-items: center; gap: 16px;">
+        <div style="display: flex; flex-direction: row; align-items: center; gap: 16px; pointer-events: auto;">
           <%= if @current_user && @current_user.role == "dueño" do %>
-            <a href="/mi-stand" style="width: 72px; height: 72px; border-radius: 50%; background-color: #3B2505; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 4px 20px rgba(0,0,0,0.3); flex-shrink: 0;">
+            <a id="btn-mi-tienda" href="/mi-stand" style="width: 72px; height: 72px; border-radius: 50%; background-color: #3B2505; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 4px 20px rgba(0,0,0,0.3); flex-shrink: 0;">
               <span style="color: white; font-size: 10px; font-weight: bold; text-align: center; line-height: 1.3;">Mi<br>Tienda</span>
             </a>
           <% end %>
@@ -130,20 +118,63 @@
               <span style="color: white; font-size: 10px; font-weight: bold;">Admin</span>
             </button>
           <% end %>
-          <button id="dale-btn" onclick="toggleDale()" style="width: 84px; height: 84px; border-radius: 50%; border: none; cursor: pointer; padding: 0; overflow: hidden; box-shadow: 0 6px 24px rgba(0,0,0,0.35); flex-shrink: 0; transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1);">
-            <img src="https://res.cloudinary.com/djziwuaky/image/upload/v1779311629/WhatsApp_Image_2026-05-20_at_6.07.52_PM_2_dz41fk.jpg" style="width: 100%; height: 100%; object-fit: cover; object-position: center;"/>
-          </button>
         </div>
+      </div>
+
+      <script>
+        const btnMiTienda = document.getElementById('btn-mi-tienda');
+        if (btnMiTienda && (window.location.pathname.startsWith('/marcas') || window.location.pathname.startsWith('/mi-tienda') || window.location.pathname === '/mi-stand')) {
+          btnMiTienda.style.display = 'none';
+        }
+      </script>
+
+      <!-- BARRA DE NAVEGACIÓN INFERIOR -->
+      <div id="bottom-bar" style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 5000; background: rgba(255,255,255,0.96); backdrop-filter: blur(10px); border-top: 1px solid #f0f0f0; height: 11vh; display: flex; align-items: center; justify-content: space-around; padding: 0 8px; transition: none;">
+        <% ruta = @conn.request_path %>
+
+        <a href="/amigos" style={"display: flex; flex-direction: column; align-items: center; gap: 4px; text-decoration: none; flex: 1; color: #{if ruta == "/amigos", do: "#186904", else: "#9a9a9a"};"}>
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 21a8 8 0 0 0-16 0"/><circle cx="10" cy="8" r="5"/><path d="M22 21a8 8 0 0 0-5.3-7.4"/><circle cx="19" cy="7" r="3" stroke-width="1.5"/>
+          </svg>
+          <span style={"font-size: 10px; font-family: 'Noto Sans', sans-serif; font-weight: #{if ruta == "/amigos", do: "600", else: "400"};"}>Amigos</span>
+        </a>
+
+        <a href="/perfil" style={"display: flex; flex-direction: column; align-items: center; gap: 4px; text-decoration: none; flex: 1; color: #{if ruta == "/perfil", do: "#186904", else: "#9a9a9a"};"}>
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/>
+          </svg>
+          <span style={"font-size: 10px; font-family: 'Noto Sans', sans-serif; font-weight: #{if ruta == "/perfil", do: "600", else: "400"};"}>Perfil</span>
+        </a>
+
+        <a href="/" style="display: flex; flex-direction: column; align-items: center; text-decoration: none; flex: 1;">
+          <img src="https://res.cloudinary.com/djziwuaky/image/upload/v1779311629/WhatsApp_Image_2026-05-20_at_6.07.52_PM_2_dz41fk.jpg" style="width: 58px; height: 58px; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"/>
+        </a>
+
+        <a href="/mapa" style={"display: flex; flex-direction: column; align-items: center; gap: 4px; text-decoration: none; flex: 1; color: #{if ruta == "/mapa", do: "#186904", else: "#9a9a9a"};"}>
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/>
+          </svg>
+          <span style={"font-size: 10px; font-family: 'Noto Sans', sans-serif; font-weight: #{if ruta == "/mapa", do: "600", else: "400"};"}>Mapa</span>
+        </a>
+
+        <a href="/mydream" style={"display: flex; flex-direction: column; align-items: center; gap: 4px; text-decoration: none; flex: 1; color: #{if ruta == "/mydream", do: "#186904", else: "#9a9a9a"};"}>
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            <line x1="12" y1="8" x2="12" y2="14"/><line x1="9" y1="11" x2="15" y2="11"/>
+          </svg>
+          <span style={"font-size: 10px; font-family: 'Noto Sans', sans-serif; font-weight: #{if ruta == "/mydream", do: "600", else: "400"};"}>Dream</span>
+        </a>
+
       </div>
 
     </div>
 
     <script>
       let lastScroll = 0;
-      let daleOpen = false;
       const navbar = document.getElementById("navbar");
 
       window.addEventListener("scroll", () => {
+        if (window.location.pathname === "/mapa") return;
         const current = window.scrollY;
         if (current > lastScroll && current > 60) {
           navbar.style.transform = "translateY(-100%)";
@@ -173,22 +204,6 @@
         menu.style.display = menu.style.display === "none" ? "flex" : "none";
       }
 
-      function toggleDale() {
-        const menu = document.getElementById("dale-menu");
-        const btn = document.getElementById("dale-btn");
-        daleOpen = !daleOpen;
-        if (daleOpen) {
-          menu.style.opacity = "1";
-          menu.style.transform = "scale(1) translateY(0)";
-          menu.style.pointerEvents = "auto";
-          btn.style.transform = "scale(1.12)";
-        } else {
-          menu.style.opacity = "0";
-          menu.style.transform = "scale(0.7) translateY(20px)";
-          menu.style.pointerEvents = "none";
-          btn.style.transform = "scale(1)";
-        }
-      }
     </script>
 
     <style>
@@ -200,5 +215,285 @@
       }
     </style>
 
+
+  <div id="producto-overlay" onclick="cerrarProductoSheet()" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:9990;"></div>
+
+  <div id="producto-sheet" style="display:none; position:fixed; left:0; right:0; bottom:0; background:white; z-index:9991; border-radius:18px 18px 0 0; max-width:480px; margin:0 auto; height:60vh; transition: height 0.3s ease, border-radius 0.3s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1); overflow-y:auto; box-shadow:0 -4px 24px rgba(0,0,0,0.15);">
+    <div id="producto-sheet-handle" style="position:sticky; top:0; background:white; z-index:2; padding:14px 0 12px; display:flex; justify-content:center; cursor:pointer;" onclick="toggleProductoSheetSize()">
+      <div style="width:40px; height:4px; background:#ddd; border-radius:2px;"></div>
+    </div>
+    
+
+    <div style="padding: 0 16px 32px;">
+      <div id="ps-img-wrap" style="position:relative; width:100%; aspect-ratio:1/1; background:#f0f0f0; border-radius:12px; overflow:hidden; margin-top:10px; margin-bottom:14px;">
+        <img id="ps-img" src="" style="width:100%; height:100%; object-fit:cover; display:block;"/>
+        <button id="ps-favorito" onclick="toggleFavoritoSheet()" style="position:absolute; top:10px; right:10px; background:white; border:1.5px solid #ddd; border-radius:50%; width:34px; height:34px; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; z-index:5;">
+          <span id="ps-favorito-icono">🤍</span>
+        </button>
+      </div>
+
+      <p id="ps-nombre" style="font-size:18px; font-weight:600; color:#111; margin:0 0 4px; font-family:'Noto Sans',sans-serif; text-align:left;"></p>
+
+      <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:18px;">
+        <span id="ps-precio-original" style="font-size:14px; color:#999; text-decoration:line-through; font-family:'Noto Sans',sans-serif;"></span>
+        <span id="ps-precio-final" style="font-size:18px; font-weight:700; color:#1E5C1E; font-family:'Noto Sans',sans-serif;"></span>
+      </div>
+
+      <div style="background:#1E5C1E; margin:0 -16px; padding:16px;">
+      <button style="width:100%; padding:14px; border:none; border-radius:10px; background:white; color:#1E5C1E; cursor:pointer; font-size:14px; font-weight:700; font-family:'Noto Sans',sans-serif; margin-bottom:6px;">
+        Reclamar beneficio QR
+      </button>
+
+      <p id="ps-modalidad" style="font-size:12px; font-weight:500; color:rgba(255,255,255,0.85); font-family:'Noto Sans',sans-serif; margin:0 0 24px; text-align:left;"></p>
+
+      <div id="ps-talles-wrap" style="margin-bottom:0;">
+        <p style="font-size:12px; font-weight:600; color:white; margin:0 0 10px; text-transform:uppercase; letter-spacing:1px; font-family:'Noto Sans',sans-serif;">Talles</p>
+        <div id="ps-talles" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+      </div>
+      </div>
+
+      <div id="ps-descripcion-wrap" style="margin-top:24px; margin-bottom:28px;">
+        <p style="font-size:12px; font-weight:600; color:#333; margin:0 0 10px; text-transform:uppercase; letter-spacing:1px; font-family:'Noto Sans',sans-serif;">Descripción</p>
+        <p id="ps-descripcion" style="font-size:13px; color:#444; line-height:1.5; font-family:'Noto Sans',sans-serif; margin:0; text-align:left;"></p>
+      </div>
+
+      <div id="ps-direccion-wrap" style="margin-bottom:28px;">
+        <p id="ps-direccion-titulo" style="font-size:12px; font-weight:600; color:#333; margin:0 0 10px; text-transform:uppercase; letter-spacing:1px; font-family:'Noto Sans',sans-serif;">Dirección</p>
+        <div id="ps-direcciones" style="font-size:13px; color:#444; line-height:1.5; font-family:'Noto Sans',sans-serif;"></div>
+      </div>
+
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-top:18px; margin-bottom:14px; padding:14px 0; border-top:1.5px solid #bbb; border-bottom:1.5px solid #bbb;">
+        <a id="ps-marca" href="#" style="font-size:15px; font-weight:700; color:#111; font-family:'Noto Sans',sans-serif; text-decoration:none; text-transform:capitalize;"></a>
+        <div style="display:flex; gap:6px;">
+          <button id="ps-mapa" onclick="toggleMapaSheet()" style="padding:6px 14px; border:1.5px solid #ccc; border-radius:20px; background:white; color:#666; font-size:12px; font-weight:600; font-family:'Noto Sans',sans-serif; cursor:pointer;">+ Mapa</button>
+          <button id="ps-seguir" onclick="toggleSeguirSheet()" style="padding:6px 16px; border:none; border-radius:20px; background:#ccc; color:white; font-size:12px; font-weight:600; font-family:'Noto Sans',sans-serif; cursor:pointer;">Seguir</button>
+        </div>
+      </div>
+
+      <div id="ps-otros-wrap" style="margin-bottom:14px;">
+        <div id="ps-otros" style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let psProductoId = null;
+    let psExpanded = false;
+
+    async function abrirProductoSheet(id) {
+      psProductoId = id;
+      const res = await fetch('/productos/' + id + '/detalle');
+      const data = await res.json();
+      if (!data.ok) return;
+
+      document.getElementById('ps-img').src = data.image || '';
+      document.getElementById('ps-nombre').textContent = data.name;
+      document.getElementById('ps-precio-original').textContent = data.original_price ? ('$' + data.original_price) : '';
+      document.getElementById('ps-precio-final').textContent = data.price ? ('$' + data.price) : '';
+      document.getElementById('ps-marca').textContent = data.brand_name;
+      document.getElementById('ps-marca').href = '/marcas/' + data.brand_id;
+
+      const modalidadEl = document.getElementById('ps-modalidad');
+      if (data.modalidad === 'local') {
+        modalidadEl.textContent = 'Mostrar en el local';
+      } else if (data.modalidad === 'digital') {
+        modalidadEl.textContent = 'Mostrar via digital al vendedor';
+      } else {
+        modalidadEl.textContent = 'Mostrar al vendedor';
+      }
+      document.getElementById('ps-descripcion').textContent = data.description || '';
+
+      const direcciones = (data.address || '').split('|').map(d => d.trim()).filter(d => d);
+      const dirTitulo = document.getElementById('ps-direccion-titulo');
+      const dirWrap = document.getElementById('ps-direcciones');
+      if (direcciones.length === 0) {
+        document.getElementById('ps-direccion-wrap').style.display = 'none';
+      } else {
+        document.getElementById('ps-direccion-wrap').style.display = 'block';
+        dirTitulo.textContent = direcciones.length > 1 ? 'Direcciones' : 'Dirección';
+        dirWrap.innerHTML = '';
+        direcciones.forEach(d => {
+          const p = document.createElement('p');
+          p.textContent = d;
+          p.style.margin = '0 0 4px';
+          dirWrap.appendChild(p);
+        });
+      }
+
+      const tallesAll = ['XS','S','M','L','XL','XXL'];
+      const tallesDisponibles = data.talles || [];
+      const tallesWrap = document.getElementById('ps-talles');
+      tallesWrap.innerHTML = '';
+      tallesAll.forEach(t => {
+        const disponible = tallesDisponibles.includes(t);
+        const span = document.createElement('span');
+        span.textContent = t;
+        span.style.padding = '6px 14px';
+        span.style.borderRadius = '6px';
+        span.style.fontSize = '13px';
+        span.style.fontFamily = "'Noto Sans', sans-serif";
+        span.style.position = 'relative';
+        if (disponible) {
+          span.style.border = '1.5px solid white';
+          span.style.color = 'white';
+          span.style.fontWeight = '600';
+          span.style.background = 'rgba(255,255,255,0.1)';
+        } else {
+          span.style.border = '1.5px solid rgba(255,255,255,0.3)';
+          span.style.color = 'rgba(255,255,255,0.4)';
+          span.style.background = 'linear-gradient(to top left, transparent 47%, rgba(255,255,255,0.3) 48%, rgba(255,255,255,0.3) 52%, transparent 53%)';
+        }
+        tallesWrap.appendChild(span);
+      });
+
+      const otrosWrap = document.getElementById('ps-otros');
+      otrosWrap.innerHTML = '';
+      (data.otros_productos || []).forEach(p => {
+        const div = document.createElement('div');
+        div.style.aspectRatio = '3/4';
+        div.style.background = '#f0f0f0';
+        div.style.borderRadius = '8px';
+        div.style.overflow = 'hidden';
+        div.style.cursor = 'pointer';
+        div.onclick = () => abrirProductoSheet(p.id);
+        const img = document.createElement('img');
+        img.src = p.image;
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'cover';
+        img.style.display = 'block';
+        div.appendChild(img);
+        otrosWrap.appendChild(div);
+      });
+      document.getElementById('ps-otros-wrap').style.display = (data.otros_productos || []).length > 0 ? 'block' : 'none';
+
+      const favIcon = document.getElementById('ps-favorito-icono');
+      favIcon.textContent = data.favorito ? '💚' : '🤍';
+
+      const seguirBtn = document.getElementById('ps-seguir');
+      seguirBtn.textContent = 'Seguir';
+      seguirBtn.style.background = '#ccc';
+
+      const mapaBtn = document.getElementById('ps-mapa');
+      mapaBtn.textContent = '+ Mapa';
+      mapaBtn.style.background = 'white';
+      mapaBtn.style.color = '#666';
+      mapaBtn.style.border = '1.5px solid #ccc';
+
+      psExpanded = false;
+      const sheet = document.getElementById('producto-sheet');
+      sheet.style.height = '60vh';
+      sheet.style.borderRadius = '18px 18px 0 0';
+      sheet.scrollTop = 0;
+
+      const overlay = document.getElementById('producto-overlay');
+      overlay.style.display = 'block';
+      overlay.style.opacity = '0';
+      overlay.style.transition = 'opacity 0.3s ease';
+
+      sheet.style.display = 'block';
+      sheet.style.transform = 'translateY(100%)';
+      document.body.style.overflow = 'hidden';
+
+      requestAnimationFrame(() => {
+        overlay.style.opacity = '1';
+        sheet.style.transform = 'translateY(0)';
+      });
+    }
+
+    function cerrarProductoSheet() {
+      const overlay = document.getElementById('producto-overlay');
+      const sheet = document.getElementById('producto-sheet');
+      overlay.style.opacity = '0';
+      sheet.style.transform = 'translateY(100%)';
+      setTimeout(() => {
+        overlay.style.display = 'none';
+        sheet.style.display = 'none';
+        document.body.style.overflow = '';
+      }, 300);
+    }
+
+    function toggleProductoSheetSize() {
+      const sheet = document.getElementById('producto-sheet');
+      psExpanded = !psExpanded;
+      if (psExpanded) {
+        sheet.style.height = '100vh';
+        sheet.style.borderRadius = '0';
+      } else {
+        sheet.style.height = '60vh';
+        sheet.style.borderRadius = '18px 18px 0 0';
+      }
+    }
+
+    async function toggleFavoritoSheet() {
+      if (!psProductoId) return;
+      const csrfToken = document.querySelector("meta[name='csrf-token']")?.getAttribute("content");
+      const res = await fetch('/favoritos/' + psProductoId, {
+        method: 'POST',
+        headers: { 'x-csrf-token': csrfToken, 'content-type': 'application/json' }
+      });
+      const data = await res.json();
+      if (data.ok) {
+        document.getElementById('ps-favorito-icono').textContent = data.action === 'added' ? '💚' : '🤍';
+      } else if (data.error === 'not_logged_in') {
+        window.location.href = '/auth/google';
+      }
+    }
+
+    function toggleMapaSheet() {
+      const btn = document.getElementById('ps-mapa');
+      if (btn.textContent === '+ Mapa') {
+        btn.textContent = '✓ En mapa';
+        btn.style.background = '#1E5C1E';
+        btn.style.color = 'white';
+        btn.style.border = '1.5px solid #1E5C1E';
+      } else {
+        btn.textContent = '+ Mapa';
+        btn.style.background = 'white';
+        btn.style.color = '#666';
+        btn.style.border = '1.5px solid #ccc';
+      }
+    }
+
+    function toggleSeguirSheet() {
+      const btn = document.getElementById('ps-seguir');
+      if (btn.textContent === 'Seguir') {
+        btn.textContent = 'Seguido';
+        btn.style.background = '#1E5C1E';
+      } else {
+        btn.textContent = 'Seguir';
+        btn.style.background = '#ccc';
+      }
+    }
+
+    (function() {
+      const sheet = document.getElementById('producto-sheet');
+
+      sheet.addEventListener('scroll', function() {
+        const imgWrap = document.getElementById('ps-img-wrap');
+        const favBtn = document.getElementById('ps-favorito');
+        const imgHeight = imgWrap.offsetHeight;
+        const scrollTop = sheet.scrollTop;
+        const maxTravel = imgHeight - 10 - 34;
+        const offset = Math.min(scrollTop, maxTravel);
+        favBtn.style.transform = 'translateY(' + (-offset) + 'px)';
+      });
+
+      let startY = 0;
+      sheet.addEventListener('touchstart', function(e) {
+        startY = e.touches[0].clientY;
+      }, { passive: true });
+      sheet.addEventListener('touchmove', function(e) {
+        const diff = startY - e.touches[0].clientY;
+        if (diff > 50 && !psExpanded) {
+          toggleProductoSheetSize();
+        } else if (diff < -80 && psExpanded && sheet.scrollTop === 0) {
+          toggleProductoSheetSize();
+        } else if (diff < -140 && !psExpanded && sheet.scrollTop === 0) {
+          cerrarProductoSheet();
+        }
+      }, { passive: true });
+    })();
+  </script>
   </body>
 </html>

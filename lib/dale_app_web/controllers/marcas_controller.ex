@@ -18,21 +18,14 @@ defmodule DaleAppWeb.MarcasController do
     cupon = Repo.one(from c in Coupon, where: c.brand_id == ^marca.id and c.active == true, limit: 1)
     user_id = get_session(conn, :user_id)
     current_user = conn.assigns[:current_user]
-
-    if current_user && current_user.role == "dueño" && current_user.id == marca.user_id do
-      Products.ensure_brand_slots(marca.id)
-    end
-
     productos = Products.list_brand_products(marca.id)
-    
     en_mapa = if user_id do
       saved = MapSaves.list_user_map(user_id)
       Enum.any?(saved, fn s -> s.brand_id == marca.id end)
     else
       false
     end
-
     Events.track("brand_view", user_id, marca.id, %{brand_name: marca.name})
-    render(conn, :show, marca: marca, cupon: cupon, productos: productos, en_mapa: en_mapa)
+    render(conn, :show, marca: marca, cupon: cupon, productos: productos, en_mapa: en_mapa, current_user: current_user)
   end
 end
