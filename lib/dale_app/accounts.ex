@@ -18,6 +18,12 @@ defmodule DaleApp.Accounts do
 
   def get_user(id), do: Repo.get(User, id)
 
+  def update_user(user, attrs) do
+    user
+    |> User.changeset(attrs)
+    |> Repo.update()
+  end
+
   def update_user_role(user, role) do
     result =
       user

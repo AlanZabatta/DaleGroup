@@ -34,7 +34,22 @@ defmodule DaleAppWeb.PageController do
       current_user = Accounts.get_user(user_id)
       amigos = DaleApp.Friends.friends_list(user_id)
       favoritos = DaleApp.Favorites.list_user_favorites(user_id)
-      render(conn, :perfil, current_user: current_user, amigos: amigos, favoritos: favoritos)
+      publicaciones = DaleApp.Publicaciones.listar_de_usuario(user_id)
+      render(conn, :perfil, current_user: current_user, amigos: amigos, favoritos: favoritos, publicaciones: publicaciones)
+    end
+  end
+
+  def guardar_config(conn, %{"config" => config}) do
+    user_id = get_session(conn, :user_id)
+    if is_nil(user_id) do
+      json(conn, %{ok: false, error: "No logueado"})
+    else
+      user = Accounts.get_user(user_id)
+      merged = Map.merge(user.perfil_config || %{}, config)
+      case Accounts.update_user(user, %{perfil_config: merged}) do
+        {:ok, _} -> json(conn, %{ok: true})
+        {:error, _} -> json(conn, %{ok: false, error: "No se pudo guardar"})
+      end
     end
   end
 
@@ -44,10 +59,16 @@ defmodule DaleAppWeb.PageController do
     solicitudes = if user_id, do: DaleApp.Friends.pending_requests(user_id), else: []
     amigos = if user_id, do: DaleApp.Friends.friends_list(user_id), else: []
     amigo_ids = Enum.map(amigos, & &1.id)
-    publicaciones = if user_id, do: DaleApp.Publicaciones.listar_de_amigos(user_id, amigo_ids), else: []
+    publicaciones =
+      if user_id && amigo_ids != [] do
+        DaleApp.Publicaciones.listar_de_amigos(user_id, amigo_ids)
+      else
+        DaleApp.Publicaciones.listar_todas()
+      end
     pub_ids = Enum.map(publicaciones, & &1.id)
-    {likes_conteo, mis_likes} = if user_id, do: DaleApp.Likes.likes_por_publicaciones(pub_ids, user_id), else: {%{}, MapSet.new()}
-    render(conn, :amigos, current_user: current_user, solicitudes: solicitudes, amigos: amigos, publicaciones: publicaciones, likes_conteo: likes_conteo, mis_likes: mis_likes)
+    {likes_conteo, mis_likes} = if user_id, do: DaleApp.Likes.likes_por_publicaciones(pub_ids, user_id), else: {DaleApp.Likes.conteo_publicaciones(pub_ids), MapSet.new()}
+    chats = if user_id, do: DaleApp.Mensajes.lista_chats(user_id), else: []
+    render(conn, :amigos, current_user: current_user, solicitudes: solicitudes, amigos: amigos, publicaciones: publicaciones, likes_conteo: likes_conteo, mis_likes: mis_likes, chats: chats)
   end
 
   def productos(conn, params) do
@@ -208,6 +229,19 @@ defmodule DaleAppWeb.PageController do
         json(conn, %{ok: true, url: url})
       _ ->
         json(conn, %{ok: false, error: "Error al subir foto"})
+    end
+  end
+
+  def cambiar_vitrina(conn, %{"foto" => foto}) do
+    user_id = get_session(conn, :user_id)
+    user = Accounts.get_user(user_id)
+    case DaleApp.Storage.upload_image(foto.path, foto.filename) do
+      {:ok, %{body: %{"secure_url" => url}}} ->
+        nuevo_config = Map.put(user.perfil_config || %{}, "vitrina", url)
+        user |> DaleApp.Accounts.User.changeset(%{perfil_config: nuevo_config}) |> DaleApp.Repo.update()
+        json(conn, %{ok: true, url: url})
+      _ ->
+        json(conn, %{ok: false, error: "Error al subir imagen"})
     end
   end
 

@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={get_csrf_token()} />
-    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Noto+Sans:wght@400;600&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Noto+Sans:wght@400;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet"/>
     <.live_title default="DaleGroup">
       {assigns[:page_title]}
     </.live_title>
@@ -175,6 +175,8 @@
 
       window.addEventListener("scroll", () => {
         if (window.location.pathname === "/mapa") return;
+        const editor = document.getElementById("editor-overlay");
+        if (editor && editor.style.transform === "translateY(0px)") { navbar.style.transform = "translateY(0)"; return; }
         const current = window.scrollY;
         if (current > lastScroll && current > 60) {
           navbar.style.transform = "translateY(-100%)";

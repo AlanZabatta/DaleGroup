@@ -1,3 +1,24 @@
+<style>
+  #amigos-slider { display:flex; width:100%; height:calc(100vh - 60px); overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  #amigos-slider::-webkit-scrollbar { display:none; }
+  .amigos-panel { flex:0 0 100%; width:100%; height:100%; overflow-y:auto; scroll-snap-align:start; scroll-snap-stop:always; box-sizing:border-box; }
+  .amigos-dots { display:flex; gap:7px; justify-content:center; padding:8px 0; }
+  .amigos-dot { width:7px; height:7px; border-radius:50%; background:#ccc; transition:all 0.3s; }
+  .amigos-dot.activo { background:#186904; width:20px; border-radius:4px; }
+</style>
+
+<div class="amigos-dots">
+  <div class="amigos-dot" id="adot-0"></div>
+  <div class="amigos-dot activo" id="adot-1"></div>
+  <div class="amigos-dot" id="adot-2"></div>
+</div>
+
+<div id="amigos-slider">
+  <div class="amigos-panel" style="padding:16px; display:flex; align-items:center; justify-content:center;">
+    <p style="color:#ccc; font-size:14px; font-family:Poppins,sans-serif;">Próximamente</p>
+  </div>
+
+  <div class="amigos-panel" id="amigos-panel-centro">
 <!-- PUBLICACIONES -->
 <div style="width: 100%; box-sizing: border-box; padding: 0 32px; margin-top: 48px;">
   <%= for pub <- @publicaciones do %>
@@ -18,10 +39,10 @@
                 </button>
               <% end %>
             </div>
-            <%= if pub.user_id != @current_user.id do %>
-  <button onclick="toggleSeguir(this)" style="background:#186904; color:white; border:none; border-radius:6px; padding:5px 18px; font-size:13px; font-weight:600; font-family:'Noto Sans',sans-serif; cursor:pointer; width:fit-content;">Seguir</button>
-<% else %>
+            <%= if @current_user && pub.user_id == @current_user.id do %>
   <button style="background:white; color:#186904; border:1.5px solid #186904; border-radius:6px; padding:5px 18px; font-size:13px; font-weight:600; font-family:'Noto Sans',sans-serif; cursor:default; width:fit-content;">Sos vos</button>
+<% else %>
+  <button onclick="toggleSeguir(this)" style="background:#186904; color:white; border:none; border-radius:6px; padding:5px 18px; font-size:13px; font-weight:600; font-family:'Noto Sans',sans-serif; cursor:pointer; width:fit-content;">Seguir</button>
 <% end %>
           </div>
         </div>
@@ -87,6 +108,11 @@
 </div>
 
 <script>
+  window.dale_logueado = <%= if @current_user, do: "true", else: "false" %>;
+  function dale_pedirLogin() {
+    if (!window.dale_logueado) { window.location.href = "/auth/google"; return true; }
+    return false;
+  }
   const csrfLike = document.querySelector("meta[name='csrf-token']")?.getAttribute("content");
 
   function animarCorazones(el) {
@@ -106,7 +132,7 @@
     }
   }
 
-  function toggleLike(el) { const pubId = el.getAttribute("data-id");
+  function toggleLike(el) { if (dale_pedirLogin()) return; const pubId = el.getAttribute("data-id");
     fetch('/publicaciones/' + pubId + '/like', {
       method: 'POST',
       headers: { 'x-csrf-token': csrfLike, 'content-type': 'application/json' },
@@ -135,6 +161,7 @@
   const csrfComentario = document.querySelector("meta[name='csrf-token']")?.getAttribute("content");
 
   function toggleComentarios(pubId) {
+    if (dale_pedirLogin()) return;
     const seccion = document.getElementById('comentarios-' + pubId);
     if (seccion.style.display === 'none' || seccion.style.display === '') {
       seccion.style.display = 'block';
@@ -206,6 +233,7 @@
   let pubIdActual = null;
 
   function toggleComentarios(pubId) {
+    if (dale_pedirLogin()) return;
     pubIdActual = pubId;
     document.getElementById('modal-comentarios').style.display = 'flex';
     document.getElementById('modal-comentarios-overlay').style.display = 'block';
@@ -293,6 +321,7 @@
 </script>
 <script>
   function toggleSeguir(btn) {
+    if (dale_pedirLogin()) return;
     if (btn.textContent === 'Seguir') {
       btn.textContent = 'Siguiendo';
       btn.style.background = 'white';
@@ -391,3 +420,57 @@
     });
   }
 </script>
+
+  </div>
+
+  <div class="amigos-panel" id="amigos-panel-chats" style="padding:16px 12px;">
+    <p style="font-size:24px; font-weight:800; color:#186904; font-family:Poppins,sans-serif; margin:8px 4px 16px;">Mensajes</p>
+
+    <%= if assigns[:chats] == nil or @chats == [] do %>
+      <p style="text-align:center; color:#bbb; font-size:14px; font-family:Poppins,sans-serif; margin-top:40px;">Todavía no tenés amigos para chatear.</p>
+    <% else %>
+      <%= for chat <- @chats do %>
+        <div onclick={"window.location.href='/chat/#{chat.amigo.id}'"} style="display:flex; align-items:center; gap:12px; padding:12px; border-radius:16px; cursor:pointer; margin-bottom:6px; background:#fff; border:1px solid #f0f0f0;">
+          <div style="position:relative; flex-shrink:0;">
+            <img src={chat.amigo.avatar} style="width:52px; height:52px; border-radius:50%; object-fit:cover; background:#eee;"/>
+            <%= if chat.no_leidos > 0 do %>
+              <div style="position:absolute; top:-2px; right:-2px; min-width:18px; height:18px; background:#e02020; border-radius:9px; color:#fff; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; padding:0 4px; font-family:Poppins,sans-serif;"><%= chat.no_leidos %></div>
+            <% end %>
+          </div>
+          <div style="flex:1; min-width:0;">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+              <span style={"font-size:15px; color:#111; font-family:Poppins,sans-serif; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; " <> if chat.no_leidos > 0, do: "font-weight:700;", else: "font-weight:600;"}>@<%= chat.amigo.username || chat.amigo.name %></span>
+              <%= if chat.fecha do %>
+                <span style="font-size:11px; color:#999; font-family:Poppins,sans-serif; flex-shrink:0;"><%= Calendar.strftime(chat.fecha, "%H:%M") %></span>
+              <% end %>
+            </div>
+            <p style={"margin:2px 0 0; font-size:13px; font-family:Poppins,sans-serif; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; " <> if chat.no_leidos > 0, do: "color:#186904; font-weight:600;", else: "color:#999;"}>
+              <%= cond do %>
+                <% chat.ultimo_texto == nil -> %>Tocá para escribir
+                <% chat.ultimo_mio -> %>Vos: <%= chat.ultimo_texto %>
+                <% true -> %><%= chat.ultimo_texto %>
+              <% end %>
+            </p>
+          </div>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+</div>
+
+<script>
+  (function() {
+    var slider = document.getElementById('amigos-slider');
+    var dots = [document.getElementById('adot-0'), document.getElementById('adot-1'), document.getElementById('adot-2')];
+    function irAlCentro() { slider.scrollLeft = slider.clientWidth; }
+    irAlCentro();
+    window.addEventListener('load', irAlCentro);
+    slider.addEventListener('scroll', function() {
+      var idx = Math.round(slider.scrollLeft / slider.clientWidth);
+      dots.forEach(function(d, i) {
+        if (d) d.classList.toggle('activo', i === idx);
+      });
+    });
+  })();
+</script>
+

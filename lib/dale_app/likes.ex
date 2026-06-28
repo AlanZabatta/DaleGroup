@@ -31,4 +31,9 @@ defmodule DaleApp.Likes do
     mis_likes = Repo.all(from l in Like, where: l.publicacion_id in ^publicacion_ids and l.user_id == ^user_id, select: l.publicacion_id)
     {Map.new(conteos), MapSet.new(mis_likes)}
   end
+
+  def conteo_publicaciones(publicacion_ids) do
+    conteos = Repo.all(from l in Like, where: l.publicacion_id in ^publicacion_ids, group_by: l.publicacion_id, select: {l.publicacion_id, count(l.id)})
+    Map.new(conteos)
+  end
 end

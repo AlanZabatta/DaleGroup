@@ -20,9 +20,14 @@ defmodule DaleAppWeb.Router do
     post "/amigos/buscar", FriendController, :buscar
     post "/perfil/username", PageController, :cambiar_username
     post "/perfil/foto", PageController, :cambiar_foto
+    post "/perfil/config", PageController, :guardar_config
+    post "/perfil/vitrina", PageController, :cambiar_vitrina
     post "/amigos/solicitar", FriendController, :solicitar
     post "/amigos/aceptar/:id", FriendController, :aceptar
     post "/amigos/rechazar/:id", FriendController, :rechazar
+    get "/chat/:id", MensajeController, :chat
+    post "/chat/:id/enviar", MensajeController, :enviar
+    get "/chat/:id/listar", MensajeController, :listar
     post "/publicaciones/crear", PublicacionController, :crear
     post "/publicaciones/:publicacion_id/like", LikeController, :toggle
     delete "/publicaciones/:id", PublicacionController, :borrar

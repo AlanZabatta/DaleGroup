@@ -1,5 +1,6 @@
 <style>
-  body { overflow: hidden !important; }
+  html, body { overflow: hidden !important; height: 100%; width: 100%; }
+  #navbar, #bottom-bar { transition: none !important; }
   @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
   @keyframes mp-flotar { 0%,100%{transform:translateY(0) rotate(-1.5deg)} 50%{transform:translateY(-10px) rotate(1.5deg)} }
   @keyframes mp-swing { 0%,100%{transform:rotate(-7deg)} 50%{transform:rotate(7deg)} }
@@ -31,6 +32,14 @@
     width: 40px; height: 4px;
     background: #e0e0e0; border-radius: 2px;
   }
+  @keyframes ff-aparecer { from{opacity:0; transform:translateY(-12px);} to{opacity:1; transform:translateY(0);} }
+  #seccion-filtros.activa .ff-fade { animation: ff-aparecer 0.5s ease forwards; opacity:0; }
+  #seccion-filtros.activa .ff-fade:nth-child(3){animation-delay:0.05s;}
+  #seccion-filtros.activa .ff-fade:nth-child(4){animation-delay:0.13s;}
+  #seccion-filtros.activa .ff-fade:nth-child(5){animation-delay:0.21s;}
+  #seccion-filtros.activa .ff-fade:nth-child(6){animation-delay:0.29s;}
+  #seccion-filtros.activa .ff-fade:nth-child(7){animation-delay:0.37s;}
+  #seccion-filtros.activa .ff-fade:nth-child(8){animation-delay:0.45s;}
   .subte-label { display: none; }
   .zoom-cerca .subte-label { display: inline-block; }
 </style>
@@ -46,9 +55,9 @@
     </svg>
   </div>
 
-  <div id="panel-mp" style="position:absolute; top:0; left:0; width:210px; height:100%; padding:80px 14px 26px; box-sizing:border-box; transform:translateX(-240px); transition:transform 0.55s cubic-bezier(0.34,1.45,0.5,1); z-index:1101; opacity:0; overflow-y:auto;">
-    <div id="mp-titulo-activo" style="font-size:22px; font-weight:600; color:#186904; margin-bottom:0px; font-family:'Noto Sans',sans-serif;">DaleMapa</div>
-    <div id="mp-titulo-inactivo" style="font-size:15px; font-weight:500; color:#999; margin-bottom:20px; font-family:'Noto Sans',sans-serif;">MapaParty</div>
+  <div id="panel-mp" style="position:absolute; top:0; left:0; width:210px; height:100%; padding:48px 14px 26px; box-sizing:border-box; transform:translateX(-240px); transition:transform 0.55s cubic-bezier(0.34,1.45,0.5,1); z-index:1101; opacity:0; overflow-y:auto;">
+    <div id="mp-titulo-activo" onclick="cambiarSeccion()" style="font-size:25px; font-weight:700; color:#186904; margin-bottom:2px; font-family:'Noto Sans',sans-serif; cursor:pointer; line-height:1.1;">DaleMapa</div>
+    <div id="mp-titulo-inactivo" onclick="cambiarSeccion()" style="font-size:17px; font-weight:500; color:#999; margin-bottom:22px; font-family:'Noto Sans',sans-serif; cursor:pointer; line-height:1.1;">MapaParty</div>
 
     <div id="seccion-dalemapa">
       <div style="display:flex; align-items:center; gap:7px; background:#f2f2f2; border-radius:14px; padding:8px 12px; margin-bottom:16px;">
@@ -77,6 +86,68 @@
       </div>
       <div style="margin-top:12px;">
         <span style="color:#186904; font-size:14px; font-weight:600; font-family:'Noto Sans',sans-serif; cursor:pointer;">Ver más</span>
+      </div>
+
+    <div style="font-size:13px; color:#186904; font-weight:600; margin-top:20px; margin-bottom:10px; font-family:'Noto Sans',sans-serif;">Transportes</div>
+      <div style="display:flex; gap:10px; margin-bottom:6px;">
+        <div id="t-btn-subte" onclick="toggleTransporte('subte')" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; background:#f6f6f6; border:2.5px solid #f6f6f6; border-radius:14px; padding:11px 0; cursor:pointer; transition:all 0.2s;">
+          <svg width="32" height="32" viewBox="0 0 40 40" fill="none">
+            <rect x="7" y="5" width="26" height="26" rx="7" fill="#fff" stroke="#000" stroke-width="2.5"/>
+            <rect x="11" y="9" width="18" height="8" rx="2.5" fill="#FFD200" stroke="#000" stroke-width="2"/>
+            <circle cx="14" cy="23" r="2.3" fill="#000"/><circle cx="26" cy="23" r="2.3" fill="#000"/>
+            <line x1="12" y1="31" x2="9" y2="36" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="28" y1="31" x2="31" y2="36" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+          <span id="t-lbl-subte" style="font-size:12px; color:#555; font-weight:500; font-family:'Noto Sans',sans-serif;">Subte</span>
+        </div>
+        <div id="t-btn-colectivo" onclick="toggleTransporte('colectivo')" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; background:#f6f6f6; border:2.5px solid #f6f6f6; border-radius:14px; padding:11px 0; cursor:pointer; transition:all 0.2s;">
+          <svg width="32" height="32" viewBox="0 0 40 40" fill="none">
+            <rect x="5" y="8" width="30" height="20" rx="5" fill="#fff" stroke="#000" stroke-width="2.5"/>
+            <rect x="9" y="12" width="9" height="7" rx="2" fill="#7FC0E8" stroke="#000" stroke-width="1.8"/>
+            <rect x="22" y="12" width="9" height="7" rx="2" fill="#7FC0E8" stroke="#000" stroke-width="1.8"/>
+            <line x1="5" y1="23" x2="35" y2="23" stroke="#000" stroke-width="1.8"/>
+            <circle cx="13" cy="30" r="3.2" fill="#fff" stroke="#000" stroke-width="2.5"/>
+            <circle cx="27" cy="30" r="3.2" fill="#fff" stroke="#000" stroke-width="2.5"/>
+          </svg>
+          <span id="t-lbl-colectivo" style="font-size:12px; color:#555; font-weight:500; font-family:'Noto Sans',sans-serif;">Colectivo</span>
+        </div>
+      </div>
+
+      <div id="ff-titulo" style="font-size:13px; color:#186904; font-weight:600; margin-top:20px; margin-bottom:10px; font-family:'Noto Sans',sans-serif;">Filtros</div>
+      <div id="ff-btn-ver" onclick="abrirFiltros()" style="display:flex; flex-direction:column; align-items:center; gap:6px; background:#f6f6f6; border:2.5px solid #f6f6f6; border-radius:14px; padding:12px 0; cursor:pointer; transition:all 0.2s; width:70%;">
+        <svg width="32" height="32" viewBox="0 0 40 40" fill="none">
+          <path d="M7 9 L33 9 L24 21 L24 32 L16 28 L16 21 Z" fill="#fff" stroke="#000" stroke-width="2.5" stroke-linejoin="round"/>
+          <circle cx="13" cy="13" r="1.6" fill="#186904"/>
+          <circle cx="20" cy="13" r="1.6" fill="#E91E8C"/>
+          <circle cx="27" cy="13" r="1.6" fill="#F5A623"/>
+        </svg>
+        <span style="font-size:12px; color:#555; font-weight:500; font-family:'Noto Sans',sans-serif;">Ver Filtros</span>
+      </div>
+    </div>
+
+    <div id="seccion-filtros" style="display:none;">
+      <div onclick="cerrarFiltros()" style="display:flex; align-items:center; gap:6px; cursor:pointer; margin-bottom:4px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        <span style="font-size:12px; color:#186904; font-weight:600; font-family:'Noto Sans',sans-serif;">Volver</span>
+      </div>
+      <div style="font-size:21px; font-weight:700; color:#186904; font-family:'Noto Sans',sans-serif; margin-bottom:18px;">Filtros</div>
+      <div class="ff-fade" style="font-size:12px; color:#555; font-weight:600; font-family:'Noto Sans',sans-serif; margin-bottom:7px;">Genero</div>
+      <div class="ff-fade" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px;">
+        <div onclick="toggleChipF(this,'genero')" data-val="mujer" style="padding:5px 12px; border-radius:20px; border:1.5px solid #186904; font-size:12px; color:#186904; font-family:'Noto Sans',sans-serif; cursor:pointer; background:white;">Mujer</div>
+        <div onclick="toggleChipF(this,'genero')" data-val="hombre" style="padding:5px 12px; border-radius:20px; border:1.5px solid #186904; font-size:12px; color:#186904; font-family:'Noto Sans',sans-serif; cursor:pointer; background:white;">Hombre</div>
+        <div onclick="toggleChipF(this,'genero')" data-val="unisex" style="padding:5px 12px; border-radius:20px; border:1.5px solid #186904; font-size:12px; color:#186904; font-family:'Noto Sans',sans-serif; cursor:pointer; background:white;">Unisex</div>
+      </div>
+      <div class="ff-fade" style="font-size:12px; color:#555; font-weight:600; font-family:'Noto Sans',sans-serif; margin-bottom:7px;">Precio</div>
+      <div class="ff-fade" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px;">
+        <div onclick="toggleChipF(this,'precio')" data-val="$" style="padding:5px 14px; border-radius:20px; border:1.5px solid #186904; font-size:12px; color:#186904; font-family:'Noto Sans',sans-serif; cursor:pointer; background:white;">$</div>
+        <div onclick="toggleChipF(this,'precio')" data-val="$$" style="padding:5px 14px; border-radius:20px; border:1.5px solid #186904; font-size:12px; color:#186904; font-family:'Noto Sans',sans-serif; cursor:pointer; background:white;">$$</div>
+        <div onclick="toggleChipF(this,'precio')" data-val="$$$" style="padding:5px 14px; border-radius:20px; border:1.5px solid #186904; font-size:12px; color:#186904; font-family:'Noto Sans',sans-serif; cursor:pointer; background:white;">$$$</div>
+      </div>
+      <div class="ff-fade" style="font-size:12px; color:#555; font-weight:600; font-family:'Noto Sans',sans-serif; margin-bottom:7px;">Estilo</div>
+      <div class="ff-fade" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px;">
+        <div onclick="toggleChipF(this,'estilo')" data-val="deportiva" style="padding:5px 12px; border-radius:20px; border:1.5px solid #186904; font-size:12px; color:#186904; font-family:'Noto Sans',sans-serif; cursor:pointer; background:white;">Deportiva</div>
+        <div onclick="toggleChipF(this,'estilo')" data-val="elegante" style="padding:5px 12px; border-radius:20px; border:1.5px solid #186904; font-size:12px; color:#186904; font-family:'Noto Sans',sans-serif; cursor:pointer; background:white;">Elegante</div>
+        <div onclick="toggleChipF(this,'estilo')" data-val="casual" style="padding:5px 12px; border-radius:20px; border:1.5px solid #186904; font-size:12px; color:#186904; font-family:'Noto Sans',sans-serif; cursor:pointer; background:white;">Casual</div>
       </div>
     </div>
 
@@ -140,12 +211,13 @@
     <div style="position:absolute; top:62px; left:50%; transform:translateX(-50%); color:white; font-size:12px; font-weight:600; text-align:center; width:100px; line-height:1.2; font-family:'Noto Sans',sans-serif;">Crear<br>MapaParty</div>
   </div>
 
-  <div style="position:absolute;top:70px;right:16px;z-index:1000;display:flex;flex-direction:column;gap:8px;">
+  <div style="position:absolute;top:70px;right:16px;z-index:1000;display:none;flex-direction:column;gap:8px;">
     <button onclick="setPaleta('verde')" style="width:36px;height:36px;border-radius:50%;background:#44BB64;border:3px solid white;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3);"></button>
     <button onclick="setPaleta('rosa')" style="width:36px;height:36px;border-radius:50%;background:#E91E8C;border:3px solid white;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3);"></button>
     <button onclick="setPaleta('negro')" style="width:36px;height:36px;border-radius:50%;background:#111;border:3px solid #C9A84C;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3);"></button>
     <button id="btn-subte" onclick="toggleSubte()" style="width:36px;height:36px;border-radius:50%;background:white;border:3px solid #888;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3);opacity:0.5;font-size:16px;display:flex;align-items:center;justify-content:center;padding:0;">🚇</button>
   </div>
+
 
   <div id="ubicacion-loading" style="position:absolute;top:70px;left:50%;transform:translateX(-50%);z-index:1000;background:rgba(0,0,0,0.75);color:white;padding:8px 18px;border-radius:20px;font-size:13px;font-family:sans-serif;display:flex;align-items:center;gap:8px;">
     <span style="animation:spin 1s linear infinite;display:inline-block;">📍</span>
@@ -198,26 +270,27 @@
     lng: l.longitude
   } end)) |> raw() %>;
 
-  function makeIcon(colorName) {
-    const valid = ['blue','green','red','orange','yellow','violet','grey','black','gold'];
-    if (colorName === 'platinum') {
-      const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="25" height="41" viewBox="0 0 25 41"><path d="M12.5 0 C5.6 0 0 5.6 0 12.5 C0 22 12.5 41 12.5 41 C12.5 41 25 22 25 12.5 C25 5.6 19.4 0 12.5 0Z" fill="#B0B7C3"/><circle cx="12.5" cy="12.5" r="5" fill="rgba(255,255,255,0.4)"/></svg>';
-      return L.icon({ iconUrl: 'data:image/svg+xml;base64,' + btoa(svg), iconSize:[25,41], iconAnchor:[12,41], popupAnchor:[1,-34] });
-    }
-    const c = valid.includes(colorName) ? colorName : 'blue';
+  function makeIcon(saved) {
+    // Color segun la paleta activa
+    var col = paletaActual === 'verde' ? '#44BB64' : paletaActual === 'rosa' ? '#E91E8C' : '#2b2b2b';
+    // Pin caricatura: gota redondeada con borde negro grueso tipo cartoon
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="38" height="50" viewBox="0 0 38 50">' +
+      '<path d="M19 3 C9 3 2 10 2 19 C2 31 19 47 19 47 C19 47 36 31 36 19 C36 10 29 3 19 3 Z" fill="' + col + '" stroke="#000000" stroke-width="3" stroke-linejoin="round"/>' +
+      '<circle cx="19" cy="18" r="6.5" fill="#ffffff" stroke="#000000" stroke-width="2.5"/>' +
+      (saved ? '<circle cx="19" cy="18" r="2.8" fill="#000000"/>' : '') +
+      '</svg>';
     return L.icon({
-      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-' + c + '.png',
-      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-      iconSize:[25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41]
+      iconUrl: 'data:image/svg+xml;base64,' + btoa(svg),
+      iconSize:[38,50], iconAnchor:[19,47], popupAnchor:[0,-44]
     });
   }
 
   function makeAvatarIcon() {
-    const bc = paletaActual === 'verde' ? '#44BB64' : paletaActual === 'rosa' ? '#E91E8C' : '#E8E8E8';
+    const bc = paletaActual === 'verde' ? '#44BB64' : paletaActual === 'rosa' ? '#E91E8C' : '#2b2b2b';
     const html = userAvatar
-      ? '<img src="' + userAvatar + '" width="44" height="44" style="border-radius:50%;border:3px solid ' + bc + ';box-shadow:0 2px 12px rgba(0,0,0,0.5);object-fit:cover;display:block;" />'
-      : '<div style="width:44px;height:44px;border-radius:50%;background:' + bc + ';border:3px solid white;display:flex;align-items:center;justify-content:center;color:white;font-size:18px;">👤</div>';
-    return L.divIcon({ html:html, iconSize:[44,44], iconAnchor:[22,22], className:'' });
+      ? '<div style="width:48px;height:48px;border-radius:50%;border:3.5px solid #000;background:' + bc + ';box-shadow:0 2px 10px rgba(0,0,0,0.4);overflow:hidden;box-sizing:border-box;"><img src="' + userAvatar + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;" /></div>'
+      : '<div style="width:48px;height:48px;border-radius:50%;background:' + bc + ';border:3.5px solid #000;display:flex;align-items:center;justify-content:center;color:white;font-size:20px;box-sizing:border-box;">👤</div>';
+    return L.divIcon({ html:html, iconSize:[48,48], iconAnchor:[24,24], className:'' });
   }
 
   function abrirPanel(marca) {
@@ -256,7 +329,7 @@
     marcas.forEach(function(marca) {
       if (marca.lat && marca.lng) {
         const isSaved = savedIds.includes(marca.id);
-        const marker = L.marker([marca.lat, marca.lng], {icon: makeIcon(isSaved ? p.saved : p.normal)})
+        const marker = L.marker([marca.lat, marca.lng], {icon: makeIcon(isSaved)})
           .addTo(map).on('click', function() { abrirPanel(marca); });
         marcasMarkers.push(marker);
       }
@@ -266,7 +339,7 @@
       if (loc.lat && loc.lng) {
         const isSaved = savedIds.includes(loc.brand_id);
         const marca = marcas.find(function(m) { return m.id === loc.brand_id; });
-        const marker = L.marker([loc.lat, loc.lng], {icon: makeIcon(isSaved ? p.saved : p.normal)})
+        const marker = L.marker([loc.lat, loc.lng], {icon: makeIcon(isSaved)})
           .addTo(map).on('click', function() {
             if (marca) abrirPanel(Object.assign({}, marca, {address: loc.address}));
           });
@@ -391,6 +464,38 @@
     if (subteGroup) { map.removeLayer(subteGroup); subteGroup = null; }
     if (subteEstacionesGroup) { map.removeLayer(subteEstacionesGroup); subteEstacionesGroup = null; }
     subteVisible = false;
+  }
+
+  var transporteEstado = { subte:false, colectivo:false };
+  function toggleChip(el) {
+    var activo = el.getAttribute('data-on') === '1';
+    if (activo) {
+      el.setAttribute('data-on', '0');
+      el.style.background = '#f6f6f6';
+      el.style.borderColor = '#f6f6f6';
+      el.style.color = '#555';
+    } else {
+      el.setAttribute('data-on', '1');
+      el.style.background = '#E8F5EC';
+      el.style.borderColor = '#186904';
+      el.style.color = '#186904';
+    }
+  }
+
+  function toggleTransporte(t) {
+    transporteEstado[t] = !transporteEstado[t];
+    var btn = document.getElementById('t-btn-' + t);
+    var lbl = document.getElementById('t-lbl-' + t);
+    if (transporteEstado[t]) {
+      btn.style.background = '#E8F5EC';
+      btn.style.borderColor = '#186904';
+      lbl.style.color = '#186904';
+    } else {
+      btn.style.background = '#f6f6f6';
+      btn.style.borderColor = '#f6f6f6';
+      lbl.style.color = '#555';
+    }
+    if (t === 'subte') { toggleSubte(); }
   }
 
   function toggleSubte() {
@@ -619,4 +724,59 @@
 
   setPaleta('rosa');
   pedirUbicacion();
+  var nubeFiltrosAbierta = false;
+  var filtrosActivos = { genero: [], precio: [], estilo: [] };
+  function toggleNubeFiltros() {
+    nubeFiltrosAbierta = !nubeFiltrosAbierta;
+    var nube = document.getElementById('cloudwrap-filtros');
+    var panel = document.getElementById('panel-filtros');
+    var btn = document.getElementById('btn-filtros');
+    if (nubeFiltrosAbierta) {
+      nube.style.transform = 'translateX(0)';
+      panel.style.transform = 'translateX(0)';
+      panel.style.opacity = '1';
+      btn.style.background = '#0d4a02';
+      btn.textContent = 'Cerrar filtros';
+    } else {
+      nube.style.transform = 'translateX(160px)';
+      panel.style.transform = 'translateX(200px)';
+      panel.style.opacity = '0';
+      btn.style.background = '#186904';
+      btn.textContent = 'Seleccionar filtros';
+    }
+  }
+  function toggleChipF(el, grupo) {
+    var val = el.getAttribute('data-val');
+    var idx = filtrosActivos[grupo].indexOf(val);
+    if (idx === -1) {
+      filtrosActivos[grupo].push(val);
+      el.style.background = '#186904';
+      el.style.color = 'white';
+    } else {
+      filtrosActivos[grupo].splice(idx, 1);
+      el.style.background = 'white';
+      el.style.color = '#186904';
+    }
+  }
+  function abrirFiltros() {
+    var dale = document.getElementById('seccion-dalemapa');
+    var filtros = document.getElementById('seccion-filtros');
+    dale.style.transition = 'opacity 0.3s';
+    dale.style.opacity = '0';
+    setTimeout(function() {
+      dale.style.display = 'none';
+      filtros.style.display = 'block';
+      void filtros.offsetWidth;
+      filtros.classList.add('activa');
+    }, 300);
+  }
+  function cerrarFiltros() {
+    var dale = document.getElementById('seccion-dalemapa');
+    var filtros = document.getElementById('seccion-filtros');
+    filtros.classList.remove('activa');
+    filtros.style.display = 'none';
+    dale.style.display = 'block';
+    void dale.offsetWidth;
+    dale.style.opacity = '1';
+  }
 </script>

@@ -1,31 +1,124 @@
-<div style="width: 100%; box-sizing: border-box; padding: 0 16px;">
+<style>
+  @keyframes dp-ondular { to{transform:translateX(-50%)} }
+  @keyframes dp-respirar { 0%,100%{transform:scale(1) rotate(0)} 50%{transform:scale(1.04,0.97) rotate(-0.5deg)} }
+  @keyframes dp-morder { 0%,100%{transform:translateX(0) scale(1)} 25%{transform:translateX(-3px) scale(1.05,0.95)} 75%{transform:translateX(3px) scale(0.97,1.04)} }
+  @keyframes dp-gIzq { to{transform:rotate(-360deg)} }
+  @keyframes dp-gDer { to{transform:rotate(360deg)} }
+  @keyframes dp-parpadeo { 0%,92%,100%{transform:scaleY(1)} 96%{transform:scaleY(0.1)} }
+  @keyframes dp-vaiven { 0%,100%{transform:rotate(0)} 50%{transform:rotate(0.4deg)} }
+  @keyframes dp-subir { 0%{transform:translateY(0); opacity:0.8} 100%{transform:translateY(-300px); opacity:0} }
+  @keyframes dp-festejar { 0%{opacity:0; transform:translate(-50%,10px) scale(0.8)} 30%{opacity:1; transform:translate(-50%,-8px) scale(1.1)} 100%{opacity:0; transform:translate(-50%,-30px) scale(1)} }
+  #dp-tritu { transform-origin:center bottom; animation: dp-respirar 2.6s ease-in-out infinite; }
+  #dp-tritu.dp-muerde { animation: dp-morder 0.35s ease-in-out infinite; }
+  #dp-tritu .dp-rodillo { transform-box:fill-box; transform-origin:center; }
+  #dp-tritu.dp-girando .dp-rod-izq { animation: dp-gIzq 0.35s linear infinite; }
+  #dp-tritu.dp-girando .dp-rod-der { animation: dp-gDer 0.35s linear infinite; }
+  #dp-tritu .dp-ojo { animation: dp-parpadeo 4s infinite; transform-origin:center; }
+  #dp-liquido { animation: dp-vaiven 3.5s ease-in-out infinite; }
+  .dp-burbuja { position:absolute; background:rgba(255,255,255,0.6); border-radius:50%; bottom:0; z-index:2; animation: dp-subir linear infinite; }
+  .dp-marca-l { transition:background 0.2s; }
+  .dp-marca-l.dp-flash { background:#FFD200 !important; box-shadow:0 0 8px #FFD200; }
+  #dp-festejo { position:absolute; left:50%; top:38%; transform:translateX(-50%); font-size:13px; font-weight:700; color:#186904; opacity:0; pointer-events:none; z-index:10; white-space:nowrap; font-family:Poppins,sans-serif; }
+  #dp-festejo.dp-show { animation: dp-festejar 1.2s ease-out; }
+</style>
+<style>
+  #perfil-slider { display:flex; width:100%; height:calc(100vh - 60px); overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  #perfil-slider::-webkit-scrollbar { display:none; }
+  .perfil-panel { flex:0 0 100%; width:100%; height:100%; overflow-y:auto; scroll-snap-align:start; scroll-snap-stop:always; box-sizing:border-box; }
+  .perfil-dot { width:7px; height:7px; border-radius:50%; background:#ccc; transition:all 0.25s; }
+  .perfil-dot.activo { background:#186904; width:18px; border-radius:4px; }
+</style>
 
+<div style="position:fixed; top:60px; left:0; right:0; z-index:50; display:flex; justify-content:center; gap:6px; padding:10px 0; pointer-events:none;">
+  <div class="perfil-dot" id="pdot-0"></div>
+  <div class="perfil-dot activo" id="pdot-1"></div>
+  <div class="perfil-dot" id="pdot-2"></div>
+</div>
+
+<div id="perfil-slider">
+
+  <!-- PANEL 1 (izquierda): perfil actual -->
+  <div class="perfil-panel" style="padding:0 16px;">
   <%= if @current_user do %>
-    <div style="margin-top: 32px; display: flex; flex-direction: column; align-items: center; gap: 12px;">
-      <div style="position: relative; width: 80px; height: 80px; cursor: pointer;" onclick="document.getElementById('foto-input').click()">
-        <%= if @current_user.avatar do %>
-          <img src={@current_user.avatar} id="foto-preview" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #186904;"/>
-        <% else %>
-          <div id="foto-preview" style="width: 80px; height: 80px; border-radius: 50%; background: #f0f0f0; border: 2px solid #186904; display: flex; align-items: center; justify-content: center; font-size: 32px;">👤</div>
-        <% end %>
-        <div style="position: absolute; bottom: 0; right: 0; background: #186904; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
-          <span style="color: white; font-size: 12px;">📷</span>
-        </div>
-        <input type="file" id="foto-input" accept="image/*" style="display: none;" onchange="subirFotoPerfil(this)"/>
-      </div>
-      <p style="font-size: 18px; font-weight: 700; color: #111; margin: 0; font-family: 'Noto Sans', sans-serif;"><%= @current_user.username %></p>
-      <p style="font-size: 13px; color: #999; margin: 0; font-family: 'Noto Sans', sans-serif;"><%= @current_user.name %></p>
-    </div>
+    <% cfg = @current_user.perfil_config || %{} %>
+    <% forma = Map.get(cfg, "forma", "capsula") %>
+    <% c_principal = Map.get(cfg, "principal", "#ffffff") %>
+    <% c_secundario = Map.get(cfg, "secundario", "#186904") %>
+    <% c_numerico = Map.get(cfg, "numerico", forma == "capsula" && "#ffffff" || "#186904") %>
+    <% c_boton = Map.get(cfg, "boton", forma == "capsula" && "#186904" || "#ffffff") %>
 
-    <div style="margin-top: 32px; display: flex; justify-content: center; gap: 40px;">
-      <div style="text-align: center;">
-        <p style="font-size: 22px; font-weight: 700; color: #186904; margin: 0; font-family: 'Noto Sans', sans-serif;"><%= length(@amigos) %></p>
-        <p style="font-size: 12px; color: #999; margin: 4px 0 0; font-family: 'Noto Sans', sans-serif;">Amigos</p>
-      </div>
-      <div style="text-align: center;">
-        <p style="font-size: 22px; font-weight: 700; color: #186904; margin: 0; font-family: 'Noto Sans', sans-serif;"><%= length(@favoritos) %></p>
-        <p style="font-size: 12px; color: #999; margin: 4px 0 0; font-family: 'Noto Sans', sans-serif;">Favoritos</p>
-      </div>
+    <div id="perfil-header" style={"margin-top:24px; --c-principal:#{c_principal}; --c-secundario:#{c_secundario}; --c-numerico:#{c_numerico}; --c-boton:#{c_boton};"}>
+
+      <%= if forma == "capsula" do %>
+        <!-- FORMA 1: CAPSULA -->
+        <div style="background:var(--c-secundario); border-radius:34px; padding:18px; display:flex; align-items:center; gap:14px;">
+          <div style="position:relative; width:84px; height:84px; flex-shrink:0; cursor:pointer;" onclick="document.getElementById('foto-input').click()">
+            <%= if @current_user.avatar do %>
+              <img src={@current_user.avatar} id="foto-preview" style="width:84px; height:84px; border-radius:50%; object-fit:cover; border:4px solid var(--c-principal); background:var(--c-principal);"/>
+            <% else %>
+              <div id="foto-preview" style="width:84px; height:84px; border-radius:50%; background:var(--c-principal); border:4px solid var(--c-principal); display:flex; align-items:center; justify-content:center; font-size:32px;">👤</div>
+            <% end %>
+          </div>
+          <div style="flex:1; min-width:0;">
+            <p style="margin:0 0 8px; font-size:14px; font-weight:700; color:var(--c-secundario); background:var(--c-principal); display:inline-block; padding:4px 12px; border-radius:14px; font-family:'Noto Sans',sans-serif; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">@<%= @current_user.username %></p>
+            <div style="display:flex; gap:8px;">
+              <button style="background:var(--c-principal); color:var(--c-boton); border:none; border-radius:14px; padding:7px 18px; font-size:13px; font-weight:700; font-family:'Noto Sans',sans-serif; cursor:pointer;">Seguir</button>
+              <button style="background:var(--c-principal); color:var(--c-boton); border:none; border-radius:14px; padding:7px 18px; font-size:13px; font-weight:700; font-family:'Noto Sans',sans-serif; cursor:pointer;">Mensaje</button>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:12px;">
+          <div style="flex:1; background:var(--c-secundario); border-radius:20px; padding:10px 0; text-align:center;">
+            <p style="margin:0; font-size:20px; font-weight:700; color:var(--c-numerico); font-family:'Noto Sans',sans-serif;"><%= length(@amigos) %></p>
+            <p style="margin:2px 0 0; font-size:11px; color:var(--c-numerico); font-family:'Noto Sans',sans-serif;">Seguidores</p>
+          </div>
+          <div style="flex:1; background:var(--c-secundario); border-radius:20px; padding:10px 0; text-align:center;">
+            <p style="margin:0; font-size:20px; font-weight:700; color:var(--c-numerico); font-family:'Noto Sans',sans-serif;"><%= length(@amigos) %></p>
+            <p style="margin:2px 0 0; font-size:11px; color:var(--c-numerico); font-family:'Noto Sans',sans-serif;">Seguidos</p>
+          </div>
+          <div style="flex:1; background:var(--c-secundario); border-radius:20px; padding:10px 0; text-align:center;">
+            <p style="margin:0; font-size:20px; font-weight:700; color:var(--c-numerico); font-family:'Noto Sans',sans-serif;"><%= length(@favoritos) %></p>
+            <p style="margin:2px 0 0; font-size:11px; color:var(--c-numerico); font-family:'Noto Sans',sans-serif;">Publicaciones</p>
+          </div>
+        </div>
+
+      <% else %>
+        <!-- FORMA 2: TARJETA -->
+        <div style="background:var(--c-principal); border:2px solid var(--c-secundario); border-radius:24px; padding:18px;">
+          <div style="display:flex; align-items:center; gap:14px;">
+            <div style="position:relative; width:88px; height:88px; flex-shrink:0; cursor:pointer;" onclick="document.getElementById('foto-input').click()">
+              <%= if @current_user.avatar do %>
+                <img src={@current_user.avatar} id="foto-preview" style="width:88px; height:88px; border-radius:50%; object-fit:cover; border:3px solid var(--c-secundario);"/>
+              <% else %>
+                <div id="foto-preview" style="width:88px; height:88px; border-radius:50%; background:#f0f0f0; border:3px solid var(--c-secundario); display:flex; align-items:center; justify-content:center; font-size:32px;">👤</div>
+              <% end %>
+            </div>
+            <div style="flex:1; min-width:0;">
+              <p style="margin:0 0 8px; font-size:15px; font-weight:700; color:var(--c-secundario); font-family:'Noto Sans',sans-serif; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">@<%= @current_user.username %></p>
+              <div style="display:flex; gap:8px;">
+                <button style="background:var(--c-secundario); color:var(--c-boton); border:none; border-radius:8px; padding:7px 18px; font-size:13px; font-weight:700; font-family:'Noto Sans',sans-serif; cursor:pointer;">Seguir</button>
+                <button style="background:var(--c-secundario); color:var(--c-boton); border:none; border-radius:8px; padding:7px 18px; font-size:13px; font-weight:700; font-family:'Noto Sans',sans-serif; cursor:pointer;">Mensaje</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:12px;">
+          <div style="flex:1; background:var(--c-principal); border:2px solid var(--c-secundario); border-radius:18px; padding:9px 0; text-align:center;">
+            <p style="margin:0; font-size:19px; font-weight:700; color:var(--c-numerico); font-family:'Noto Sans',sans-serif;"><%= length(@amigos) %></p>
+            <p style="margin:2px 0 0; font-size:11px; color:#999; font-family:'Noto Sans',sans-serif;">Seguidores</p>
+          </div>
+          <div style="flex:1; background:var(--c-principal); border:2px solid var(--c-secundario); border-radius:18px; padding:9px 0; text-align:center;">
+            <p style="margin:0; font-size:19px; font-weight:700; color:var(--c-numerico); font-family:'Noto Sans',sans-serif;"><%= length(@amigos) %></p>
+            <p style="margin:2px 0 0; font-size:11px; color:#999; font-family:'Noto Sans',sans-serif;">Seguidos</p>
+          </div>
+          <div style="flex:1; background:var(--c-principal); border:2px solid var(--c-secundario); border-radius:18px; padding:9px 0; text-align:center;">
+            <p style="margin:0; font-size:19px; font-weight:700; color:var(--c-numerico); font-family:'Noto Sans',sans-serif;"><%= length(@favoritos) %></p>
+            <p style="margin:2px 0 0; font-size:11px; color:#999; font-family:'Noto Sans',sans-serif;">Publicaciones</p>
+          </div>
+        </div>
+      <% end %>
+
+      <input type="file" id="foto-input" accept="image/*" style="display: none;" onchange="subirFotoPerfil(this)"/>
     </div>
 
     <div style="margin-top: 24px; display: flex; justify-content: center;">
@@ -65,7 +158,195 @@
       <% end %>
     </div>
   <% end %>
+</div>
 
+  <% cfg2 = (@current_user && @current_user.perfil_config) || %{} %>
+  <% c_sec = Map.get(cfg2, "secundario", "#186904") %>
+  <% c_pri = Map.get(cfg2, "principal", "#ffffff") %>
+  <% c_numm = Map.get(cfg2, "numerico", "#000000") %>
+  <% c_bot = Map.get(cfg2, "boton", "#ffffff") %>
+  <div class="perfil-panel" id="perfil-panel-centro" style={"padding:16px; --c-principal:#{c_pri}; --c-secundario:#{c_sec}; --c-numerico:#{c_numm}; --c-boton:#{c_bot};"}>
+    <div style={"position:relative; background:#{c_sec}; border-radius:90px; width:100%; height: 300px;margin-top:20px;"}>
+      <div style="position:absolute; z-index:10; top:15px; left:7px; width:155px; height:155px; border-radius:50%; overflow:hidden; border:4px solid var(--c-secundario,#186904); background:#f0f0f0;">
+        <%= if @current_user && @current_user.avatar do %>
+          <img src={@current_user.avatar} style="width:100%; height:100%; object-fit:cover; display:block;"/>
+        <% else %>
+          <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:40px;">👤</div>
+        <% end %>
+      </div>
+      <div style="position:absolute; top:45px; left:180px; right:30px; height:90px; background:var(--c-principal,#fff); border-radius:70px; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:8px; padding:0 25px; box-sizing:border-box;"><span style="font-size:16px; font-weight:600; color:#000; font-family:Poppins,sans-serif; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">@<%= @current_user && @current_user.username %></span><div style="display:flex; gap:8px; margin-left:-12px; margin-top:-4px;"><%= if assigns[:es_dueno_perfil] != false do %><button onclick="abrirEditor()" style="background:var(--c-secundario,#186904); color:var(--c-boton,#fff); border:none; border-radius:12px; padding:6px 14px; font-size:13px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer; white-space:nowrap;">Editar</button><button onclick="abrirSelectorFotos()" style="background:var(--c-secundario,#186904); color:var(--c-boton,#fff); border:none; border-radius:12px; padding:6px 14px; font-size:13px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer; white-space:nowrap;">Publicar</button><% else %><button style="background:var(--c-secundario,#186904); color:var(--c-boton,#fff); border:none; border-radius:12px; padding:6px 14px; font-size:13px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer; white-space:nowrap;">Seguir</button><button style="background:var(--c-secundario,#186904); color:var(--c-boton,#fff); border:none; border-radius:12px; padding:6px 14px; font-size:13px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer; white-space:nowrap;">Mensaje</button><% end %></div></div>
+      <% vitrina_url = Map.get(cfg2, "vitrina") %>
+      <div onclick="abrirCropperVitrina()" style="position:absolute; top:160px; left:30px; right:30px; height:120px; background:var(--c-principal,#fff); border-radius:50px; overflow:hidden; cursor:pointer; display:flex; align-items:center; justify-content:center;">
+        <%= if vitrina_url do %>
+          <img id="vitrina-img" src={vitrina_url} style="width:100%; height:100%; object-fit:cover; display:block;"/>
+        <% else %>
+          <span id="vitrina-placeholder" style="color:#ccc; font-size:13px; font-family:Poppins,sans-serif;">Tocá para agregar una imagen</span>
+        <% end %>
+      </div>
+    </div>
+
+    <% c_num = Map.get(cfg2, "numerico", "#000") %>
+    <div style={"background: #{c_sec}; border-radius:40px; width:100%; margin-top:16px; padding:10px; box-sizing:border-box; display:flex; gap:10px;"}>
+      <div style="flex:1; background:#fff; border-radius:50px; padding:9px 0; text-align:center;">
+        <p style={"margin:0; font-size:22px; font-weight:700; color: #{c_num}; font-family:Poppins,sans-serif;"}><%= length(@amigos) %></p>
+        <p style="margin:2px 0 0; font-size:11px; color:#888; font-family:Poppins,sans-serif;">Seguidores</p>
+      </div>
+      <div style="flex:1; background:#fff; border-radius:50px; padding:9px 0; text-align:center;">
+        <p style={"margin:0; font-size:22px; font-weight:700; color: #{c_num}; font-family:Poppins,sans-serif;"}><%= length(@amigos) %></p>
+        <p style="margin:2px 0 0; font-size:11px; color:#888; font-family:Poppins,sans-serif;">Seguidos</p>
+      </div>
+      <div style="flex:1; background:#fff; border-radius:50px; padding:9px 0; text-align:center;">
+        <p style={"margin:0; font-size:22px; font-weight:700; color: #{c_num}; font-family:Poppins,sans-serif;"}><%= length(@favoritos) %></p>
+        <p style="margin:2px 0 0; font-size:11px; color:#888; font-family:Poppins,sans-serif;">Publicaciones</p>
+      </div>
+    </div>
+
+    <div style={"height:5px; background: #{c_sec}; border-radius:10px; margin:20px 24px 0;"}></div>
+
+    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:3px; margin-top:16px;">
+      <%= for pub <- (assigns[:publicaciones] || []) do %>
+        <% primera = pub.imagen_url |> String.split(",") |> List.first() %>
+        <div style="position:relative; width:100%; aspect-ratio:3/4; overflow:hidden; background:#f0f0f0; cursor:pointer;">
+          <img src={primera} style="width:100%; height:100%; object-fit:cover; display:block;"/>
+        </div>
+      <% end %>
+    </div>
+    <%= if (assigns[:publicaciones] || []) == [] do %>
+      <p style="text-align:center; color:#bbb; font-size:13px; font-family:Poppins,sans-serif; margin-top:24px;">Todavía no hay publicaciones</p>
+    <% end %>
+  </div>
+
+  <div class="perfil-panel" id="perfil-panel-puntos" style="padding:16px;">
+    <p style="font-size:30px; font-weight:800; color:#186904; font-family:Poppins,sans-serif; margin:0 0 2px;">DalePuntos</p>
+    <p style="font-size:13px; color:#999; font-family:Poppins,sans-serif; margin:0 0 18px;">Canjeá cupones y subí de nivel</p>
+
+    <div style="display:flex; gap:20px; align-items:flex-start;">
+      <div style="position:relative; width:120px; flex-shrink:0;">
+        <div id="dp-festejo">¡Nivel 2! 🎉</div>
+        <svg id="dp-tritu" width="124" height="106" viewBox="0 0 140 120" style="display:block; margin:0 auto -10px; position:relative; z-index:3; overflow:visible;">
+          <defs>
+            <linearGradient id="dp-grad-cuerpo" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#34B24A"/>
+              <stop offset="0.5" stop-color="#1E8A2E"/>
+              <stop offset="1" stop-color="#125C1D"/>
+            </linearGradient>
+            <linearGradient id="dp-grad-tolva" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#3DBF52"/>
+              <stop offset="1" stop-color="#16701F"/>
+            </linearGradient>
+            <radialGradient id="dp-grad-rodillo" cx="0.35" cy="0.3" r="0.8">
+              <stop offset="0" stop-color="#ffffff"/>
+              <stop offset="1" stop-color="#C7E8CF"/>
+            </radialGradient>
+          </defs>
+          <!-- tolva con gradiente y contorno negro parejo -->
+          <path d="M16,10 Q14,6 20,6 L120,6 Q126,6 124,10 L96,46 Q94,50 88,50 L52,50 Q46,50 44,46 Z" fill="url(#dp-grad-tolva)" stroke="#0A0A0A" stroke-width="4" stroke-linejoin="round"/>
+          <!-- brillo tolva -->
+          <path d="M26,12 L52,12 L44,30 L34,30 Z" fill="#fff" opacity="0.18"/>
+          <!-- cuerpo principal redondeado con gradiente -->
+          <rect x="30" y="46" width="80" height="50" rx="16" fill="url(#dp-grad-cuerpo)" stroke="#0A0A0A" stroke-width="4"/>
+          <!-- brillo superior del cuerpo -->
+          <rect x="38" y="52" width="64" height="9" rx="4.5" fill="#fff" opacity="0.22"/>
+          <!-- ventana con rodillos -->
+          <rect x="42" y="60" width="56" height="30" rx="8" fill="#0E3914" stroke="#0A0A0A" stroke-width="3"/>
+          <g class="dp-rodillo dp-rod-izq">
+            <circle cx="58" cy="75" r="11" fill="url(#dp-grad-rodillo)" stroke="#0A0A0A" stroke-width="2.5"/>
+            <g stroke="#0A0A0A" stroke-width="2.2"><line x1="58" y1="63" x2="58" y2="67"/><line x1="58" y1="83" x2="58" y2="87"/><line x1="46" y1="75" x2="50" y2="75"/><line x1="66" y1="75" x2="70" y2="75"/><line x1="49.5" y1="66.5" x2="52.5" y2="69.5"/><line x1="63.5" y1="80.5" x2="66.5" y2="83.5"/></g>
+            <circle cx="58" cy="75" r="3" fill="#1E8A2E" stroke="#0A0A0A" stroke-width="1.5"/>
+          </g>
+          <g class="dp-rodillo dp-rod-der">
+            <circle cx="82" cy="75" r="11" fill="url(#dp-grad-rodillo)" stroke="#0A0A0A" stroke-width="2.5"/>
+            <g stroke="#0A0A0A" stroke-width="2.2"><line x1="82" y1="63" x2="82" y2="67"/><line x1="82" y1="83" x2="82" y2="87"/><line x1="70" y1="75" x2="74" y2="75"/><line x1="90" y1="75" x2="94" y2="75"/><line x1="73.5" y1="66.5" x2="76.5" y2="69.5"/><line x1="87.5" y1="80.5" x2="90.5" y2="83.5"/></g>
+            <circle cx="82" cy="75" r="3" fill="#1E8A2E" stroke="#0A0A0A" stroke-width="1.5"/>
+          </g>
+          <!-- patas/base que apoya sobre el labio del tubo -->
+          <rect x="38" y="94" width="64" height="9" rx="4" fill="#125C1D" stroke="#0A0A0A" stroke-width="3.5"/>
+        </svg>
+
+        <div style="position:relative; width:104px; margin:0 auto;">
+        <!-- labio superior del tubo (borde engrosado) -->
+        <div style="width:104px; height:16px; margin:0 auto; background:linear-gradient(to right, #d8d8d8, #ffffff 35%, #ffffff 55%, #bcbcbc); border:4px solid #0A0A0A; border-radius:10px; position:relative; z-index:2; box-sizing:border-box;"></div>
+        <div id="dp-tubo" style="position:relative; width:90px; height:330px; margin:-2px auto 0; border:4px solid #0A0A0A; border-top:none; border-radius:0 0 45px 45px; background:linear-gradient(to right, rgba(255,255,255,0.85), rgba(220,235,222,0.35) 45%, rgba(150,180,155,0.4)); overflow:hidden; box-sizing:border-box;">
+          <div id="dp-liquido" style="position:absolute; left:0; right:0; bottom:0; height:0%; background:linear-gradient(#6BDB88,#27A04C); transition:height 0.7s cubic-bezier(0.34,1.3,0.5,1); border-radius:0 0 41px 41px;">
+            <div style="position:absolute; top:-11px; left:0; width:200%; height:13px;">
+              <svg viewBox="0 0 200 13" preserveAspectRatio="none" style="width:100%; height:100%; display:block; animation:dp-ondular 2s linear infinite;"><path d="M0,6 Q25,0 50,6 T100,6 T150,6 T200,6 V13 H0 Z" fill="#6BDB88"/></svg>
+            </div>
+          </div>
+          <div style="position:absolute; top:10px; left:10px; width:14px; height:70%; background:linear-gradient(rgba(255,255,255,0.7),rgba(255,255,255,0)); border-radius:10px; z-index:5; pointer-events:none;"></div>
+          <div class="dp-marca-l" id="dp-m0" style="position:absolute; right:0; bottom:15%; width:14px; height:3px; background:#333; z-index:4;"></div><div style="position:absolute; right:18px; bottom:15%; font-size:9px; color:#555; transform:translateY(-7px); z-index:4;">1000</div>
+          <div class="dp-marca-l" id="dp-m1" style="position:absolute; right:0; bottom:40%; width:14px; height:3px; background:#333; z-index:4;"></div><div style="position:absolute; right:18px; bottom:40%; font-size:9px; color:#555; transform:translateY(-7px); z-index:4;">2000</div>
+          <div class="dp-marca-l" id="dp-m2" style="position:absolute; right:0; bottom:65%; width:14px; height:3px; background:#333; z-index:4;"></div><div style="position:absolute; right:18px; bottom:65%; font-size:9px; color:#555; transform:translateY(-7px); z-index:4;">3500</div>
+          <div class="dp-marca-l" id="dp-m3" style="position:absolute; right:0; bottom:88%; width:14px; height:3px; background:#333; z-index:4;"></div><div style="position:absolute; right:18px; bottom:88%; font-size:9px; color:#555; transform:translateY(-7px); z-index:4;">5000</div>
+        </div>
+        </div>
+      </div>
+
+      <div style="flex:1; display:flex; flex-direction:column; gap:11px; align-self:center; background:#fff; border:3px solid #186904; border-radius:22px; padding:16px;">
+        <div class="dp-nivel" onclick="dpToggleNivel(4)" style="border:2px solid #e8e8e8; border-radius:16px; padding:14px 16px; cursor:pointer; background:#fff;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <span style="font-size:15px; font-weight:700; color:#000; font-family:Poppins,sans-serif;">Nivel 4 · 5000</span>
+            <span id="dp-flecha-4" style="font-size:11px; color:#999; transition:transform 0.2s;">&#9660;</span>
+          </div>
+          <div id="dp-detalle-4" style="max-height:0; overflow:hidden; transition:max-height 0.3s ease;">
+            <p style="font-size:12px; color:#555; font-family:Poppins,sans-serif; margin:8px 0 0; line-height:1.4;">&#127942; 1 mes gratis de <b style="color:#186904;">DalePremium</b>, sin tarjeta.</p>
+          </div>
+        </div>
+        <div class="dp-nivel" onclick="dpToggleNivel(3)" style="border:2px solid #e8e8e8; border-radius:16px; padding:14px 16px; cursor:pointer; background:#fff;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <span style="font-size:15px; font-weight:700; color:#000; font-family:Poppins,sans-serif;">Nivel 3 · 3500</span>
+            <span id="dp-flecha-3" style="font-size:11px; color:#999; transition:transform 0.2s;">&#9660;</span>
+          </div>
+          <div id="dp-detalle-3" style="max-height:0; overflow:hidden; transition:max-height 0.3s ease;">
+            <p style="font-size:12px; color:#555; font-family:Poppins,sans-serif; margin:8px 0 0; line-height:1.4;">Pr&oacute;ximamente: recompensas exclusivas.</p>
+          </div>
+        </div>
+        <div class="dp-nivel" onclick="dpToggleNivel(2)" style="border:2px solid #e8e8e8; border-radius:16px; padding:14px 16px; cursor:pointer; background:#fff;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <span style="font-size:15px; font-weight:700; color:#000; font-family:Poppins,sans-serif;">Nivel 2 · 2000</span>
+            <span id="dp-flecha-2" style="font-size:11px; color:#999; transition:transform 0.2s;">&#9660;</span>
+          </div>
+          <div id="dp-detalle-2" style="max-height:0; overflow:hidden; transition:max-height 0.3s ease;">
+            <p style="font-size:12px; color:#555; font-family:Poppins,sans-serif; margin:8px 0 0; line-height:1.4;">&#127873; 1 mes gratis de <b style="color:#186904;">DalePlus</b>, sin tarjeta.</p>
+          </div>
+        </div>
+        <div class="dp-nivel" onclick="dpToggleNivel(1)" style="border:2px solid #e8e8e8; border-radius:16px; padding:14px 16px; cursor:pointer; background:#fff;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <span style="font-size:15px; font-weight:700; color:#000; font-family:Poppins,sans-serif;">Nivel 1 · 1000</span>
+            <span id="dp-flecha-1" style="font-size:11px; color:#999; transition:transform 0.2s;">&#9660;</span>
+          </div>
+          <div id="dp-detalle-1" style="max-height:0; overflow:hidden; transition:max-height 0.3s ease;">
+            <p style="font-size:12px; color:#555; font-family:Poppins,sans-serif; margin:8px 0 0; line-height:1.4;">Pr&oacute;ximamente: recompensas de bienvenida.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:8px; justify-content:center; margin-top:20px; flex-wrap:wrap;">
+      <button onclick="dpAdd()" style="padding:8px 12px; border:2px solid #ddd; background:#fafafa; color:#888; border-radius:10px; font-family:Poppins,sans-serif; font-size:11px; cursor:pointer;">+ líquido</button>
+      <button onclick="dpSub()" style="padding:8px 12px; border:2px solid #ddd; background:#fafafa; color:#888; border-radius:10px; font-family:Poppins,sans-serif; font-size:11px; cursor:pointer;">− líquido</button>
+      <button onclick="dpCupon()" style="padding:8px 12px; border:2px solid #ddd; background:#fafafa; color:#888; border-radius:10px; font-family:Poppins,sans-serif; font-size:11px; cursor:pointer;">🎟️ cupón</button>
+    </div>
+    <p style="font-size:9px; color:#bbb; text-align:center; font-family:Poppins,sans-serif; margin:6px 0 0;">Botones de prueba (provisorios)</p>
+  </div>
+
+  <script>
+    (function() {
+      var slider = document.getElementById('perfil-slider');
+      var dots = [document.getElementById('pdot-0'), document.getElementById('pdot-1'), document.getElementById('pdot-2')];
+      function irAlCentro() { slider.scrollLeft = slider.clientWidth; }
+      irAlCentro();
+      window.addEventListener('load', irAlCentro);
+      var raf;
+      slider.addEventListener('scroll', function() {
+        if (raf) return;
+        raf = requestAnimationFrame(function() {
+          var idx = Math.round(slider.scrollLeft / slider.clientWidth);
+          dots.forEach(function(d, i) { if (d) d.classList.toggle('activo', i === idx); });
+          raf = null;
+        });
+      });
+    })();
+  </script>
 </div>
 
 <script>
@@ -119,6 +400,77 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
 <!-- MODAL CROPPER -->
+<!-- MODAL CROPPER VITRINA -->
+<div id="vitrina-cropper-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.92); z-index:100001; flex-direction:column;">
+  <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 16px;">
+    <button onclick="cerrarCropperVitrina()" style="background:none; border:none; color:white; font-size:22px; cursor:pointer;">&#x2715;</button>
+    <p style="color:white; font-size:15px; font-weight:700; margin:0; font-family:Poppins,sans-serif;">Ajustá la imagen</p>
+    <button onclick="confirmarCropVitrina()" style="background:none; border:none; color:#44BB64; font-size:15px; font-weight:700; cursor:pointer; font-family:Poppins,sans-serif;">Listo ✓</button>
+  </div>
+  <div style="flex:1; display:flex; align-items:center; justify-content:center; overflow:hidden; padding:0 16px;">
+    <img id="vitrina-cropper-img" style="max-width:100%; max-height:100%;"/>
+  </div>
+  <input type="file" id="vitrina-input" accept="image/*" style="display:none;" onchange="elegirFotoVitrina(this)"/>
+</div>
+
+<script>
+  let vitrinaCropperInstance = null;
+  function abrirCropperVitrina() {
+    document.getElementById('vitrina-input').click();
+  }
+  function elegirFotoVitrina(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    const imgEl = document.getElementById('vitrina-cropper-img');
+    imgEl.src = url;
+    document.getElementById('vitrina-cropper-modal').style.display = 'flex';
+    document.getElementById('navbar').style.display = 'none';
+    setTimeout(() => {
+      if (vitrinaCropperInstance) { vitrinaCropperInstance.destroy(); vitrinaCropperInstance = null; }
+      vitrinaCropperInstance = new Cropper(imgEl, {
+        aspectRatio: 3 / 1,
+        viewMode: 1,
+        dragMode: 'move',
+        autoCropArea: 1,
+        guides: false,
+        center: false,
+        highlight: false,
+        cropBoxMovable: false,
+        cropBoxResizable: false,
+        toggleDragModeOnDblclick: false,
+      });
+    }, 200);
+  }
+  function cerrarCropperVitrina() {
+    if (vitrinaCropperInstance) { vitrinaCropperInstance.destroy(); vitrinaCropperInstance = null; }
+    document.getElementById('vitrina-cropper-modal').style.display = 'none';
+    document.getElementById('vitrina-input').value = '';
+    document.getElementById('navbar').style.display = '';
+  }
+  function confirmarCropVitrina() {
+    if (!vitrinaCropperInstance) return;
+    const canvas = vitrinaCropperInstance.getCroppedCanvas({ width: 1200, height: 400 });
+    canvas.toBlob(blob => {
+      const formData = new FormData();
+      formData.append('_csrf_token', csrfTokenPerfil);
+      formData.append('foto', blob, 'vitrina.jpg');
+      fetch('/perfil/vitrina', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+          if (data.ok) {
+            const cont = document.querySelector('[onclick="abrirCropperVitrina()"]');
+            cont.innerHTML = '<img id="vitrina-img" src="' + data.url + '" style="width:100%; height:100%; object-fit:cover; display:block;"/>';
+            cerrarCropperVitrina();
+            window.mostrarAviso && window.mostrarAviso('Imagen guardada!');
+          } else {
+            window.mostrarAviso && window.mostrarAviso('Error al subir');
+          }
+        });
+    }, 'image/jpeg', 0.9);
+  }
+</script>
+
 <div id="pub-cropper-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.92); z-index:100000; flex-direction:column;">
   <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 16px;">
     <button onclick="cerrarCropperPub()" style="background:none; border:none; color:white; font-size:22px; cursor:pointer;">&#x2715;</button>
@@ -367,3 +719,363 @@
       });
   }
 </script>
+
+<!-- OVERLAY EDITOR DE PERFIL -->
+<div id="editor-overlay" style="position:fixed; top:60px; left:0; right:0; bottom:11vh; background:#fff; z-index:4000; transform:translateY(100%); transition:transform 0.35s cubic-bezier(0.34,1.2,0.5,1); overflow-y:auto; max-width:480px; margin:0 auto;">
+  <div style="display:flex; align-items:center; justify-content:space-between; padding:16px; border-bottom:1px solid #eee;">
+    <button onclick="intentarCerrarEditor()" style="background:none; border:none; color:#186904; font-size:22px; font-weight:700; cursor:pointer; line-height:1;">&#x2715;</button>
+    <p style="font-size:16px; font-weight:700; color:#111; margin:0; font-family:Poppins,sans-serif;">Editar perfil</p>
+    <span style="width:22px;"></span>
+  </div>
+  <div style="padding:20px 18px 40px;">
+
+    <p style="font-size:13px; font-weight:600; color:#186904; margin:0 0 8px; font-family:Poppins,sans-serif;">Nombre de usuario</p>
+    <div style="display:flex; gap:8px; margin-bottom:6px;">
+      <input id="ed-username" type="text" maxlength="20" value={@current_user && @current_user.username} style="flex:1; padding:13px 16px; border:1.5px solid #e0e0e0; border-radius:16px; font-family:Poppins,sans-serif; font-size:14px; color:#333; outline:none; box-sizing:border-box;"/>
+      <button onclick="guardarUsernameEditor()" style="background:#186904; color:#fff; border:none; border-radius:16px; padding:0 20px; font-size:13px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer;">Guardar</button>
+    </div>
+    <p id="ed-username-error" style="font-size:11px; color:#c0392b; margin:0 0 4px; font-family:Poppins,sans-serif; display:none;"></p>
+    <p style="font-size:10px; color:#aaa; margin:0 0 22px; font-family:Poppins,sans-serif;">4-20 caracteres. Podés cambiarlo 1 vez cada 7 días.</p>
+
+    <p style="font-size:13px; font-weight:600; color:#186904; margin:0 0 8px; font-family:Poppins,sans-serif;">Género</p>
+    <div style="display:flex; gap:8px; margin-bottom:22px;">
+      <div onclick="elegirGenero(this,'hombre')" data-gen="hombre" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; padding:14px 0; border:2px solid #e0e0e0; border-radius:16px; cursor:pointer; transition:all 0.2s;">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2196F3" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14" r="5"/><line x1="19" y1="5" x2="13.6" y2="10.4"/><polyline points="15 5 19 5 19 9"/></svg>
+        <span style="font-size:12px; color:#555; font-family:Poppins,sans-serif;">Hombre</span>
+      </div>
+      <div onclick="elegirGenero(this,'mujer')" data-gen="mujer" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; padding:14px 0; border:2px solid #e0e0e0; border-radius:16px; cursor:pointer; transition:all 0.2s;">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#E91E8C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><line x1="12" y1="13" x2="12" y2="21"/><line x1="9" y1="18" x2="15" y2="18"/></svg>
+        <span style="font-size:12px; color:#555; font-family:Poppins,sans-serif;">Mujer</span>
+      </div>
+      <div onclick="elegirGenero(this,'otro')" data-gen="otro" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; padding:14px 0; border:2px solid #e0e0e0; border-radius:16px; cursor:pointer; transition:all 0.2s;">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg>
+        <span style="font-size:12px; color:#555; font-family:Poppins,sans-serif;">Prefiero no decir</span>
+      </div>
+    </div>
+
+    <p style="font-size:13px; font-weight:600; color:#186904; margin:0 0 8px; font-family:Poppins,sans-serif;">Gmail</p>
+    <input id="ed-gmail" type="email" value={@current_user && @current_user.email} readonly style="width:100%; padding:13px 16px; border:1.5px solid #e0e0e0; border-radius:16px; font-family:Poppins,sans-serif; font-size:14px; color:#999; background:#f7f7f7; outline:none; box-sizing:border-box; margin-bottom:22px; cursor:not-allowed;"/>
+
+    <p style="font-size:13px; font-weight:600; color:#186904; margin:0 0 8px; font-family:Poppins,sans-serif;">Número de teléfono</p>
+    <div style="display:flex; align-items:center; border:1.5px solid #e0e0e0; border-radius:16px; padding:0 16px; margin-bottom:10px;">
+      <span style="font-size:14px; color:#555; font-family:Poppins,sans-serif; font-weight:600; padding-right:8px; border-right:1px solid #e0e0e0;">+54</span>
+      <input id="ed-telefono" type="tel" placeholder="11 1234 5678" oninput="marcarCambio()" style="flex:1; padding:13px 0 13px 12px; border:none; font-family:Poppins,sans-serif; font-size:14px; color:#333; outline:none;"/>
+    </div>
+
+    <div style="height:1px; background:#eee; margin:24px 0;"></div>
+    <p style="font-size:16px; font-weight:700; color:#111; margin:0 0 16px; font-family:Poppins,sans-serif;">Colores del perfil</p>
+
+    <div id="color-preview" style={"--c-principal:#{c_pri}; --c-secundario:#{c_sec}; --c-numerico:#{c_numm}; --c-boton:#{c_bot}; margin-top:24px; margin-bottom:-30px; transform:scale(0.82); transform-origin:top center;"}>
+      <div style="position:relative; background:var(--c-secundario); border-radius:90px; width:100%; height:300px;">
+        <div style="position:absolute; z-index:10; top:15px; left:7px; width:155px; height:155px; border-radius:50%; overflow:hidden; border:4px solid var(--c-secundario); background:#f0f0f0;">
+          <%= if @current_user && @current_user.avatar do %><img src={@current_user.avatar} style="width:100%; height:100%; object-fit:cover; display:block;"/><% else %><div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:40px;">👤</div><% end %>
+        </div>
+        <div style="position:absolute; top:45px; left:180px; right:30px; height:90px; background:var(--c-principal); border-radius:70px; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:8px; padding:0 25px; box-sizing:border-box;">
+          <span style="font-size:16px; font-weight:600; color:#000; font-family:Poppins,sans-serif; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">@<%= @current_user && @current_user.username %></span>
+          <div style="display:flex; gap:8px; margin-left:-12px; margin-top:-4px;">
+            <button style="background:var(--c-secundario); color:var(--c-boton); border:none; border-radius:12px; padding:6px 14px; font-size:13px; font-weight:600; font-family:Poppins,sans-serif; white-space:nowrap;">Seguir</button>
+            <button style="background:var(--c-secundario); color:var(--c-boton); border:none; border-radius:12px; padding:6px 14px; font-size:13px; font-weight:600; font-family:Poppins,sans-serif; white-space:nowrap;">Mensaje</button>
+          </div>
+        </div>
+        <div style="position:absolute; top:160px; left:30px; right:30px; height:120px; background:var(--c-principal); border-radius:50px;"></div>
+      </div>
+      <div style="background:var(--c-secundario); border-radius:40px; width:100%; margin-top:16px; padding:10px; box-sizing:border-box; display:flex; gap:10px;">
+        <div style="flex:1; background:var(--c-principal); border-radius:50px; padding:9px 0; text-align:center;"><p style="margin:0; font-size:22px; font-weight:700; color:var(--c-numerico); font-family:Poppins,sans-serif;">3</p><p style="margin:2px 0 0; font-size:11px; color:#888; font-family:Poppins,sans-serif;">Seguidores</p></div>
+        <div style="flex:1; background:var(--c-principal); border-radius:50px; padding:9px 0; text-align:center;"><p style="margin:0; font-size:22px; font-weight:700; color:var(--c-numerico); font-family:Poppins,sans-serif;">3</p><p style="margin:2px 0 0; font-size:11px; color:#888; font-family:Poppins,sans-serif;">Seguidos</p></div>
+        <div style="flex:1; background:var(--c-principal); border-radius:50px; padding:9px 0; text-align:center;"><p style="margin:0; font-size:22px; font-weight:700; color:var(--c-numerico); font-family:Poppins,sans-serif;">0</p><p style="margin:2px 0 0; font-size:11px; color:#888; font-family:Poppins,sans-serif;">Publicaciones</p></div>
+      </div>
+    </div>
+
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid #f2f2f2;">
+      <span style="font-size:14px; color:#333; font-family:Poppins,sans-serif;">Color principal</span>
+      <div style={"width:34px; height:34px; border-radius:50%; border:2px solid #e0e0e0; position:relative; overflow:hidden; background:#{c_pri};"}><input type="color" value={c_pri} oninput="setColorPreview('--c-principal', this)" style="position:absolute; top:-8px; left:-8px; width:50px; height:50px; border:none; padding:0; cursor:pointer;"></div>
+    </div>
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid #f2f2f2;">
+      <span style="font-size:14px; color:#333; font-family:Poppins,sans-serif;">Color secundario</span>
+      <div style={"width:34px; height:34px; border-radius:50%; border:2px solid #e0e0e0; position:relative; overflow:hidden; background:#{c_sec};"}><input type="color" value={c_sec} oninput="setColorPreview('--c-secundario', this)" style="position:absolute; top:-8px; left:-8px; width:50px; height:50px; border:none; padding:0; cursor:pointer;"></div>
+    </div>
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid #f2f2f2;">
+      <span style="font-size:14px; color:#333; font-family:Poppins,sans-serif;">Color de números</span>
+      <div style={"width:34px; height:34px; border-radius:50%; border:2px solid #e0e0e0; position:relative; overflow:hidden; background:#{c_numm};"}><input type="color" value={c_numm} oninput="setColorPreview('--c-numerico', this)" style="position:absolute; top:-8px; left:-8px; width:50px; height:50px; border:none; padding:0; cursor:pointer;"></div>
+    </div>
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid #f2f2f2;">
+      <span style="font-size:14px; color:#333; font-family:Poppins,sans-serif;">Color de botones</span>
+      <div style={"width:34px; height:34px; border-radius:50%; border:2px solid #e0e0e0; position:relative; overflow:hidden; background:#{c_bot};"}><input type="color" value={c_bot} oninput="setColorPreview('--c-boton', this)" style="position:absolute; top:-8px; left:-8px; width:50px; height:50px; border:none; padding:0; cursor:pointer;"></div>
+    </div>
+
+    <button onclick="guardarColores()" style="width:100%; background:#186904; color:#fff; border:none; border-radius:16px; padding:14px 0; font-size:15px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer; margin-top:20px;">Guardar cambios</button>
+    <button onclick="document.getElementById('aviso-reset').style.display='flex'" style="width:100%; background:#fff; color:#186904; border:2px solid #186904; border-radius:16px; padding:12px 0; font-size:14px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer; margin-top:10px; display:flex; align-items:center; justify-content:center; gap:8px;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+      Predeterminado
+    </button>
+
+    <button onclick="guardarDatosEditor()" style="display:none; width:100%; background:#186904; color:#fff; border:none; border-radius:16px; padding:15px 0; font-size:15px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer; margin-top:14px;">Guardar cambios</button>
+  </div>
+</div>
+
+<script>
+  function abrirEditor() {
+    document.getElementById('editor-overlay').style.transform = 'translateY(0)';
+  }
+  function cerrarEditor() {
+    document.getElementById('editor-overlay').style.transform = 'translateY(100%)';
+  }
+  function elegirGenero(el, genero) {
+    document.querySelectorAll('[data-gen]').forEach(function(b) {
+      b.style.borderColor = '#e0e0e0';
+      b.style.background = '#fff';
+    });
+    el.style.borderColor = '#186904';
+    el.style.background = '#E8F5EC';
+    fetch('/perfil/config', {
+      method: 'POST',
+      headers: { 'x-csrf-token': csrfTokenPerfil, 'content-type': 'application/json' },
+      body: JSON.stringify({ config: { genero: genero } })
+    }).then(r => r.json()).then(function(data) {
+      if (data.ok) { window.mostrarAviso && window.mostrarAviso('Género guardado'); }
+    });
+  }
+  // Colores seleccionados en el editor
+  var coloresEditor = { principal: <%= raw(Jason.encode!(c_pri)) %>, secundario: <%= raw(Jason.encode!(c_sec)) %>, numerico: <%= raw(Jason.encode!(c_numm)) %>, boton: <%= raw(Jason.encode!(c_bot)) %> };
+  function setColorPreview(varName, input) {
+    marcarCambio();
+    document.getElementById('color-preview').style.setProperty(varName, input.value);
+    input.parentElement.style.background = input.value;
+    if (varName === '--c-principal') coloresEditor.principal = input.value;
+    if (varName === '--c-secundario') coloresEditor.secundario = input.value;
+    if (varName === '--c-numerico') coloresEditor.numerico = input.value;
+    if (varName === '--c-boton') coloresEditor.boton = input.value;
+  }
+  function resetColores() {
+    coloresEditor = { principal:"#ffffff", secundario:"#186904", numerico:"#000000", boton:"#ffffff" };
+    var pv = document.getElementById('color-preview');
+    pv.style.setProperty('--c-principal', '#ffffff');
+    pv.style.setProperty('--c-secundario', '#186904');
+    pv.style.setProperty('--c-numerico', '#000000');
+    pv.style.setProperty('--c-boton', '#ffffff');
+    document.querySelectorAll('input[type=color]').forEach(function(inp) {
+      var v = inp.getAttribute('oninput');
+      if (v.indexOf('principal') > -1) { inp.value = '#ffffff'; inp.parentElement.style.background = '#ffffff'; }
+      if (v.indexOf('secundario') > -1) { inp.value = '#186904'; inp.parentElement.style.background = '#186904'; }
+      if (v.indexOf('numerico') > -1) { inp.value = '#000000'; inp.parentElement.style.background = '#000000'; }
+      if (v.indexOf('boton') > -1) { inp.value = '#ffffff'; inp.parentElement.style.background = '#ffffff'; }
+    });
+  }
+  function guardarUsernameEditor() {
+    var nuevo = document.getElementById('ed-username').value.trim();
+    var errEl = document.getElementById('ed-username-error');
+    fetch('/perfil/username', {
+      method: 'POST',
+      headers: { 'x-csrf-token': csrfTokenPerfil, 'content-type': 'application/json' },
+      body: JSON.stringify({ username: nuevo })
+    }).then(r => r.json()).then(function(data) {
+      if (data.ok) {
+        errEl.style.display = 'none';
+        window.mostrarAviso && window.mostrarAviso('Nombre guardado');
+      } else {
+        errEl.textContent = data.error;
+        errEl.style.display = 'block';
+      }
+    });
+  }
+  function guardarColores() {
+    var tel = document.getElementById('ed-telefono').value.trim();
+    fetch('/perfil/config', {
+      method: 'POST',
+      headers: { 'x-csrf-token': csrfTokenPerfil, 'content-type': 'application/json' },
+      body: JSON.stringify({ config: {
+        principal: coloresEditor.principal,
+        secundario: coloresEditor.secundario,
+        numerico: coloresEditor.numerico,
+        boton: coloresEditor.boton,
+        telefono: tel
+      } })
+    }).then(r => r.json()).then(function(data) {
+      if (data.ok) {
+        window.mostrarAviso && window.mostrarAviso('Cambios guardados');
+        setTimeout(function(){ location.reload(); }, 600);
+      } else {
+        mostrarError(guardarColores);
+      }
+    }).catch(function(){ mostrarError(guardarColores); });
+  }
+</script>
+
+<!-- AVISO DE ERROR GENERAL -->
+<div id="aviso-error" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.45); z-index:6002; align-items:center; justify-content:center;">
+  <div style="background:#fff; border-radius:28px; width:300px; max-width:85%; padding:28px 24px 22px; box-shadow:0 12px 40px rgba(0,0,0,0.25); text-align:center;">
+    <div style="width:64px; height:64px; margin:0 auto 14px; border:4px solid #186904; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none"><line x1="12" y1="7" x2="12" y2="14" stroke="#186904" stroke-width="3.5" stroke-linecap="round"/><circle cx="12" cy="18.5" r="1.8" fill="#186904"/></svg>
+    </div>
+    <p style="font-size:20px; font-weight:700; color:#186904; margin:0 0 12px; font-family:Poppins,sans-serif;">Algo salió mal</p>
+    <div style="height:2px; width:60px; background:#186904; border-radius:2px; margin:0 auto 14px;"></div>
+    <p style="font-size:14px; color:#555; margin:0 0 22px; line-height:1.4; font-family:Poppins,sans-serif;">Intentá nuevamente más tarde. Si sigue sucediendo, considerá contactar a soporte.</p>
+    <div style="display:flex; gap:10px;">
+      <button onclick="reintentarError()" style="flex:1; background:#186904; color:#fff; border:none; border-radius:14px; padding:13px 0; font-size:14px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer;">Reintentar</button>
+      <button onclick="document.getElementById('aviso-error').style.display='none'" style="flex:1; background:#fff; color:#186904; border:2px solid #186904; border-radius:14px; padding:11px 0; font-size:14px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer;">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- AVISO CONFIRMAR PREDETERMINADO -->
+<div id="aviso-reset" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.45); z-index:6001; align-items:center; justify-content:center;">
+  <div style="background:#fff; border-radius:28px; width:300px; max-width:85%; padding:28px 24px 22px; box-shadow:0 12px 40px rgba(0,0,0,0.25); text-align:center;">
+    <div style="width:64px; height:64px; margin:0 auto 14px; border:4px solid #186904; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none"><line x1="12" y1="7" x2="12" y2="14" stroke="#186904" stroke-width="3.5" stroke-linecap="round"/><circle cx="12" cy="18.5" r="1.8" fill="#186904"/></svg>
+    </div>
+    <p style="font-size:20px; font-weight:700; color:#186904; margin:0 0 12px; font-family:Poppins,sans-serif;">Aviso</p>
+    <div style="height:2px; width:60px; background:#186904; border-radius:2px; margin:0 auto 14px;"></div>
+    <p style="font-size:14px; color:#555; margin:0 0 22px; line-height:1.4; font-family:Poppins,sans-serif;">¿Estás seguro de volver a los valores predeterminados? Todos los cambios de color volverán al original.</p>
+    <div style="display:flex; gap:10px;">
+      <button onclick="confirmarReset()" style="flex:1; background:#186904; color:#fff; border:none; border-radius:14px; padding:13px 0; font-size:14px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer;">Sí</button>
+      <button onclick="document.getElementById('aviso-reset').style.display='none'" style="flex:1; background:#fff; color:#186904; border:2px solid #186904; border-radius:14px; padding:11px 0; font-size:14px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer;">No</button>
+    </div>
+  </div>
+</div>
+
+<!-- AVISO CAMBIOS SIN GUARDAR -->
+<div id="aviso-cambios" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.45); z-index:6000; align-items:center; justify-content:center;">
+  <div style="background:#fff; border-radius:28px; width:300px; max-width:85%; padding:28px 24px 22px; box-shadow:0 12px 40px rgba(0,0,0,0.25); text-align:center;">
+    <div style="width:64px; height:64px; margin:0 auto 14px; border:4px solid #186904; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none"><line x1="12" y1="7" x2="12" y2="14" stroke="#186904" stroke-width="3.5" stroke-linecap="round"/><circle cx="12" cy="18.5" r="1.8" fill="#186904"/></svg>
+    </div>
+    <p style="font-size:20px; font-weight:700; color:#186904; margin:0 0 12px; font-family:Poppins,sans-serif;">Aviso</p>
+    <div style="height:2px; width:60px; background:#186904; border-radius:2px; margin:0 auto 14px;"></div>
+    <p style="font-size:14px; color:#555; margin:0 0 22px; line-height:1.4; font-family:Poppins,sans-serif;">Hiciste cambios que todavía no guardaste. ¿Querés guardarlos antes de salir?</p>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <button onclick="guardarColores()" style="background:#186904; color:#fff; border:none; border-radius:14px; padding:13px 0; font-size:14px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer;">Guardar cambios</button>
+      <button onclick="salirSinGuardar()" style="background:#fff; color:#186904; border:2px solid #186904; border-radius:14px; padding:11px 0; font-size:14px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer;">Salir sin guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  var hayCambios = false;
+  function marcarCambio() { hayCambios = true; }
+  function intentarCerrarEditor() {
+    if (hayCambios) {
+      document.getElementById('aviso-cambios').style.display = 'flex';
+      var ov = document.getElementById('editor-overlay');
+      ov.scrollTo({ top: ov.scrollHeight, behavior: 'smooth' });
+    } else {
+      cerrarEditor();
+    }
+  }
+  function salirSinGuardar() {
+    hayCambios = false;
+    document.getElementById('aviso-cambios').style.display = 'none';
+    cerrarEditor();
+  }
+  function confirmarReset() {
+    document.getElementById('aviso-reset').style.display = 'none';
+    resetColores();
+    hayCambios = false;
+    fetch('/perfil/config', {
+      method: 'POST',
+      headers: { 'x-csrf-token': csrfTokenPerfil, 'content-type': 'application/json' },
+      body: JSON.stringify({ config: {
+        principal: "#ffffff",
+        secundario: "#186904",
+        numerico: "#000000",
+        boton: "#ffffff"
+      } })
+    }).then(r => r.json()).then(function(data) {
+      if (data.ok) {
+        window.mostrarAviso && window.mostrarAviso('Colores restablecidos');
+        setTimeout(function(){ location.reload(); }, 600);
+      }
+    });
+  }
+  var ultimaAccionError = null;
+  function mostrarError(accionReintentar) {
+    ultimaAccionError = accionReintentar || null;
+    document.getElementById('aviso-error').style.display = 'flex';
+  }
+  function reintentarError() {
+    document.getElementById('aviso-error').style.display = 'none';
+    if (typeof ultimaAccionError === 'function') ultimaAccionError();
+  }
+</script>
+
+<script>
+  (function(){
+    var pts=0; var MAX=5000; var nivs=[1000,2000,3500,5000]; var MULT=1;
+    var nivelPrev=1;
+    // mapea puntos a la altura del liquido para que coincida con las lineas
+    // lineas: 1000->15%, 2000->40%, 3500->65%, 5000->88%
+    function dpAltura(p){
+      var puntos=[0,1000,2000,3500,5000];
+      var alturas=[0,15,40,65,88];
+      if(p>=5000) return 88;
+      for(var i=1;i<puntos.length;i++){
+        if(p<=puntos[i]){
+          var t=(p-puntos[i-1])/(puntos[i]-puntos[i-1]);
+          return alturas[i-1]+t*(alturas[i]-alturas[i-1]);
+        }
+      }
+      return 88;
+    }
+    function nivelDe(p){ var n=0; nivs.forEach(function(u){if(p>=u)n++;}); return n===0?1:n; }
+    function render(){
+      var liq=document.getElementById('dp-liquido');
+      var txt=document.getElementById('dp-niveltxt');
+      if(liq) liq.style.height=dpAltura(pts)+'%';
+      var n=nivelDe(pts);
+      if(txt) txt.textContent=pts+' pts · Nivel '+n;
+      if(n>nivelPrev) festejarNivel(n);
+      nivelPrev=n;
+    }
+    function festejarNivel(n){
+      var f=document.getElementById('dp-festejo');
+      if(f){ f.textContent='¡Nivel '+n+'! 🎉'; f.classList.remove('dp-show'); void f.offsetWidth; f.classList.add('dp-show'); }
+      var m=document.getElementById('dp-m'+(n-1));
+      if(m){ m.classList.add('dp-flash'); setTimeout(function(){m.classList.remove('dp-flash');},900); }
+    }
+    function spawnBurbuja(){
+      var liq=document.getElementById('dp-liquido');
+      if(!liq || liq.offsetHeight<20) return;
+      var b=document.createElement('div'); var sz=3+Math.random()*4;
+      b.className='dp-burbuja';
+      b.style.width=sz+'px'; b.style.height=sz+'px';
+      b.style.left=(10+Math.random()*60)+'px';
+      b.style.animationDuration=(1.5+Math.random()*1.5)+'s';
+      liq.appendChild(b);
+      setTimeout(function(){b.remove();},3000);
+    }
+    setInterval(spawnBurbuja,500);
+
+    window.dpAdd=function(){ pts=Math.min(MAX,pts+250); render(); };
+    window.dpSub=function(){ pts=Math.max(0,pts-250); render(); };
+    window.dpCupon=function(){
+      var t=document.getElementById('dp-tritu'); var zona=t.parentElement;
+      t.classList.add('dp-muerde','dp-girando');
+      for(var i=0;i<3;i++){(function(i){ setTimeout(function(){
+        var g=document.createElement('div');
+        g.style.cssText='position:absolute;left:'+(40+i*7)+'px;top:78px;width:9px;height:12px;background:#27A04C;border-radius:50%/60% 60% 40% 40%;z-index:4;';
+        zona.appendChild(g);
+        var y=78,v=0;
+        var fall=setInterval(function(){ v+=1.2; y+=v; g.style.top=y+'px';
+          if(y>335){ v=-v*0.4; y=335; if(Math.abs(v)<2){clearInterval(fall); g.style.transition='opacity 0.3s'; g.style.opacity=0; setTimeout(function(){g.remove();},300);} }
+        },16);
+      }, i*160); })(i);}
+      setTimeout(function(){ t.classList.remove('dp-muerde','dp-girando'); pts=Math.min(MAX,pts+Math.round(100*MULT)); render(); },1300);
+    };
+
+    var tubo=document.getElementById('dp-tubo');
+    if(tubo){
+      function dpSet(cy){
+        var r=tubo.getBoundingClientRect();
+        var pct=1-(cy-r.top)/r.height; pct=Math.max(0,Math.min(1,pct));
+        pts=Math.round(pct*MAX); render();
+      }
+      var drag=false;
+      tubo.addEventListener('mousedown',function(e){drag=true;dpSet(e.clientY);});
+      window.addEventListener('mousemove',function(e){if(drag)dpSet(e.clientY);});
+      window.addEventListener('mouseup',function(){drag=false;});
+      tubo.addEventListener('touchstart',function(e){dpSet(e.touches[0].clientY);});
+      tubo.addEventListener('touchmove',function(e){dpSet(e.touches[0].clientY); e.preventDefault();},{passive:false});
+    }
+    render();
+  })();
+</script>
+

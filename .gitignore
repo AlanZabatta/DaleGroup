@@ -39,3 +39,6 @@ npm-debug.log
 .env
 *.bak
 *.zip
+
+# Backups locales
+*.bak*
