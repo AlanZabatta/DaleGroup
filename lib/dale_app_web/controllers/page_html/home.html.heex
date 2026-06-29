@@ -1,101 +1,137 @@
 <style>
-  @keyframes slideInFromLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
-  @keyframes slideInFromRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
-  .slide-in-left { animation: slideInFromLeft 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
-  .slide-in-right { animation: slideInFromRight 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
+  #home-slider { display:flex; width:100%; height:calc(100vh - 60px); overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  #home-slider::-webkit-scrollbar { display:none; }
+  .home-panel { flex:0 0 100%; width:100%; height:100%; overflow-y:auto; scroll-snap-align:start; scroll-snap-stop:always; box-sizing:border-box; }
+  .home-dots { display:flex; gap:7px; justify-content:center; padding:8px 0; }
+  .home-dot { width:7px; height:7px; border-radius:50%; background:#ccc; transition:all 0.3s; }
+  .home-dot.activo { background:#186904; width:20px; border-radius:4px; }
 </style>
 
-<div id="nav-arrows" style="display: none; position: fixed; top: 50%; transform: translateY(-50%); width: 100%; max-width: 480px; left: 50%; margin-left: -240px; pointer-events: none; z-index: 100;">
-  <button onclick="navTo('/productos', 'right')" style="pointer-events: all; position: absolute; left: -48px; background: none; border: none; cursor: pointer; opacity: 0.4; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='0.4'">
-    <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="15" stroke="#888" stroke-width="1.5"/><polyline points="18,10 12,16 18,22" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  </button>
-  <button onclick="navTo('/tiendas', 'left')" style="pointer-events: all; position: absolute; right: -48px; background: none; border: none; cursor: pointer; opacity: 0.4; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='0.4'">
-    <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="15" stroke="#888" stroke-width="1.5"/><polyline points="14,10 20,16 14,22" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  </button>
+<div class="home-dots">
+  <div class="home-dot" id="hdot-0"></div>
+  <div class="home-dot activo" id="hdot-1"></div>
+  <div class="home-dot" id="hdot-2"></div>
 </div>
 
-<div id="page-content" style="max-width: 480px; margin: 0 auto; overflow: hidden;">
+<div id="home-slider">
 
-  <div style="display: flex; justify-content: center; gap: 6px; padding: 12px 0 0;">
-    <div style="width: 7px; height: 7px; border-radius: 50%; background: #ccc;"></div>
-    <div style="width: 7px; height: 7px; border-radius: 50%; background: #999;"></div>
-    <div style="width: 7px; height: 7px; border-radius: 50%; background: #ccc;"></div>
-  </div>
-
-  <div style="margin: 12px 16px 0; background-color: #1E5C1E; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; border-radius: 16px;">
-    <span style="color: white; font-size: 32px; font-weight: 900; font-family: 'Abril Fatface', cursive; letter-spacing: 2px; opacity: 0.5;">Video</span>
-  </div>
-
-  <div style="padding: 32px 16px 24px;">
-    <span style="font-size: 15px; color: white; font-weight: 400; letter-spacing: 2px; text-transform: uppercase; background-color: #1E5C1E; padding: 6px 18px; border-radius: 20px; font-family: 'Noto Sans', sans-serif;">Tendencia</span>
-  </div>
-
-  <%= for brand <- @featured_brands do %>
-    <div style="margin: 0 16px 24px;">
-      <a href={"/marcas/#{brand.id}"} style="display: block; text-decoration: none; border-radius: 12px; overflow: hidden; position: relative; background: #f0f0f0; aspect-ratio: 16/7; box-shadow: 0 2px 12px rgba(0,0,0,0.08);">
-        <%= if brand.cover_image do %>
-          <img src={brand.cover_image} style="width: 100%; height: 100%; object-fit: cover; display: block;"/>
-        <% else %>
-          <div style="width: 100%; height: 100%; background: #e8e8e8; display: flex; align-items: center; justify-content: center;">
-            <span style="color: #ccc; font-size: 14px; font-family: 'Noto Sans', sans-serif;">Sin imagen</span>
-          </div>
-        <% end %>
-        <%= if brand.cupon_activo do %>
-          <div style="position: absolute; bottom: 12px; left: 12px; background: #1e7a37; color: white; padding: 6px 14px; font-size: 24px; font-family: 'Abril Fatface', cursive;">
-            <%= brand.cupon_activo.discount %> off
-          </div>
-        <% end %>
-        <%= if brand.logo do %>
-          <div style="position: absolute; top: 12px; right: 12px; background: white; border-radius: 8px; padding: 4px 6px; width: 130px; height: 76px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-            <img src={brand.logo} style="max-width: 100%; max-height: 100%; object-fit: contain; display: block;"/>
-          </div>
-        <% end %>
-      </a>
-      <div style="padding: 8px 4px 0;">
-        <span style="font-size: 15px; font-weight: 400; color: #000; font-family: 'Abril Fatface', cursive;">• <%= String.capitalize(brand.name) %></span><span style="font-size: 15px; font-weight: 400; color: #000; font-family: 'Abril Fatface', cursive;"> • <%= String.capitalize(brand.modalidad) %></span>
-      </div>
+  <!-- PANEL 1: PRODUCTOS -->
+  <div class="home-panel" id="home-panel-productos">
+    <div style="background: white; border-bottom: 1px solid #ddd; display: flex; width: 100%;">
+      <button style="flex: 1; background: none; border: none; border-right: 1px solid #ddd; padding: 10px 4px; font-family: 'Noto Sans', sans-serif; font-size: 12px; color: #999; cursor: pointer; letter-spacing: 0.5px;">Categorías</button>
+      <button style="flex: 1; background: none; border: none; border-right: 1px solid #ddd; padding: 10px 4px; font-family: 'Noto Sans', sans-serif; font-size: 12px; color: #999; cursor: pointer; letter-spacing: 0.5px;">Menor a mayor</button>
+      <button style="flex: 1; background: none; border: none; padding: 10px 4px; font-family: 'Noto Sans', sans-serif; font-size: 12px; color: #999; cursor: pointer; letter-spacing: 0.5px;">Filtros</button>
     </div>
-  <% end %>
+    <div style="margin-top: 16px; padding: 0 16px;">
+      <span style="font-size: 26px; font-weight: 800; font-family: Poppins, sans-serif; color: #186904;">Catalogo</span>
+      <div style="height: 24px;"></div>
+    </div>
+    <div style="background: white; padding: 8px 16px 100px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+      <%= for %{producto: producto, marca: marca} <- @productos do %>
+        <a href={"/marcas/#{marca.id}"} onclick={"event.preventDefault(); abrirProductoSheet(#{producto.id})"} style="text-decoration: none; border-radius: 12px; overflow: hidden; border: 0.5px solid #eee; display: block;">
+          <div style="position: relative; aspect-ratio: 3/4; background: #f0f0f0; overflow: hidden;">
+            <img src={producto.image} style="width: 100%; height: 100%; object-fit: cover; display: block;"/>
+            <button onclick={"event.preventDefault(); event.stopPropagation(); toggleFavorito(this, #{producto.id})"} style="position: absolute; top: 6px; right: 6px; z-index: 10; background: white; border: 1.5px solid #ddd; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px;">&#129293;</button>
+          </div>
+          <div style="background: white; padding: 8px 10px;">
+            <p style="font-size: 12px; font-weight: 500; margin: 0; color: #111; font-family: 'Noto Sans', sans-serif;"><%= producto.name %></p>
+            <%= if producto.original_price do %>
+              <p style="font-size: 11px; color: #999; margin: 1px 0 0; text-decoration: line-through; font-family: 'Noto Sans', sans-serif;">$<%= producto.original_price %></p>
+            <% end %>
+            <%= if producto.price do %>
+              <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0; font-family: 'Noto Sans', sans-serif;">$<%= producto.price %></p>
+            <% end %>
+            <p style="font-size: 11px; color: #888; margin: 2px 0 0; font-family: 'Noto Sans', sans-serif;"><%= marca.name %></p>
+          </div>
+        </a>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- PANEL 2: HOME (centro) -->
+  <div class="home-panel" id="home-panel-centro">
+    <div style="margin: 12px 16px 0; background-color: #186904; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; border-radius: 16px;">
+      <span style="color: white; font-size: 32px; font-weight: 900; font-family: 'Abril Fatface', cursive; letter-spacing: 2px; opacity: 0.5;">Video</span>
+    </div>
+    <div style="padding: 32px 16px 24px;">
+      <span style="font-size: 15px; color: white; font-weight: 400; letter-spacing: 2px; text-transform: uppercase; background-color: #186904; padding: 6px 18px; border-radius: 20px; font-family: 'Noto Sans', sans-serif;">Tendencia</span>
+    </div>
+    <%= for brand <- @featured_brands do %>
+      <div style="margin: 0 16px 24px;">
+        <a href={"/marcas/#{brand.id}"} style="display: block; text-decoration: none; border-radius: 12px; overflow: hidden; position: relative; background: #f0f0f0; aspect-ratio: 16/7; box-shadow: 0 2px 12px rgba(0,0,0,0.08);">
+          <%= if brand.cover_image do %>
+            <img src={brand.cover_image} style="width: 100%; height: 100%; object-fit: cover; display: block;"/>
+          <% else %>
+            <div style="width: 100%; height: 100%; background: #e8e8e8; display: flex; align-items: center; justify-content: center;"><span style="color: #ccc; font-size: 14px; font-family: 'Noto Sans', sans-serif;">Sin imagen</span></div>
+          <% end %>
+          <%= if brand.cupon_activo do %>
+            <div style="position: absolute; bottom: 12px; left: 12px; background: #186904; color: white; padding: 6px 14px; font-size: 24px; font-family: 'Abril Fatface', cursive;"><%= brand.cupon_activo.discount %> off</div>
+          <% end %>
+          <%= if brand.logo do %>
+            <div style="position: absolute; top: 12px; right: 12px; background: white; border-radius: 8px; padding: 4px 6px; width: 130px; height: 76px; display: flex; align-items: center; justify-content: center; overflow: hidden;"><img src={brand.logo} style="max-width: 100%; max-height: 100%; object-fit: contain; display: block;"/></div>
+          <% end %>
+        </a>
+        <div style="padding: 8px 4px 0;">
+          <span style="font-size: 15px; font-weight: 400; color: #000; font-family: 'Abril Fatface', cursive;">&bull; <%= String.capitalize(brand.name) %></span><span style="font-size: 15px; font-weight: 400; color: #000; font-family: 'Abril Fatface', cursive;"> &bull; <%= String.capitalize(brand.modalidad) %></span>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- PANEL 3: MARCAS -->
+  <div class="home-panel" id="home-panel-marcas">
+    <div style="background: white; border-bottom: 1px solid #ddd; display: flex; width: 100%;">
+      <button style="flex: 1; background: none; border: none; border-right: 1px solid #ddd; padding: 10px 4px; font-family: 'Noto Sans', sans-serif; font-size: 12px; color: #999; cursor: pointer; letter-spacing: 0.5px;">Categorias</button>
+      <button style="flex: 1; background: none; border: none; border-right: 1px solid #ddd; padding: 10px 4px; font-family: 'Noto Sans', sans-serif; font-size: 12px; color: #999; cursor: pointer; letter-spacing: 0.5px;">Menor a mayor</button>
+      <button style="flex: 1; background: none; border: none; padding: 10px 4px; font-family: 'Noto Sans', sans-serif; font-size: 12px; color: #999; cursor: pointer; letter-spacing: 0.5px;">Filtros</button>
+    </div>
+    <div style="margin-top: 16px; padding: 0 16px 16px;">
+      <span style="font-size: 26px; font-weight: 800; font-family: Poppins, sans-serif; color: #186904;">Marcas</span>
+    </div>
+    <%= for brand <- @marcas do %>
+      <div style="margin: 0 16px 24px;">
+        <a href={"/marcas/#{brand.id}"} style="display: block; text-decoration: none; border-radius: 12px; overflow: hidden; position: relative; background: #f0f0f0; aspect-ratio: 16/7; box-shadow: 0 2px 12px rgba(0,0,0,0.08);">
+          <%= if brand.cover_image do %>
+            <img src={brand.cover_image} style="width: 100%; height: 100%; object-fit: cover; display: block;"/>
+          <% else %>
+            <div style="width: 100%; height: 100%; background: #e8e8e8; display: flex; align-items: center; justify-content: center;"><span style="color: #ccc; font-size: 14px; font-family: 'Noto Sans', sans-serif;">Sin imagen</span></div>
+          <% end %>
+          <%= if brand.cupon_activo do %>
+            <div style="position: absolute; bottom: 12px; left: 12px; background: #186904; color: white; padding: 6px 14px; font-size: 24px; font-family: 'Abril Fatface', cursive;"><%= brand.cupon_activo.discount %> off</div>
+          <% end %>
+          <%= if brand.logo do %>
+            <div style="position: absolute; top: 12px; right: 12px; background: white; border-radius: 8px; padding: 4px 6px; width: 130px; height: 76px; display: flex; align-items: center; justify-content: center; overflow: hidden;"><img src={brand.logo} style="max-width: 100%; max-height: 100%; object-fit: contain; display: block;"/></div>
+          <% end %>
+        </a>
+        <div style="padding: 8px 4px 0;">
+          <span style="font-size: 15px; font-weight: 400; color: #000; font-family: 'Abril Fatface', cursive;">&bull; <%= String.capitalize(brand.name) %></span><span style="font-size: 15px; font-weight: 400; color: #000; font-family: 'Abril Fatface', cursive;"> &bull; <%= String.capitalize(brand.modalidad) %></span>
+        </div>
+      </div>
+    <% end %>
+  </div>
 
 </div>
 
 <script>
-  function navTo(url, from) {
-    sessionStorage.setItem('slide_from', from);
-    window.location.href = url;
-  }
   (function() {
-    const page = document.getElementById('page-content');
-    const arrows = document.getElementById('nav-arrows');
-    const came = sessionStorage.getItem('slide_from');
-    if (came === 'left') page.classList.add('slide-in-left');
-    else if (came === 'right') page.classList.add('slide-in-right');
-    sessionStorage.removeItem('slide_from');
-    if (!('ontouchstart' in window)) arrows.style.display = 'block';
-
-    let startX = 0, startY = 0, isHorizontal = null;
-
-    document.addEventListener('touchstart', function(e) {
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
-      isHorizontal = null;
-    }, { passive: true });
-
-    document.addEventListener('touchmove', function(e) {
-      if (isHorizontal === null) {
-        const dx = Math.abs(e.touches[0].clientX - startX);
-        const dy = Math.abs(e.touches[0].clientY - startY);
-        if (dx > 8 || dy > 8) isHorizontal = dx > dy;
-      }
-      if (isHorizontal) e.preventDefault();
-    }, { passive: false });
-
-    document.addEventListener('touchend', function(e) {
-      if (!isHorizontal) return;
-      const diffX = startX - e.changedTouches[0].clientX;
-      if (Math.abs(diffX) < 40) return;
-      if (diffX > 0) navTo('/tiendas', 'left');
-      else navTo('/productos', 'right');
-    }, { passive: true });
+    var slider = document.getElementById('home-slider');
+    var dots = [document.getElementById('hdot-0'), document.getElementById('hdot-1'), document.getElementById('hdot-2')];
+    function irAlCentro() { slider.scrollLeft = slider.clientWidth; }
+    irAlCentro();
+    window.addEventListener('load', irAlCentro);
+    slider.addEventListener('scroll', function() {
+      var idx = Math.round(slider.scrollLeft / slider.clientWidth);
+      dots.forEach(function(d, i) { if (d) d.classList.toggle('activo', i === idx); });
+    });
   })();
+
+  async function toggleFavorito(btn, productId) {
+    var csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content");
+    var res = await fetch('/favoritos/' + productId, { method: 'POST', headers: { 'x-csrf-token': csrfToken, 'content-type': 'application/json' } });
+    var data = await res.json();
+    if (data.ok) {
+      if (data.action === 'added') { btn.innerHTML = '&#128154;'; btn.style.borderColor = '#186904'; }
+      else { btn.innerHTML = '&#129293;'; btn.style.borderColor = '#ddd'; }
+    } else if (data.error === 'not_logged_in') { window.location.href = '/auth/google'; }
+  }
 </script>

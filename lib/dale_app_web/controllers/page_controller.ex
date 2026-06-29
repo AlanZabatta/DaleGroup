@@ -23,7 +23,34 @@ defmodule DaleAppWeb.PageController do
       )
       Map.put(brand, :cupon_activo, cupon)
     end)
-    render(conn, :home, current_user: current_user, featured_brands: featured_brands)
+
+    # Datos para el panel de Productos
+    productos = Repo.all(
+      from p in DaleApp.Products.Product,
+      join: b in DaleApp.Brands.Brand, on: p.brand_id == b.id,
+      where: p.active == true and not is_nil(p.image) and b.active == true,
+      select: %{producto: p, marca: b}
+    )
+
+    # Datos para el panel de Marcas (con cupon activo, como las destacadas)
+    marcas = Repo.all(from b in Brand, where: b.active == true)
+    marcas = Enum.map(marcas, fn brand ->
+      cupon = Repo.one(
+        from c in Coupon,
+        where: c.brand_id == ^brand.id and c.active == true and c.stock > 0,
+        order_by: [desc: c.inserted_at],
+        limit: 1
+      )
+      Map.put(brand, :cupon_activo, cupon)
+    end)
+
+    render(conn, :home,
+      current_user: current_user,
+      featured_brands: featured_brands,
+      productos: productos,
+      marcas: marcas,
+      orden: nil
+    )
   end
 
   def perfil(conn, _params) do

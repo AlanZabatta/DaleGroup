@@ -38,128 +38,9 @@
 <div id="perfil-slider">
 
   <!-- PANEL 1 (izquierda): perfil actual -->
-  <div class="perfil-panel" style="padding:0 16px;">
-  <%= if @current_user do %>
-    <% cfg = @current_user.perfil_config || %{} %>
-    <% forma = Map.get(cfg, "forma", "capsula") %>
-    <% c_principal = Map.get(cfg, "principal", "#ffffff") %>
-    <% c_secundario = Map.get(cfg, "secundario", "#186904") %>
-    <% c_numerico = Map.get(cfg, "numerico", forma == "capsula" && "#ffffff" || "#186904") %>
-    <% c_boton = Map.get(cfg, "boton", forma == "capsula" && "#186904" || "#ffffff") %>
-
-    <div id="perfil-header" style={"margin-top:24px; --c-principal:#{c_principal}; --c-secundario:#{c_secundario}; --c-numerico:#{c_numerico}; --c-boton:#{c_boton};"}>
-
-      <%= if forma == "capsula" do %>
-        <!-- FORMA 1: CAPSULA -->
-        <div style="background:var(--c-secundario); border-radius:34px; padding:18px; display:flex; align-items:center; gap:14px;">
-          <div style="position:relative; width:84px; height:84px; flex-shrink:0; cursor:pointer;" onclick="document.getElementById('foto-input').click()">
-            <%= if @current_user.avatar do %>
-              <img src={@current_user.avatar} id="foto-preview" style="width:84px; height:84px; border-radius:50%; object-fit:cover; border:4px solid var(--c-principal); background:var(--c-principal);"/>
-            <% else %>
-              <div id="foto-preview" style="width:84px; height:84px; border-radius:50%; background:var(--c-principal); border:4px solid var(--c-principal); display:flex; align-items:center; justify-content:center; font-size:32px;">👤</div>
-            <% end %>
-          </div>
-          <div style="flex:1; min-width:0;">
-            <p style="margin:0 0 8px; font-size:14px; font-weight:700; color:var(--c-secundario); background:var(--c-principal); display:inline-block; padding:4px 12px; border-radius:14px; font-family:'Noto Sans',sans-serif; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">@<%= @current_user.username %></p>
-            <div style="display:flex; gap:8px;">
-              <button style="background:var(--c-principal); color:var(--c-boton); border:none; border-radius:14px; padding:7px 18px; font-size:13px; font-weight:700; font-family:'Noto Sans',sans-serif; cursor:pointer;">Seguir</button>
-              <button style="background:var(--c-principal); color:var(--c-boton); border:none; border-radius:14px; padding:7px 18px; font-size:13px; font-weight:700; font-family:'Noto Sans',sans-serif; cursor:pointer;">Mensaje</button>
-            </div>
-          </div>
-        </div>
-        <div style="display:flex; gap:10px; margin-top:12px;">
-          <div style="flex:1; background:var(--c-secundario); border-radius:20px; padding:10px 0; text-align:center;">
-            <p style="margin:0; font-size:20px; font-weight:700; color:var(--c-numerico); font-family:'Noto Sans',sans-serif;"><%= length(@amigos) %></p>
-            <p style="margin:2px 0 0; font-size:11px; color:var(--c-numerico); font-family:'Noto Sans',sans-serif;">Seguidores</p>
-          </div>
-          <div style="flex:1; background:var(--c-secundario); border-radius:20px; padding:10px 0; text-align:center;">
-            <p style="margin:0; font-size:20px; font-weight:700; color:var(--c-numerico); font-family:'Noto Sans',sans-serif;"><%= length(@amigos) %></p>
-            <p style="margin:2px 0 0; font-size:11px; color:var(--c-numerico); font-family:'Noto Sans',sans-serif;">Seguidos</p>
-          </div>
-          <div style="flex:1; background:var(--c-secundario); border-radius:20px; padding:10px 0; text-align:center;">
-            <p style="margin:0; font-size:20px; font-weight:700; color:var(--c-numerico); font-family:'Noto Sans',sans-serif;"><%= length(@favoritos) %></p>
-            <p style="margin:2px 0 0; font-size:11px; color:var(--c-numerico); font-family:'Noto Sans',sans-serif;">Publicaciones</p>
-          </div>
-        </div>
-
-      <% else %>
-        <!-- FORMA 2: TARJETA -->
-        <div style="background:var(--c-principal); border:2px solid var(--c-secundario); border-radius:24px; padding:18px;">
-          <div style="display:flex; align-items:center; gap:14px;">
-            <div style="position:relative; width:88px; height:88px; flex-shrink:0; cursor:pointer;" onclick="document.getElementById('foto-input').click()">
-              <%= if @current_user.avatar do %>
-                <img src={@current_user.avatar} id="foto-preview" style="width:88px; height:88px; border-radius:50%; object-fit:cover; border:3px solid var(--c-secundario);"/>
-              <% else %>
-                <div id="foto-preview" style="width:88px; height:88px; border-radius:50%; background:#f0f0f0; border:3px solid var(--c-secundario); display:flex; align-items:center; justify-content:center; font-size:32px;">👤</div>
-              <% end %>
-            </div>
-            <div style="flex:1; min-width:0;">
-              <p style="margin:0 0 8px; font-size:15px; font-weight:700; color:var(--c-secundario); font-family:'Noto Sans',sans-serif; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">@<%= @current_user.username %></p>
-              <div style="display:flex; gap:8px;">
-                <button style="background:var(--c-secundario); color:var(--c-boton); border:none; border-radius:8px; padding:7px 18px; font-size:13px; font-weight:700; font-family:'Noto Sans',sans-serif; cursor:pointer;">Seguir</button>
-                <button style="background:var(--c-secundario); color:var(--c-boton); border:none; border-radius:8px; padding:7px 18px; font-size:13px; font-weight:700; font-family:'Noto Sans',sans-serif; cursor:pointer;">Mensaje</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div style="display:flex; gap:10px; margin-top:12px;">
-          <div style="flex:1; background:var(--c-principal); border:2px solid var(--c-secundario); border-radius:18px; padding:9px 0; text-align:center;">
-            <p style="margin:0; font-size:19px; font-weight:700; color:var(--c-numerico); font-family:'Noto Sans',sans-serif;"><%= length(@amigos) %></p>
-            <p style="margin:2px 0 0; font-size:11px; color:#999; font-family:'Noto Sans',sans-serif;">Seguidores</p>
-          </div>
-          <div style="flex:1; background:var(--c-principal); border:2px solid var(--c-secundario); border-radius:18px; padding:9px 0; text-align:center;">
-            <p style="margin:0; font-size:19px; font-weight:700; color:var(--c-numerico); font-family:'Noto Sans',sans-serif;"><%= length(@amigos) %></p>
-            <p style="margin:2px 0 0; font-size:11px; color:#999; font-family:'Noto Sans',sans-serif;">Seguidos</p>
-          </div>
-          <div style="flex:1; background:var(--c-principal); border:2px solid var(--c-secundario); border-radius:18px; padding:9px 0; text-align:center;">
-            <p style="margin:0; font-size:19px; font-weight:700; color:var(--c-numerico); font-family:'Noto Sans',sans-serif;"><%= length(@favoritos) %></p>
-            <p style="margin:2px 0 0; font-size:11px; color:#999; font-family:'Noto Sans',sans-serif;">Publicaciones</p>
-          </div>
-        </div>
-      <% end %>
-
-      <input type="file" id="foto-input" accept="image/*" style="display: none;" onchange="subirFotoPerfil(this)"/>
-    </div>
-
-    <div style="margin-top: 24px; display: flex; justify-content: center;">
-      <button onclick="abrirSelectorFotos()" style="display: flex; align-items: center; gap: 8px; padding: 10px 24px; border: 1.5px solid #186904; border-radius: 20px; background: white; color: #186904; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans', sans-serif;">
-        <span style="font-size: 16px;">📸</span> Subir foto
-      </button>
-    </div>
-
-    <div style="margin-top: 32px; padding: 14px; background: #f7f7f7; border-radius: 10px;">
-      <div style="display: flex; align-items: center; justify-content: space-between;">
-        <div>
-          <p style="font-size: 11px; color: #999; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 1px; font-family: 'Noto Sans', sans-serif;">Tu usuario</p>
-          <p id="username-display" style="font-size: 16px; font-weight: 700; color: #186904; margin: 0; font-family: 'Noto Sans', sans-serif;"><%= @current_user.username %></p>
-        </div>
-        <button onclick="abrirEditorUsername()" style="padding: 6px 14px; border: 1.5px solid #186904; border-radius: 16px; background: white; color: #186904; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans', sans-serif;">Cambiar</button>
-      </div>
-      <div id="editor-username" style="display: none; margin-top: 12px;">
-        <div style="display: flex; gap: 8px;">
-          <input id="nuevo-username" type="text" placeholder="Nuevo nombre" maxlength="20" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Noto Sans', sans-serif; font-size: 13px;"/>
-          <button onclick="guardarUsername()" style="padding: 8px 14px; border: none; border-radius: 6px; background: #186904; color: white; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans', sans-serif;">Guardar</button>
-        </div>
-        <p id="username-error" style="font-size: 12px; color: #c0392b; margin: 6px 0 0; font-family: 'Noto Sans', sans-serif; display: none;"></p>
-        <p style="font-size: 11px; color: #999; margin: 6px 0 0; font-family: 'Noto Sans', sans-serif;">4-20 caracteres, solo letras, números y _. Los usuarios pueden cambiar su nombre 1 vez cada 7 días.</p>
-      </div>
-    </div>
-
-    <div style="margin-top: 24px; margin-bottom: 40px;">
-      <p style="font-size: 12px; font-weight: 600; color: #333; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 1px; font-family: 'Noto Sans', sans-serif;">Tus amigos</p>
-      <%= if @amigos == [] do %>
-        <p style="font-size: 13px; color: #999; font-family: 'Noto Sans', sans-serif;">Todavía no agregaste amigos.</p>
-      <% else %>
-        <%= for a <- @amigos do %>
-          <div style="padding: 10px 0; border-bottom: 1px solid #eee; font-size: 14px; font-family: 'Noto Sans', sans-serif; color: #111;">
-            <%= a.username %>
-          </div>
-        <% end %>
-      <% end %>
-    </div>
-  <% end %>
-</div>
-
+  <div class="perfil-panel" style="padding:16px; display:flex; align-items:center; justify-content:center;">
+    <p style="color:#ccc; font-size:14px; font-family:Poppins,sans-serif;">Próximamente</p>
+  </div>
   <% cfg2 = (@current_user && @current_user.perfil_config) || %{} %>
   <% c_sec = Map.get(cfg2, "secundario", "#186904") %>
   <% c_pri = Map.get(cfg2, "principal", "#ffffff") %>
@@ -763,6 +644,18 @@
     </div>
 
     <div style="height:1px; background:#eee; margin:24px 0;"></div>
+    <%= if @current_user do %>
+      <form action="/auth/logout" method="post" style="margin:0 0 8px; padding:0;">
+        <input type="hidden" name="_method" value="delete"/>
+        <input type="hidden" name="_csrf_token" value={get_csrf_token()}/>
+        <button type="submit" style="width:100%; background:#fff; color:#c0392b; border:2px solid #c0392b; border-radius:16px; padding:13px 0; font-size:14px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Cerrar sesión
+        </button>
+      </form>
+    <% end %>
+
+    <div style="height:1px; background:#eee; margin:18px 0;"></div>
     <p style="font-size:16px; font-weight:700; color:#111; margin:0 0 16px; font-family:Poppins,sans-serif;">Colores del perfil</p>
 
     <div id="color-preview" style={"--c-principal:#{c_pri}; --c-secundario:#{c_sec}; --c-numerico:#{c_numm}; --c-boton:#{c_bot}; margin-top:24px; margin-bottom:-30px; transform:scale(0.82); transform-origin:top center;"}>

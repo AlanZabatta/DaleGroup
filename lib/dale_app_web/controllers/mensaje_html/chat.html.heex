@@ -1,14 +1,14 @@
-<div style="position:fixed; top:0; left:0; right:0; bottom:0; display:flex; flex-direction:column; background:#f4f4f4; max-width:480px; margin:0 auto; font-family:Poppins,sans-serif;">
+<div style="position:fixed; top:60px; left:0; right:0; bottom:11vh; display:flex; flex-direction:column; background:#ffffff; max-width:480px; margin:0 auto; font-family:Poppins,sans-serif; z-index:50;">
 
-  <div style="display:flex; align-items:center; gap:12px; padding:12px 14px; background:#186904; color:#fff; flex-shrink:0;">
+  <div style="display:flex; align-items:center; gap:14px; padding:14px 16px; background:#186904; color:#fff; flex-shrink:0;">
     <a href="/amigos" style="color:#fff; text-decoration:none; font-size:22px; line-height:1;">&#8249;</a>
-    <img src={@otro && @otro.avatar} style="width:40px; height:40px; border-radius:50%; object-fit:cover; background:#fff;"/>
+    <img src={@otro && @otro.avatar} style="width:46px; height:46px; border-radius:50%; object-fit:cover; background:#fff; border:3px solid #186904;"/>
     <div style="flex:1; min-width:0;">
-      <p style="margin:0; font-size:15px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><%= @otro && (@otro.username || @otro.name) %></p>
+      <p style="margin:0; font-size:16px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><%= @otro && (@otro.username || @otro.name) %></p>
     </div>
   </div>
 
-  <div id="chat-mensajes" style="flex:1; overflow-y:auto; padding:16px 12px; display:flex; flex-direction:column; gap:8px;">
+  <div id="chat-mensajes" style="flex:1; overflow-y:auto; padding:16px 12px; display:flex; flex-direction:column; gap:8px; background:#ffffff;">
     <%= for m <- @mensajes do %>
       <% mio = m.remitente_id == @current_user.id %>
       <div style={"max-width:75%; padding:9px 13px; border-radius:16px; font-size:14px; line-height:1.35; word-break:break-word; " <> if mio do "align-self:flex-end; background:#186904; color:#fff; border-bottom-right-radius:4px;" else "align-self:flex-start; background:#fff; color:#111; border:2px solid #186904; border-bottom-left-radius:4px;" end}>

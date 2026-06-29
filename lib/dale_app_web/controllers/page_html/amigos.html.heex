@@ -14,9 +14,118 @@
 </div>
 
 <div id="amigos-slider">
-  <div class="amigos-panel" style="padding:16px; display:flex; align-items:center; justify-content:center;">
-    <p style="color:#ccc; font-size:14px; font-family:Poppins,sans-serif;">Próximamente</p>
+  <div class="amigos-panel" style="padding:16px;">
+    <p style="font-size:24px; font-weight:800; color:#186904; font-family:Poppins,sans-serif; margin:8px 4px 4px;">Buscar amigos</p>
+    <p style="font-size:13px; color:#999; font-family:Poppins,sans-serif; margin:0 4px 18px;">Encontra personas por su usuario</p>
+    <div style="display:flex; gap:8px; margin-bottom:16px;">
+      <input id="buscar-amigo-input" type="text" placeholder="Nombre de usuario" autocomplete="off" style="flex:1; padding:13px 16px; border:2px solid #e0e0e0; border-radius:16px; font-family:Poppins,sans-serif; font-size:14px; outline:none; box-sizing:border-box;" onkeydown="if(event.key==='Enter'){buscarAmigo();}"/>
+      <button onclick="buscarAmigo()" style="background:#186904; color:#fff; border:none; border-radius:16px; padding:0 20px; font-size:14px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer;">Buscar</button>
+    </div>
+    <div id="buscar-resultado"></div>
+
+    <div style="height:1px; background:#eee; margin:22px 0;"></div>
+
+    <p style="font-size:13px; font-weight:600; color:#186904; font-family:Poppins,sans-serif; margin:0 0 8px;">Tu nombre de usuario</p>
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+      <p id="username-display-amigos" style="flex:1; font-size:16px; font-weight:700; color:#111; margin:0; font-family:Poppins,sans-serif;">@<%= @current_user && @current_user.username %></p>
+      <button onclick="document.getElementById('editor-username-amigos').style.display='block'" style="padding:7px 16px; border:2px solid #186904; border-radius:16px; background:#fff; color:#186904; font-size:13px; font-weight:600; cursor:pointer; font-family:Poppins,sans-serif;">Cambiar</button>
+    </div>
+    <div id="editor-username-amigos" style="display:none; margin-top:10px;">
+      <div style="display:flex; gap:8px;">
+        <input id="nuevo-username-amigos" type="text" placeholder="Nuevo nombre" maxlength="20" style="flex:1; padding:11px 14px; border:2px solid #e0e0e0; border-radius:14px; font-family:Poppins,sans-serif; font-size:14px; outline:none; box-sizing:border-box;"/>
+        <button onclick="guardarUsernameAmigos()" style="background:#186904; color:#fff; border:none; border-radius:14px; padding:0 18px; font-size:13px; font-weight:600; cursor:pointer; font-family:Poppins,sans-serif;">Guardar</button>
+      </div>
+      <p id="username-error-amigos" style="font-size:12px; color:#c0392b; margin:6px 0 0; font-family:Poppins,sans-serif; display:none;"></p>
+      <p style="font-size:10px; color:#aaa; margin:6px 0 0; font-family:Poppins,sans-serif;">Podes cambiarlo 1 vez cada 7 dias.</p>
+    </div>
+
+    <div style="height:1px; background:#eee; margin:22px 0;"></div>
+
+    <p style="font-size:13px; font-weight:600; color:#186904; font-family:Poppins,sans-serif; margin:0 0 12px;">Tus amigos</p>
+    <%= if @amigos == [] do %>
+      <p style="font-size:13px; color:#999; font-family:Poppins,sans-serif;">Todavia no agregaste amigos.</p>
+    <% else %>
+      <%= for a <- @amigos do %>
+        <div style="display:flex; align-items:center; gap:12px; padding:10px; border:2px solid #f0f0f0; border-radius:14px; margin-bottom:6px;">
+          <img src={a.avatar} style="width:44px; height:44px; border-radius:50%; object-fit:cover; background:#eee;"/>
+          <span style="font-size:14px; font-weight:600; color:#111; font-family:Poppins,sans-serif;">@<%= a.username %></span>
+        </div>
+      <% end %>
+    <% end %>
   </div>
+
+  <script>
+    function guardarUsernameAmigos() {
+      var nuevo = document.getElementById('nuevo-username-amigos').value.trim();
+      var errEl = document.getElementById('username-error-amigos');
+      fetch('/perfil/username', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-csrf-token': csrfBuscar },
+        body: JSON.stringify({ username: nuevo })
+      }).then(function(r){ return r.json(); }).then(function(data){
+        if (data.ok) {
+          document.getElementById('username-display-amigos').textContent = '@' + nuevo;
+          document.getElementById('editor-username-amigos').style.display = 'none';
+          errEl.style.display = 'none';
+        } else {
+          errEl.textContent = data.error || 'No se pudo cambiar';
+          errEl.style.display = 'block';
+        }
+      });
+    }
+  </script>
+  <script>
+    var csrfBuscar = document.querySelector("meta[name='csrf-token']").getAttribute("content");
+    function buscarAmigo() {
+      var username = document.getElementById('buscar-amigo-input').value.trim();
+      var cont = document.getElementById('buscar-resultado');
+      if (username === '') { cont.innerHTML = ''; return; }
+      cont.innerHTML = '<p style="text-align:center; color:#bbb; font-size:13px; font-family:Poppins,sans-serif;">Buscando...</p>';
+      fetch('/amigos/buscar', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-csrf-token': csrfBuscar },
+        body: JSON.stringify({ username: username })
+      }).then(function(r){ return r.json(); }).then(function(data){
+        if (!data.ok) {
+          cont.innerHTML = '<p style="text-align:center; color:#bbb; font-size:13px; font-family:Poppins,sans-serif; margin-top:20px;">No se encontro ningun usuario con ese nombre.</p>';
+          return;
+        }
+        var boton = '';
+        if (data.estado === 'friends') {
+          boton = '<span style="font-size:12px; color:#186904; font-weight:600; font-family:Poppins,sans-serif;">Ya son amigos</span>';
+        } else if (data.estado === 'sent') {
+          boton = '<span style="font-size:12px; color:#999; font-family:Poppins,sans-serif;">Solicitud enviada</span>';
+        } else if (data.estado === 'received') {
+          boton = '<span style="font-size:12px; color:#999; font-family:Poppins,sans-serif;">Te envio solicitud</span>';
+        } else {
+          boton = '<button onclick="solicitarAmigo(' + data.id + ', this)" style="background:#186904; color:#fff; border:none; border-radius:14px; padding:8px 16px; font-size:13px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer;">Agregar</button>';
+        }
+        cont.innerHTML =
+          '<div style="display:flex; align-items:center; gap:12px; padding:12px; border:2px solid #f0f0f0; border-radius:16px;">' +
+            '<img src="' + (data.avatar || '') + '" style="width:50px; height:50px; border-radius:50%; object-fit:cover; background:#eee;"/>' +
+            '<div style="flex:1; min-width:0;">' +
+              '<p style="margin:0; font-size:15px; font-weight:600; color:#111; font-family:Poppins,sans-serif; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">@' + data.username + '</p>' +
+            '</div>' +
+            boton +
+          '</div>';
+      });
+    }
+    function solicitarAmigo(id, btn) {
+      btn.disabled = true;
+      btn.textContent = 'Enviando...';
+      fetch('/amigos/solicitar/' + id, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-csrf-token': csrfBuscar }
+      }).then(function(r){ return r.json(); }).then(function(data){
+        if (data.ok) {
+          btn.outerHTML = '<span style="font-size:12px; color:#999; font-family:Poppins,sans-serif;">Solicitud enviada</span>';
+        } else {
+          btn.disabled = false;
+          btn.textContent = 'Agregar';
+        }
+      });
+    }
+  </script>
 
   <div class="amigos-panel" id="amigos-panel-centro">
 <!-- PUBLICACIONES -->

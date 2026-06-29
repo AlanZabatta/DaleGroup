@@ -11,4 +11,15 @@ defmodule DaleAppWeb.FavoritoController do
       json(conn, %{ok: false, error: "not_logged_in"})
     end
   end
+
+  def index(conn, _params) do
+    user_id = get_session(conn, :user_id)
+    if is_nil(user_id) do
+      redirect(conn, to: "/auth/google")
+    else
+      current_user = DaleApp.Accounts.get_user(user_id)
+      favoritos = Favorites.list_user_favorites(user_id)
+      render(conn, :index, current_user: current_user, favoritos: favoritos)
+    end
+  end
 end

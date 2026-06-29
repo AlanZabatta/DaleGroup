@@ -76,6 +76,7 @@ defmodule DaleAppWeb.Router do
     post "/productos/:id/nombre", ProductoController, :update_nombre
     post "/mapa/agregar/:brand_id", MapaController, :agregar
     delete "/mapa/quitar/:brand_id", MapaController, :quitar
+    get "/favoritos", FavoritoController, :index
     post "/favoritos/:product_id", FavoritoController, :toggle
     get "/productos/:id/detalle", ProductoController, :detalle
   end

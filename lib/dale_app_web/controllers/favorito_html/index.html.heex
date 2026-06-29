@@ -1,0 +1,35 @@
+<div style="padding:16px; max-width:480px; margin:0 auto; font-family:Poppins,sans-serif;">
+  <p style="font-size:26px; font-weight:800; color:#186904; margin:8px 4px 4px;">Favoritos</p>
+  <p style="font-size:13px; color:#999; margin:0 4px 20px;">Los productos que guardaste</p>
+
+  <%= if @favoritos == [] do %>
+    <div style="text-align:center; margin-top:60px;">
+      <svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.8" style="margin-bottom:12px;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      <p style="color:#bbb; font-size:14px;">Todavia no guardaste favoritos</p>
+    </div>
+  <% else %>
+    <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:12px;">
+      <%= for fav <- @favoritos do %>
+        <% p = fav.product %>
+        <%= if p do %>
+          <div style="background:#fff; border:2px solid #f0f0f0; border-radius:16px; overflow:hidden;">
+            <div style="width:100%; aspect-ratio:3/4; background:#f5f5f5; overflow:hidden;">
+              <%= if p.image do %>
+                <img src={p.image} style="width:100%; height:100%; object-fit:cover; display:block;"/>
+              <% end %>
+            </div>
+            <div style="padding:10px 12px;">
+              <p style="margin:0 0 4px; font-size:14px; font-weight:600; color:#111; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><%= p.name %></p>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span style="font-size:15px; font-weight:700; color:#186904;">$<%= p.price %></span>
+                <%= if p.original_price && p.original_price > p.price do %>
+                  <span style="font-size:12px; color:#bbb; text-decoration:line-through;">$<%= p.original_price %></span>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+</div>
