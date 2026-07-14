@@ -11,6 +11,7 @@ defmodule DaleApp.Products.Product do
     field :tipo, :string
     field :talles, {:array, :string}, default: []
     field :categorias, {:array, :string}, default: []
+    field :estilo, :string
     field :description, :string
     field :position_in_brand, :integer, default: 1
     field :position_global, :integer, default: 0
@@ -22,7 +23,7 @@ defmodule DaleApp.Products.Product do
 
   def changeset(product, attrs) do
     product
-    |> cast(attrs, [:name, :price, :original_price, :image, :gender, :tipo, :talles, :categorias, :description, :position_in_brand, :position_global, :active, :brand_id])
+    |> cast(attrs, [:name, :price, :original_price, :image, :gender, :tipo, :talles, :categorias, :estilo, :description, :position_in_brand, :position_global, :active, :brand_id])
     |> validate_required([:brand_id])
     |> validate_inclusion(:gender, ["hombre", "mujer", "unisex"])
   end

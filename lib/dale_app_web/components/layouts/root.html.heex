@@ -40,9 +40,10 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
-            <input id="search-input" type="text" placeholder="Buscá marcas o prendas..." style="border: none; background: none; outline: none; font-size: 14px; width: 100%; color: #1a1a1a;"/>
+            <input id="search-input" type="text" placeholder="Buscá marcas o prendas..." oninput="onSearchInput(this.value)" style="border: none; background: none; outline: none; font-size: 14px; width: 100%; color: #1a1a1a;"/>
             <button onclick="toggleSearch()" style="background: none; border: none; cursor: pointer; color: #888; font-size: 18px; line-height: 1;">×</button>
           </div>
+          <div id="search-opciones" style="margin-top: 10px;"></div>
         </div>
       </div>
 
@@ -189,6 +190,35 @@
         const isHidden = bar.style.display === "none";
         bar.style.display = isHidden ? "block" : "none";
         if (isHidden) document.getElementById("search-input").focus();
+        else { document.getElementById("search-input").value = ""; document.getElementById("search-opciones").innerHTML = ""; }
+      }
+
+      function onSearchInput(texto) {
+        const cont = document.getElementById("search-opciones");
+        const q = texto.trim();
+        if (q === "") { cont.innerHTML = ""; return; }
+
+        const opcion = function(label, onclick) {
+          return '<div onclick="' + onclick + '" style="display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:12px; cursor:pointer; background:#f7f7f7; margin-bottom:6px;">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
+            '<span style="font-size:14px; color:#333; font-family:Poppins,sans-serif;">' + label + '</span></div>';
+        };
+
+        const qEsc = q.replace(/'/g, "");
+        cont.innerHTML =
+          opcion('Buscar "' + q + '" en <b>Ropa</b>', "buscarEn('ropa', '" + qEsc + "')") +
+          opcion('Buscar "' + q + '" en <b>Marcas</b>', "buscarEn('marcas', '" + qEsc + "')") +
+          opcion('Buscar "' + q + '" en <b>Gente</b>', "buscarEn('gente', '" + qEsc + "')");
+      }
+
+      function buscarEn(tipo, q) {
+        if (tipo === 'ropa') {
+          window.location.href = '/productos?buscar=' + encodeURIComponent(q);
+        } else if (tipo === 'marcas') {
+          window.location.href = '/tiendas?buscar=' + encodeURIComponent(q);
+        } else if (tipo === 'gente') {
+          alert('La búsqueda de gente estará disponible pronto');
+        }
       }
 
       function toggleMenu() {

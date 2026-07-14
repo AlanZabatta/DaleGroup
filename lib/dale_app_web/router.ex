@@ -16,6 +16,7 @@ defmodule DaleAppWeb.Router do
     pipe_through :browser
     get "/", PageController, :home
     get "/productos", PageController, :productos
+    get "/api/buscar", PageController, :api_buscar
     get "/amigos", PageController, :amigos
     post "/amigos/buscar", FriendController, :buscar
     post "/perfil/username", PageController, :cambiar_username

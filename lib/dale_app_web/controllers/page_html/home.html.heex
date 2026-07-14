@@ -20,7 +20,7 @@
     <div style="background: white; border-bottom: 1px solid #ddd; display: flex; width: 100%;">
       <button style="flex: 1; background: none; border: none; border-right: 1px solid #ddd; padding: 10px 4px; font-family: 'Noto Sans', sans-serif; font-size: 12px; color: #999; cursor: pointer; letter-spacing: 0.5px;">Categorías</button>
       <button style="flex: 1; background: none; border: none; border-right: 1px solid #ddd; padding: 10px 4px; font-family: 'Noto Sans', sans-serif; font-size: 12px; color: #999; cursor: pointer; letter-spacing: 0.5px;">Menor a mayor</button>
-      <button style="flex: 1; background: none; border: none; padding: 10px 4px; font-family: 'Noto Sans', sans-serif; font-size: 12px; color: #999; cursor: pointer; letter-spacing: 0.5px;">Filtros</button>
+      <button id="home-btn-filtros" style="flex: 1; background: none; border: none; padding: 10px 4px; font-family: 'Noto Sans', sans-serif; font-size: 12px; color: #999; cursor: pointer; letter-spacing: 0.5px;">Filtros</button>
     </div>
     <div style="margin-top: 16px; padding: 0 16px;">
       <span style="font-size: 26px; font-weight: 800; font-family: Poppins, sans-serif; color: #186904;">Catalogo</span>
@@ -28,7 +28,7 @@
     </div>
     <div style="background: white; padding: 8px 16px 100px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
       <%= for %{producto: producto, marca: marca} <- @productos do %>
-        <a href={"/marcas/#{marca.id}"} onclick={"event.preventDefault(); abrirProductoSheet(#{producto.id})"} style="text-decoration: none; border-radius: 12px; overflow: hidden; border: 0.5px solid #eee; display: block;">
+        <a href={"/marcas/#{marca.id}"} data-precio={producto.price} class="home-producto-card" onclick={"event.preventDefault(); abrirProductoSheet(#{producto.id})"} style="text-decoration: none; border-radius: 12px; overflow: hidden; border: 0.5px solid #eee; display: block;">
           <div style="position: relative; aspect-ratio: 3/4; background: #f0f0f0; overflow: hidden;">
             <img src={producto.image} style="width: 100%; height: 100%; object-fit: cover; display: block;"/>
             <button onclick={"event.preventDefault(); event.stopPropagation(); toggleFavorito(this, #{producto.id})"} style="position: absolute; top: 6px; right: 6px; z-index: 10; background: white; border: 1.5px solid #ddd; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px;">&#129293;</button>
@@ -134,4 +134,62 @@
       else { btn.innerHTML = '&#129293;'; btn.style.borderColor = '#ddd'; }
     } else if (data.error === 'not_logged_in') { window.location.href = '/auth/google'; }
   }
+</script>
+
+<div id="home-panel-filtros" style="display:none; position:fixed; top:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px; height:100%; background:white; z-index:9999; padding:80px 16px 20px; box-sizing:border-box; overflow-y:auto;">
+  <div id="home-volver-filtros" style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:20px; padding:8px 0;">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    <span style="font-size:15px; color:#186904; font-weight:700; font-family:'Noto Sans',sans-serif;">Volver</span>
+  </div>
+  <div style="font-size:21px; font-weight:700; color:#186904; font-family:'Noto Sans',sans-serif; margin-bottom:18px;">Filtros</div>
+  <div style="font-size:12px; color:#555; font-weight:600; font-family:'Noto Sans',sans-serif; margin-bottom:7px;">Precio</div>
+  <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px;">
+    <div class="home-chip-precio" data-val="1" style="padding:5px 14px; border-radius:20px; border:1.5px solid #186904; font-size:12px; color:#186904; font-family:'Noto Sans',sans-serif; cursor:pointer; background:white;">$</div>
+    <div class="home-chip-precio" data-val="2" style="padding:5px 14px; border-radius:20px; border:1.5px solid #186904; font-size:12px; color:#186904; font-family:'Noto Sans',sans-serif; cursor:pointer; background:white;">$$</div>
+    <div class="home-chip-precio" data-val="3" style="padding:5px 14px; border-radius:20px; border:1.5px solid #186904; font-size:12px; color:#186904; font-family:'Noto Sans',sans-serif; cursor:pointer; background:white;">$$$</div>
+  </div>
+  <button id="home-aplicar-filtros" style="width:100%; padding:12px; border:none; border-radius:12px; background:#186904; color:white; font-size:14px; font-weight:600; font-family:'Noto Sans',sans-serif; cursor:pointer; margin-top:10px;">Aplicar</button>
+</div>
+
+<script>
+(function(){
+  var T1 = 60000, T2 = 180000;
+  function init(){
+    var btn = document.getElementById('home-btn-filtros');
+    var panel = document.getElementById('home-panel-filtros');
+    if(!btn || !panel){ setTimeout(init, 200); return; }
+    btn.addEventListener('click', function(){ panel.style.display='block'; });
+    var volver = document.getElementById('home-volver-filtros');
+    if(volver) volver.addEventListener('click', function(){ panel.style.display='none'; });
+    var chips = panel.querySelectorAll('.home-chip-precio');
+    var seleccion = null;
+    chips.forEach(function(chip){
+      chip.addEventListener('click', function(){
+        var val = chip.getAttribute('data-val');
+        if(seleccion === val){
+          seleccion = null;
+          chip.style.background='white'; chip.style.color='#186904';
+        } else {
+          chips.forEach(function(x){ x.style.background='white'; x.style.color='#186904'; });
+          seleccion = val;
+          chip.style.background='#186904'; chip.style.color='white';
+        }
+      });
+    });
+    var aplicar = document.getElementById('home-aplicar-filtros');
+    if(aplicar) aplicar.addEventListener('click', function(){
+      var cards = document.querySelectorAll('.home-producto-card');
+      cards.forEach(function(card){
+        var precio = parseInt(card.getAttribute('data-precio'), 10) || 0;
+        var mostrar = true;
+        if(seleccion === '1') mostrar = (precio <= T1);
+        else if(seleccion === '2') mostrar = (precio > T1 && precio <= T2);
+        else if(seleccion === '3') mostrar = (precio > T2);
+        card.style.display = mostrar ? 'block' : 'none';
+      });
+      panel.style.display='none';
+    });
+  }
+  init();
+})();
 </script>

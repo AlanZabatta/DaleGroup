@@ -102,22 +102,33 @@ defmodule DaleAppWeb.PageController do
     user_id = get_session(conn, :user_id)
     current_user = if user_id, do: Accounts.get_user(user_id), else: nil
     orden = Map.get(params, "orden")
-    query = from p in DaleApp.Products.Product,
-      join: b in DaleApp.Brands.Brand, on: p.brand_id == b.id,
-      where: p.active == true and not is_nil(p.image) and b.active == true,
-      select: %{producto: p, marca: b}
-    productos = Repo.all(query)
-    productos = case orden do
-      "mayor_menor" ->
-        Enum.sort_by(productos, fn %{producto: p, marca: b} ->
-          -(Integer.parse(to_string(b.discount || 0)) |> elem(0))
-        end)
-      "menor_mayor" ->
-        Enum.sort_by(productos, fn %{producto: p} -> p.price || 0 end)
-      _ ->
-        productos
-    end
-    render(conn, :productos, current_user: current_user, productos: productos, orden: orden)
+    texto = Map.get(params, "buscar")
+    productos = DaleApp.Products.buscar_productos(%{
+      texto: texto,
+      genero: Map.get(params, "genero"),
+      estilo: Map.get(params, "estilo"),
+      categoria: Map.get(params, "categoria"),
+      nivel: Map.get(params, "nivel"),
+      orden: orden
+    })
+    render(conn, :productos, current_user: current_user, productos: productos, orden: orden, buscar: texto, nivel: Map.get(params, "nivel"))
+  end
+
+  def api_buscar(conn, params) do
+    texto = Map.get(params, "q", "")
+    resultados = DaleApp.Products.buscar_productos(%{texto: texto})
+    data = Enum.map(resultados, fn %{producto: p, marca: b} ->
+      %{
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        original_price: p.original_price,
+        image: p.image,
+        marca_id: b.id,
+        marca_name: b.name
+      }
+    end)
+    json(conn, %{ok: true, productos: data})
   end
 
   def tiendas(conn, params) do
