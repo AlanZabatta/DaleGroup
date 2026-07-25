@@ -8,9 +8,21 @@
   window.alert = window.mostrarAviso;
 </script>
 
+<div id="aviso-validacion" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.45); z-index:9999; align-items:center; justify-content:center;">
+  <div style="background:#fff; border-radius:28px; width:300px; max-width:85%; padding:28px 24px 22px; box-shadow:0 12px 40px rgba(0,0,0,0.25); text-align:center;">
+    <div style="width:64px; height:64px; margin:0 auto 14px; border:4px solid #186904; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none"><line x1="12" y1="7" x2="12" y2="14" stroke="#186904" stroke-width="3.5" stroke-linecap="round"/><circle cx="12" cy="18.5" r="1.8" fill="#186904"/></svg>
+    </div>
+    <p style="font-size:20px; font-weight:700; color:#186904; margin:0 0 12px; font-family:'Noto Sans',sans-serif;">Antes de continuar</p>
+    <div style="height:2px; width:60px; background:#186904; border-radius:2px; margin:0 auto 14px;"></div>
+    <p id="aviso-validacion-texto" style="font-size:14px; color:#555; margin:0 0 22px; line-height:1.5; font-family:'Noto Sans',sans-serif; text-align:left;"></p>
+    <button onclick="document.getElementById('aviso-validacion').style.display='none'" style="width:100%; background:#186904; color:#fff; border:none; border-radius:14px; padding:13px 0; font-size:14px; font-weight:600; font-family:'Noto Sans',sans-serif; cursor:pointer;">Entendido</button>
+  </div>
+</div>
+
 <div id="confirmar-modal" style="display:none; position:fixed; inset:0; z-index:9998; background:rgba(0,0,0,0.4); align-items:center; justify-content:center;">
   <div style="background:white; border-radius:12px; padding:24px; max-width:300px; width:90%; text-align:center;">
-    <p style="font-family:'Noto Sans',sans-serif; font-size:13px; font-weight:700; color:#1E5C1E; margin:0 0 8px; text-transform:uppercase; letter-spacing:1px;">Aviso</p>
+    <p style="font-family:'Noto Sans',sans-serif; font-size:13px; font-weight:700; color:#186904; margin:0 0 8px; text-transform:uppercase; letter-spacing:1px;">Aviso</p>
     <p style="font-family:'Noto Sans',sans-serif; font-size:14px; color:#111; margin:0 0 20px;">¿Borrar este producto?</p>
     <div style="display:flex; gap:10px;">
       <button onclick="cancelarBorrar()" style="flex:1; padding:10px; border:1.5px solid #ddd; border-radius:8px; background:white; cursor:pointer; font-size:14px;">Cancelar</button>
@@ -19,15 +31,15 @@
   </div>
 </div>
 
-<div id="aviso-modal" style="display:none; position:fixed; top:80px; left:50%; transform:translateX(-50%); z-index:9999; background:white; border-radius:12px; padding:20px 24px; min-width:260px; max-width:340px; box-shadow:0 8px 32px rgba(0,0,0,0.15); border-top: 3px solid #1E5C1E;">
-  <p style="font-family:'Noto Sans',sans-serif; font-size:13px; font-weight:700; color:#1E5C1E; margin:0 0 6px; letter-spacing:1px; text-transform:uppercase;">Aviso</p>
+<div id="aviso-modal" style="display:none; position:fixed; top:80px; left:50%; transform:translateX(-50%); z-index:9999; background:white; border-radius:12px; padding:20px 24px; min-width:260px; max-width:340px; box-shadow:0 8px 32px rgba(0,0,0,0.15); border-top: 3px solid #186904;">
+  <p style="font-family:'Noto Sans',sans-serif; font-size:13px; font-weight:700; color:#186904; margin:0 0 6px; letter-spacing:1px; text-transform:uppercase;">Aviso</p>
   <p id="aviso-texto" style="font-family:'Noto Sans',sans-serif; font-size:14px; color:#111; margin:0;"></p>
 </div>
 <div id="vista-lista" style="max-width: 480px; margin: 0 auto; padding: 24px 16px; font-family: 'Noto Sans', sans-serif; background: white; min-height: 100vh;">
-  <a href="/mi-tienda" style="color: #1E5C1E; font-size: 14px;">← Mi Tienda</a>
+  <a href="/mi-tienda" style="color: #186904; font-size: 14px;">← Mi Tienda</a>
   <h1 style="font-size: 22px; font-weight: bold; color: #3B2505; margin: 16px 0 24px;">Mis Productos</h1>
 
-  <button onclick="abrirNuevo()" style="width: 100%; display: flex; align-items: center; gap: 12px; padding: 16px; border: 1.5px solid #111; border-radius: 10px; background: white; cursor: pointer; font-size: 15px; font-weight: 500; color: #111; margin-bottom: 24px;">
+  <button onclick="abrirNuevo()" style="width: 100%; display: flex; align-items: center; gap: 12px; padding: 16px; border: 1.5px solid #186904; border-radius: 16px; background: white; cursor: pointer; font-size: 15px; font-weight: 600; color: #186904; margin-bottom: 24px;">
     <span style="font-size: 28px; line-height: 1; font-weight: 300;">+</span>
     Agregar nuevo producto
   </button>
@@ -35,15 +47,15 @@
   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
     <%= for producto <- @productos do %>
       <%= if producto.active and producto.image do %>
-        <div style="border-radius: 12px; overflow: hidden; border: 0.5px solid #eee; position: relative;">
-          <button onclick={"borrarProducto(#{producto.id})"} style="position: absolute; top: 6px; right: 6px; z-index: 10; background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 26px; height: 26px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center;">🗑</button>
+        <div style="border-radius: 16px; overflow: hidden; border: 1px solid #f2f2f2; position: relative; cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,0.06);" onclick={"abrirEditar(#{producto.id})"}>
+          <button onclick={"event.stopPropagation(); borrarProducto(#{producto.id})"} style="position: absolute; top: 6px; right: 6px; z-index: 10; background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 26px; height: 26px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center;">🗑</button>
           <div style="aspect-ratio: 3/4; background: #f0f0f0; overflow: hidden;">
             <img src={producto.image} style="width: 100%; height: 100%; object-fit: cover;"/>
           </div>
           <div style="background: white; padding: 8px 10px;">
             <p style="font-size: 12px; font-weight: 500; margin: 0; color: #111;"><%= producto.name %></p>
             <p style="font-size: 11px; color: #999; margin: 2px 0 0; text-decoration: line-through;">$<%= producto.original_price %></p>
-            <p style="font-size: 13px; font-weight: 600; color: #1E5C1E; margin: 0;">$<%= producto.price %></p>
+            <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0;">$<%= producto.price %></p>
             <p style="font-size: 11px; color: #888; margin: 2px 0 0;"><%= @brand.name %></p>
           </div>
         </div>
@@ -54,36 +66,64 @@
 
 <!-- VISTA NUEVO PRODUCTO -->
 <div id="vista-nuevo" style="display: none; max-width: 480px; margin: 0 auto; padding: 24px 16px; font-family: 'Noto Sans', sans-serif; background: white; min-height: 100vh;">
-  <button onclick="cerrarNuevo()" style="background: none; border: none; color: #1E5C1E; font-size: 14px; cursor: pointer; padding: 0; margin-bottom: 16px;">← Volver</button>
-  <h1 style="font-size: 22px; font-weight: bold; color: #3B2505; margin: 0 0 24px;">Nuevo Producto</h1>
+  <button onclick="cerrarNuevo()" style="background: none; border: none; color: #186904; font-size: 14px; cursor: pointer; padding: 0; margin-bottom: 16px;">← Volver</button>
+  <h1 id="form-titulo" style="font-size: 22px; font-weight: bold; color: #3B2505; margin: 0 0 24px;">Nuevo Producto</h1>
 
   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
 
     <!-- PREVIEW -->
-    <div style="border-radius: 12px; overflow: hidden; border: 0.5px solid #eee; position: relative;">
+    <div id="foto-principal-crear" style="border-radius: 16px; overflow: hidden; border: 1px solid #f2f2f2; position: relative; box-shadow: 0 3px 10px rgba(0,0,0,0.06);">
       <div style="aspect-ratio: 3/4; background: #f0f0f0; position: relative; border-radius: 0; overflow: hidden;">
         <img id="preview-img" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;"/>
         <div id="preview-placeholder" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; cursor: pointer;" onclick="document.getElementById('file-input').click()">
           <span style="font-size: 32px; color: #ccc;">+</span>
           <span style="font-size: 12px; color: #aaa;">Subir foto</span>
         </div>
-        <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="previsualizarImagen(this)"/>
+        <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="previsualizarImagen(this, 0)"/>
       </div>
       <div style="background: white; padding: 8px 10px;">
         <p id="prev-nombre" style="font-size: 12px; font-weight: 500; margin: 0; color: #111; min-height: 16px;"></p>
         <p id="prev-precio-original" style="font-size: 11px; color: #999; margin: 2px 0 0; text-decoration: line-through; min-height: 14px;"></p>
-        <p id="prev-precio-descuento" style="font-size: 13px; font-weight: 600; color: #1E5C1E; margin: 0; min-height: 16px;"></p>
+        <p id="prev-precio-descuento" style="font-size: 13px; font-weight: 600; color: #186904; margin: 0; min-height: 16px;"></p>
         <p style="font-size: 11px; color: #888; margin: 2px 0 0;"><%= if @brand, do: @brand.name, else: "" %></p>
       </div>
     </div>
 
     <!-- FORMULARIO -->
     <div style="display: flex; flex-direction: column; gap: 10px;">
-      <input id="input-nombre" type="text" placeholder="Nombre de la prenda" oninput="actualizarPreview()" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Noto Sans', sans-serif; font-size: 13px; box-sizing: border-box;"/>
-      <input id="input-precio-original" type="number" placeholder="Precio original" oninput="actualizarPreview()" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Noto Sans', sans-serif; font-size: 13px; box-sizing: border-box;"/>
-      <textarea id="input-descripcion" placeholder="Descripción (máx. 100 palabras)" oninput="actualizarPreview(); contarPalabras(this)" maxlength="600" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Noto Sans', sans-serif; font-size: 13px; box-sizing: border-box; resize: none; height: 80px;"></textarea>
+      <input id="input-nombre" type="text" placeholder="Nombre de la prenda" oninput="actualizarPreview()" style="width: 100%; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: 'Noto Sans', sans-serif; font-size: 14px; box-sizing: border-box; outline: none;"/>
+      <input id="input-precio-original" type="number" placeholder="Precio original" oninput="actualizarPreview()" style="width: 100%; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: 'Noto Sans', sans-serif; font-size: 14px; box-sizing: border-box; outline: none;"/>
+      <textarea id="input-descripcion" placeholder="Descripción (máx. 100 palabras)" oninput="actualizarPreview(); contarPalabras(this)" maxlength="600" style="width: 100%; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: 'Noto Sans', sans-serif; font-size: 14px; box-sizing: border-box; resize: none; height: 80px; outline: none;"></textarea>
       <span id="contador-palabras" style="font-size: 11px; color: #aaa;">0/100 palabras</span>
     </div>
+  </div>
+
+  <!-- FOTOS ADICIONALES -->
+  <div id="fotos-adicionales-crear" style="margin-bottom: 24px;">
+    <p style="font-size: 13px; font-weight: 500; color: #333; margin: 0 0 8px;">Fotos adicionales (opcional, hasta 2 más)</p>
+    <div style="display: flex; gap: 10px;">
+      <div style="width: 72px; height: 96px; border-radius: 10px; overflow: hidden; border: 1.5px dashed #ddd; position: relative; flex-shrink: 0;">
+        <img id="preview-img-1" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;"/>
+        <div id="preview-placeholder-1" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="document.getElementById('file-input-1').click()">
+          <span style="font-size: 22px; color: #ccc;">+</span>
+        </div>
+        <input type="file" id="file-input-1" accept="image/*" style="display: none;" onchange="previsualizarImagen(this, 1)"/>
+      </div>
+      <div style="width: 72px; height: 96px; border-radius: 10px; overflow: hidden; border: 1.5px dashed #ddd; position: relative; flex-shrink: 0;">
+        <img id="preview-img-2" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;"/>
+        <div id="preview-placeholder-2" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="document.getElementById('file-input-2').click()">
+          <span style="font-size: 22px; color: #ccc;">+</span>
+        </div>
+        <input type="file" id="file-input-2" accept="image/*" style="display: none;" onchange="previsualizarImagen(this, 2)"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- GALERIA MODO EDICION -->
+  <div id="galeria-edicion" style="display:none; margin-bottom: 24px;">
+    <p style="font-size: 13px; font-weight: 500; color: #333; margin: 0 0 8px;">Fotos del producto (hasta 3)</p>
+    <div id="galeria-edicion-slots" style="display:flex; gap:10px;"></div>
+    <input type="file" id="file-input-edicion" accept="image/*" style="display:none;" onchange="agregarFotoEdicion(this)"/>
   </div>
 
   <!-- TALLES -->
@@ -91,7 +131,7 @@
     <p style="font-size: 13px; font-weight: 500; color: #333; margin: 0 0 8px;">Seleccionar talles</p>
     <div style="display: flex; flex-wrap: wrap; gap: 8px;">
       <%= for talle <- ["XS", "S", "M", "L", "XL", "XXL"] do %>
-        <button type="button" data-talle={talle} onclick="toggleTalle(this)" style="padding: 6px 14px; border-radius: 6px; border: 1.5px solid #ddd; background: white; color: #666; cursor: pointer; font-size: 13px; font-family: 'Noto Sans', sans-serif;">
+        <button type="button" data-talle={talle} onclick="toggleTalle(this)" style="padding: 8px 16px; border-radius: 20px; border: 1.5px solid #e0e0e0; background: white; color: #666; cursor: pointer; font-size: 13px; font-weight: 600; font-family: 'Noto Sans', sans-serif;">
           <%= talle %>
         </button>
       <% end %>
@@ -103,14 +143,14 @@
     <p style="font-size: 13px; font-weight: 500; color: #333; margin: 0 0 8px;">Categorías</p>
     <div style="display: flex; flex-wrap: wrap; gap: 8px;">
       <%= for cat <- ["Hombre", "Mujer"] do %>
-        <button type="button" data-cat={cat} onclick="toggleCat(this)" style="padding: 6px 14px; border-radius: 20px; border: 1.5px solid #ddd; background: white; color: #666; cursor: pointer; font-size: 13px; font-family: 'Noto Sans', sans-serif;">
+        <button type="button" data-cat={cat} onclick="toggleCat(this)" style="padding: 8px 16px; border-radius: 20px; border: 1.5px solid #e0e0e0; background: white; color: #666; cursor: pointer; font-size: 13px; font-weight: 600; font-family: 'Noto Sans', sans-serif;">
           <%= cat %>
         </button>
       <% end %>
     </div>
   </div>
 
-  <button onclick="guardarProducto()" style="width: 100%; background: #1E5C1E; color: white; border: none; border-radius: 10px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans', sans-serif;">
+  <button id="boton-guardar" onclick="guardarProducto()" style="width: 100%; background: #186904; color: white; border: none; border-radius: 16px; padding: 15px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: 'Noto Sans', sans-serif; box-shadow: 0 3px 10px rgba(24,105,4,0.25);">
     Guardar producto
   </button>
 </div>
@@ -118,12 +158,47 @@
 <script>
   const brandId = "<%= if @brand, do: @brand.id, else: "" %>";
   const csrfToken = document.querySelector("meta[name='csrf-token']")?.getAttribute("content");
-  const descuento = parseInt("<%= if @brand && @brand.discount, do: @brand.discount, else: 0 %>");
-  let imagenBlob = null;
+  const descuento = parseInt("<%= if @cupon && @cupon.discount, do: @cupon.discount, else: 0 %>");
+  let imagenesBlobs = [null, null, null];
   let tallesSeleccionados = [];
   let catsSeleccionadas = [];
 
+  let editandoId = null;
+  let edicionImagenesActuales = [];
+
+  function limpiarFormulario() {
+    document.getElementById('input-nombre').value = '';
+    document.getElementById('input-precio-original').value = '';
+    document.getElementById('input-descripcion').value = '';
+    document.getElementById('contador-palabras').textContent = '0/100 palabras';
+    document.getElementById('preview-img').style.display = 'none';
+    document.getElementById('preview-placeholder').style.display = 'flex';
+    document.getElementById('preview-img-1').style.display = 'none';
+    document.getElementById('preview-placeholder-1').style.display = 'flex';
+    document.getElementById('preview-img-2').style.display = 'none';
+    document.getElementById('preview-placeholder-2').style.display = 'flex';
+    document.getElementById('prev-nombre').textContent = '';
+    document.getElementById('prev-precio-original').textContent = '';
+    document.getElementById('prev-precio-descuento').textContent = '';
+    imagenesBlobs = [null, null, null];
+    tallesSeleccionados = [];
+    catsSeleccionadas = [];
+    document.querySelectorAll('[data-talle]').forEach(btn => {
+      btn.style.background = 'white'; btn.style.color = '#666'; btn.style.borderColor = '#ddd';
+    });
+    document.querySelectorAll('[data-cat]').forEach(btn => {
+      btn.style.background = 'white'; btn.style.color = '#666'; btn.style.borderColor = '#ddd';
+    });
+  }
+
   function abrirNuevo() {
+    editandoId = null;
+    document.getElementById('form-titulo').textContent = 'Nuevo Producto';
+    document.getElementById('boton-guardar').textContent = 'Guardar producto';
+    document.getElementById('foto-principal-crear').style.display = 'block';
+    document.getElementById('fotos-adicionales-crear').style.display = 'block';
+    document.getElementById('galeria-edicion').style.display = 'none';
+    limpiarFormulario();
     document.getElementById('vista-lista').style.display = 'none';
     document.getElementById('vista-nuevo').style.display = 'block';
   }
@@ -133,19 +208,104 @@
     document.getElementById('vista-lista').style.display = 'block';
   }
 
-  function previsualizarImagen(input) {
+  async function abrirEditar(id) {
+    const res = await fetch('/productos/' + id + '/detalle');
+    const data = await res.json();
+    if (!data.ok) return;
+
+    editandoId = id;
+    limpiarFormulario();
+
+    document.getElementById('form-titulo').textContent = 'Editar Producto';
+    document.getElementById('boton-guardar').textContent = 'Guardar cambios';
+    document.getElementById('foto-principal-crear').style.display = 'none';
+    document.getElementById('fotos-adicionales-crear').style.display = 'none';
+    document.getElementById('galeria-edicion').style.display = 'block';
+
+    document.getElementById('input-nombre').value = data.name || '';
+    document.getElementById('input-precio-original').value = data.original_price || '';
+    document.getElementById('input-descripcion').value = data.description || '';
+    contarPalabras(document.getElementById('input-descripcion'));
+
+    (data.talles || []).forEach(t => {
+      const btn = document.querySelector('[data-talle="' + t + '"]');
+      if (btn) { tallesSeleccionados.push(t); btn.style.background = '#186904'; btn.style.color = 'white'; btn.style.borderColor = '#186904'; }
+    });
+    (data.categorias || []).forEach(cat => {
+      const btn = document.querySelector('[data-cat="' + cat + '"]');
+      if (btn) { catsSeleccionadas.push(cat); btn.style.background = '#186904'; btn.style.color = 'white'; btn.style.borderColor = '#186904'; }
+    });
+
+    edicionImagenesActuales = data.images || (data.image ? [data.image] : []);
+    renderGaleriaEdicion();
+
+    document.getElementById('vista-lista').style.display = 'none';
+    document.getElementById('vista-nuevo').style.display = 'block';
+  }
+
+  function renderGaleriaEdicion() {
+    const cont = document.getElementById('galeria-edicion-slots');
+    cont.innerHTML = '';
+    edicionImagenesActuales.forEach((url, i) => {
+      const slot = document.createElement('div');
+      slot.style.cssText = 'width:72px; height:96px; border-radius:10px; overflow:hidden; position:relative; flex-shrink:0;';
+      slot.innerHTML = '<img src="' + url + '" style="width:100%; height:100%; object-fit:cover; display:block;"/>' +
+        '<button onclick="eliminarFotoEdicion(' + i + ')" style="position:absolute; top:3px; right:3px; background:white; border:none; border-radius:50%; width:20px; height:20px; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 1px 4px rgba(0,0,0,0.3);">✕</button>';
+      cont.appendChild(slot);
+    });
+    if (edicionImagenesActuales.length < 3) {
+      const addSlot = document.createElement('div');
+      addSlot.style.cssText = 'width:72px; height:96px; border-radius:10px; border:1.5px dashed #ddd; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;';
+      addSlot.innerHTML = '<span style="font-size:22px; color:#ccc;">+</span>';
+      addSlot.onclick = () => document.getElementById('file-input-edicion').click();
+      cont.appendChild(addSlot);
+    }
+  }
+
+  async function agregarFotoEdicion(input) {
+    const file = input.files[0];
+    if (!file || !editandoId) return;
+    const formData = new FormData();
+    formData.append('_csrf_token', csrfToken);
+    formData.append('imagen', file, 'producto.jpg');
+    const res = await fetch('/productos/' + editandoId + '/imagen', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (data.ok) {
+      edicionImagenesActuales = data.images || edicionImagenesActuales;
+      renderGaleriaEdicion();
+    } else {
+      window.mostrarAviso(data.error || 'Error al subir la imagen');
+    }
+    input.value = '';
+  }
+
+  async function eliminarFotoEdicion(indice) {
+    if (!editandoId) return;
+    const res = await fetch('/productos/' + editandoId + '/imagen/' + indice, {
+      method: 'DELETE',
+      headers: { 'x-csrf-token': csrfToken }
+    });
+    const data = await res.json();
+    if (data.ok) {
+      edicionImagenesActuales = data.images || [];
+      renderGaleriaEdicion();
+    }
+  }
+
+  function previsualizarImagen(input, index) {
     const file = input.files[0];
     if (!file) return;
-    imagenBlob = file;
+    imagenesBlobs[index] = file;
     const reader = new FileReader();
     reader.onload = function(e) {
-      const img = document.getElementById('preview-img');
+      const sufijo = index === 0 ? '' : '-' + index;
+      const img = document.getElementById('preview-img' + sufijo);
       img.src = e.target.result;
       img.style.display = 'block';
-      document.getElementById('preview-placeholder').style.display = 'none';
+      document.getElementById('preview-placeholder' + sufijo).style.display = 'none';
     };
     reader.readAsDataURL(file);
-    actualizarPreview();
+    if (index === 0) actualizarPreview();
   }
 
   function actualizarPreview() {
@@ -176,7 +336,7 @@
       btn.style.background = 'white'; btn.style.color = '#666'; btn.style.borderColor = '#ddd';
     } else {
       tallesSeleccionados.push(talle);
-      btn.style.background = '#1E5C1E'; btn.style.color = 'white'; btn.style.borderColor = '#1E5C1E';
+      btn.style.background = '#186904'; btn.style.color = 'white'; btn.style.borderColor = '#186904';
     }
   }
 
@@ -187,7 +347,7 @@
       btn.style.background = 'white'; btn.style.color = '#666'; btn.style.borderColor = '#ddd';
     } else {
       catsSeleccionadas.push(cat);
-      btn.style.background = '#1E5C1E'; btn.style.color = 'white'; btn.style.borderColor = '#1E5C1E';
+      btn.style.background = '#186904'; btn.style.color = 'white'; btn.style.borderColor = '#186904';
     }
   }
 
@@ -213,30 +373,66 @@
     productoABorrar = null;
   }
 
-  async function guardarProducto() {
-    const nombre = document.getElementById('input-nombre').value;
+  function guardarProducto() {
+    const nombre = document.getElementById('input-nombre').value.trim();
     const precioOriginal = parseInt(document.getElementById('input-precio-original').value) || 0;
-    if (!nombre || !precioOriginal || !imagenBlob) {
-      window.mostrarAviso('Completá nombre, precio e imagen.');
+    const descripcion = document.getElementById('input-descripcion').value.trim();
+    const hayImagen = editandoId ? edicionImagenesActuales.length > 0 : !!imagenesBlobs[0];
+    const faltantes = [];
+    if (!nombre) faltantes.push({ falta: 'El nombre de la prenda', tip: 'Elegí un nombre claro, como "Buzo negro oversize".' });
+    if (!precioOriginal) faltantes.push({ falta: 'El precio', tip: 'Ingresá el precio original del producto.' });
+    if (!descripcion) faltantes.push({ falta: 'Una descripción', tip: 'Contá brevemente la tela, el corte o algo que lo distinga.' });
+    if (!hayImagen) faltantes.push({ falta: 'Al menos una foto', tip: 'Subí una foto clara y con buena luz, de frente.' });
+    if (tallesSeleccionados.length === 0) faltantes.push({ falta: 'Al menos un talle disponible', tip: 'Marcá los talles que tenés en stock para esta prenda.' });
+    if (faltantes.length > 0) {
+      let html = '<b style="color:#186904;">Te falta cargar:</b><ul style="margin:8px 0 14px; padding-left:18px;">';
+      faltantes.forEach(f => { html += '<li style="margin-bottom:4px;">' + f.falta + '</li>'; });
+      html += '</ul><b style="color:#186904;">Consejo:</b> ' + faltantes[0].tip;
+      document.getElementById('aviso-validacion-texto').innerHTML = html;
+      document.getElementById('aviso-validacion').style.display = 'flex';
       return;
     }
+    enviarProducto(nombre, precioOriginal, descripcion);
+  }
+
+  async function enviarProducto(nombre, precioOriginal, descripcion) {
     const precioFinal = Math.round(precioOriginal * (1 - descuento / 100));
     const formData = new FormData();
     formData.append('_csrf_token', csrfToken);
     formData.append('nombre', nombre);
     formData.append('precio_original', precioOriginal);
     formData.append('precio_final', precioFinal);
-    formData.append('descripcion', document.getElementById('input-descripcion').value);
+    formData.append('descripcion', descripcion);
     formData.append('talles', tallesSeleccionados.join(','));
     formData.append('categorias', catsSeleccionadas.join(','));
+
+    if (editandoId) {
+      const btn = document.getElementById('boton-guardar');
+      btn.textContent = "Guardando..."; btn.disabled = true;
+      const res = await fetch('/mi-tienda/productos/' + editandoId + '/actualizar', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (data.ok) {
+        setTimeout(() => window.location.reload(), 800);
+      } else {
+        window.mostrarAviso('Error al guardar los cambios.');
+        btn.textContent = "Guardar cambios"; btn.disabled = false;
+      }
+      return;
+    }
+
     const res = await fetch('/mi-tienda/productos/crear', { method: 'POST', body: formData });
     const data = await res.json();
-    if (data.ok) { const btn = document.querySelector("button[onclick='guardarProducto()']"); btn.textContent = "Subiendo imagen..."; btn.disabled = true;
-      const imgForm = new FormData();
-      imgForm.append('_csrf_token', csrfToken);
-      imgForm.append('imagen', imagenBlob, 'producto.jpg');
-      await fetch('/productos/' + data.id + '/imagen', { method: 'POST', body: imgForm });
-      setTimeout(() => window.location.reload(), 2500);
+    if (data.ok) {
+      const btn = document.getElementById('boton-guardar');
+      btn.textContent = "Subiendo imágenes..."; btn.disabled = true;
+      const fotosACargar = imagenesBlobs.filter(b => b !== null);
+      for (const blob of fotosACargar) {
+        const imgForm = new FormData();
+        imgForm.append('_csrf_token', csrfToken);
+        imgForm.append('imagen', blob, 'producto.jpg');
+        await fetch('/productos/' + data.id + '/imagen', { method: 'POST', body: imgForm });
+      }
+      setTimeout(() => window.location.reload(), 1500);
     } else {
       window.mostrarAviso('Error al guardar.');
     }

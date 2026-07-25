@@ -4,12 +4,15 @@ defmodule DaleAppWeb.ProductoController do
   alias DaleApp.Storage
   alias DaleApp.Repo
   alias DaleApp.Brands.Brand
+  alias DaleApp.Coupons.Coupon
+  import Ecto.Query
 
   def index(conn, _params) do
     user_id = get_session(conn, :user_id)
     brand = Repo.get_by(Brand, user_id: user_id)
     productos = if brand, do: Products.list_brand_products(brand.id), else: []
-    render(conn, :index, brand: brand, productos: productos)
+    cupon = if brand, do: Repo.one(from c in Coupon, where: c.brand_id == ^brand.id and c.active == true, limit: 1), else: nil
+    render(conn, :index, brand: brand, productos: productos, cupon: cupon)
   end
 
   def crear(conn, params) do
@@ -43,34 +46,81 @@ defmodule DaleAppWeb.ProductoController do
     product = Products.get_product(id)
     brand = Repo.get(Brand, product.brand_id)
     if brand.user_id == user_id do
-      result = Storage.upload_image(imagen.path, imagen.filename)
-      IO.inspect(result, label: "CLOUDINARY RESULT")
-      case result do
-        {:ok, %{body: body}} when is_map(body) ->
-          case body["secure_url"] do
-            nil ->
-              IO.inspect(body, label: "CLOUDINARY ERROR BODY")
+      imagenes_actuales = product.images || []
+      if length(imagenes_actuales) >= 3 do
+        json(conn, %{ok: false, error: "Máximo 3 imágenes por producto"})
+      else
+        case Storage.upload_image(imagen.path, imagen.filename) do
+          {:ok, %{body: body}} when is_map(body) ->
+            procesar_url_imagen(conn, product, body["secure_url"], imagenes_actuales)
+          {:ok, %{body: body}} when is_binary(body) ->
+            decoded = Jason.decode!(body)
+            procesar_url_imagen(conn, product, decoded["secure_url"], imagenes_actuales)
+          _ ->
+            if imagenes_actuales == [] do
               Products.delete_product(product)
-              json(conn, %{ok: false, error: "No secure_url"})
-            url ->
-              Products.update_product(product, %{image: url, active: true})
-              json(conn, %{ok: true, url: url})
-          end
-        {:ok, %{body: body}} when is_binary(body) ->
-          decoded = Jason.decode!(body)
-          IO.inspect(decoded, label: "CLOUDINARY DECODED")
-          case decoded["secure_url"] do
-            nil -> Products.delete_product(product)
-              json(conn, %{ok: false, error: "No secure_url"})
-            url ->
-              Products.update_product(product, %{image: url, active: true})
-              json(conn, %{ok: true, url: url})
-          end
-        other ->
-          IO.inspect(other, label: "CLOUDINARY OTHER")
-          Products.delete_product(product)
-          json(conn, %{ok: false, error: "Upload failed"})
+            end
+            json(conn, %{ok: false, error: "Upload failed"})
+        end
       end
+    else
+      json(conn, %{ok: false})
+    end
+  end
+
+  defp procesar_url_imagen(conn, product, nil, imagenes_actuales) do
+    if imagenes_actuales == [] do
+      Products.delete_product(product)
+    end
+    json(conn, %{ok: false, error: "No secure_url"})
+  end
+
+  defp procesar_url_imagen(conn, product, url, imagenes_actuales) do
+    nuevas_imagenes = imagenes_actuales ++ [url]
+    imagen_principal = List.first(nuevas_imagenes)
+    Products.update_product(product, %{images: nuevas_imagenes, image: imagen_principal, active: true})
+    json(conn, %{ok: true, url: url, images: nuevas_imagenes})
+  end
+
+  def actualizar(conn, %{"id" => id} = params) do
+    user_id = get_session(conn, :user_id)
+    product = Products.get_product(id)
+    brand = Repo.get(Brand, product.brand_id)
+    if brand.user_id == user_id do
+      nombre = Map.get(params, "nombre", product.name)
+      precio_original = params |> Map.get("precio_original", "0") |> String.to_integer()
+      precio_final = params |> Map.get("precio_final", "0") |> String.to_integer()
+      descripcion = Map.get(params, "descripcion", "")
+      talles = params |> Map.get("talles", "") |> String.split(",") |> Enum.reject(&(&1 == ""))
+      categorias = params |> Map.get("categorias", "") |> String.split(",") |> Enum.reject(&(&1 == ""))
+
+      case Products.update_product(product, %{
+        name: nombre,
+        original_price: precio_original,
+        price: precio_final,
+        description: descripcion,
+        talles: talles,
+        categorias: categorias
+      }) do
+        {:ok, _} -> json(conn, %{ok: true})
+        {:error, _} -> json(conn, %{ok: false})
+      end
+    else
+      json(conn, %{ok: false})
+    end
+  end
+
+  def borrar_imagen(conn, %{"id" => id, "indice" => indice}) do
+    user_id = get_session(conn, :user_id)
+    product = Products.get_product(id)
+    brand = Repo.get(Brand, product.brand_id)
+    if brand.user_id == user_id do
+      indice_int = String.to_integer(indice)
+      imagenes_actuales = product.images || []
+      nuevas_imagenes = List.delete_at(imagenes_actuales, indice_int)
+      nueva_principal = List.first(nuevas_imagenes)
+      Products.update_product(product, %{images: nuevas_imagenes, image: nueva_principal})
+      json(conn, %{ok: true, images: nuevas_imagenes})
     else
       json(conn, %{ok: false})
     end
@@ -115,6 +165,7 @@ defmodule DaleAppWeb.ProductoController do
       description: product.description,
       talles: product.talles || [],
       categorias: product.categorias || [],
+      images: (product.images && product.images != []) && product.images || (product.image && [product.image] || []),
       brand_id: brand.id,
       brand_name: brand.name,
       favorito: favorito,

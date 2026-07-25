@@ -29,7 +29,7 @@
   <div style="padding: 12px 0 80px;">
     <%= for brand <- @todas_las_marcas do %>
       <div style="margin: 0 16px 24px;">
-        <a href={"/marcas/#{brand.id}"} style="display: block; text-decoration: none; border-radius: 12px; overflow: hidden; position: relative; background: #f0f0f0; aspect-ratio: 16/7; box-shadow: 0 2px 12px rgba(0,0,0,0.08);">
+        <a href={"/marcas/#{brand.id}"} style="display: block; text-decoration: none; border-radius: 12px; overflow: hidden; position: relative; background: #f0f0f0; aspect-ratio: 16/7; box-shadow: 0 4px 16px rgba(0,0,0,0.14);">
           <%= if brand.cover_image do %>
             <img src={brand.cover_image} style="width: 100%; height: 100%; object-fit: cover; display: block;"/>
           <% else %>
@@ -38,7 +38,7 @@
             </div>
           <% end %>
           <%= if brand.cupon_activo do %>
-            <div style="position: absolute; bottom: 12px; left: 12px; background: #1e7a37; color: white; padding: 6px 14px; font-size: 24px; font-family: 'Abril Fatface', cursive;">
+            <div style="position: absolute; bottom: 12px; left: 12px; background: #186904; color: white; padding: 6px 14px; font-size: 24px; font-family: 'Abril Fatface', cursive; border-radius: 16px;">
               <%= brand.cupon_activo.discount %> off
             </div>
           <% end %>
@@ -48,7 +48,7 @@
             </div>
           <% end %>
         </a>
-        <div style="padding: 8px 4px 0;">
+        <div style="padding: 12px 4px 0;">
           <span style="font-size: 15px; font-weight: 400; color: #000; font-family: 'Abril Fatface', cursive;">• <%= String.capitalize(brand.name) %></span>
           <span style="font-size: 15px; font-weight: 400; color: #000; font-family: 'Abril Fatface', cursive;"> • <%= String.capitalize(brand.modalidad) %></span>
         </div>

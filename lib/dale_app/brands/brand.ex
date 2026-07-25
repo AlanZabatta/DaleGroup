@@ -8,6 +8,9 @@ defmodule DaleApp.Brands.Brand do
     field :cover_image, :string
     field :description, :string
     field :address, :string
+    field :address_full, :string
+    field :horario_atencion, :string
+    field :colores, :map, default: %{}
     field :latitude, :float
     field :longitude, :float
     field :image_limit, :integer, default: 12
@@ -23,8 +26,8 @@ defmodule DaleApp.Brands.Brand do
 
   def changeset(brand, attrs) do
     brand
-    |> cast(attrs, [:name, :logo, :cover_image, :description, :address, :latitude, :longitude, :image_limit, :active, :modalidad, :featured_slot, :user_id, :discount, :categorias])
-    |> validate_required([:name, :user_id])
+    |> cast(attrs, [:name, :logo, :cover_image, :description, :address, :address_full, :horario_atencion, :colores, :latitude, :longitude, :image_limit, :active, :modalidad, :featured_slot, :user_id, :discount, :categorias])
+    |> validate_required([:user_id])
     |> validate_inclusion(:modalidad, ["presencial", "digital", "ambos"])
     |> validate_number(:discount, greater_than_or_equal_to: 0, less_than_or_equal_to: 100)
     |> validate_inclusion(:image_limit, [12, 14, 18, 22, 30])

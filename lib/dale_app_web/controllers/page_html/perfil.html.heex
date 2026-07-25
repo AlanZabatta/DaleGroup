@@ -612,8 +612,8 @@
 
     <p style="font-size:13px; font-weight:600; color:#186904; margin:0 0 8px; font-family:Poppins,sans-serif;">Nombre de usuario</p>
     <div style="display:flex; gap:8px; margin-bottom:6px;">
-      <input id="ed-username" type="text" maxlength="20" value={@current_user && @current_user.username} style="flex:1; padding:13px 16px; border:1.5px solid #e0e0e0; border-radius:16px; font-family:Poppins,sans-serif; font-size:14px; color:#333; outline:none; box-sizing:border-box;"/>
-      <button onclick="guardarUsernameEditor()" style="background:#186904; color:#fff; border:none; border-radius:16px; padding:0 20px; font-size:13px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer;">Guardar</button>
+      <input id="ed-username" type="text" maxlength="20" value={@current_user && @current_user.username} style="flex:1; min-width:0; padding:13px 16px; border:1.5px solid #e0e0e0; border-radius:16px; font-family:Poppins,sans-serif; font-size:14px; color:#333; outline:none; box-sizing:border-box;"/>
+      <button onclick="guardarUsernameEditor()" style="background:#186904; color:#fff; border:none; border-radius:16px; padding:0 16px; font-size:13px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer; flex-shrink:0; white-space:nowrap;">Guardar</button>
     </div>
     <p id="ed-username-error" style="font-size:11px; color:#c0392b; margin:0 0 4px; font-family:Poppins,sans-serif; display:none;"></p>
     <p style="font-size:10px; color:#aaa; margin:0 0 22px; font-family:Poppins,sans-serif;">4-20 caracteres. Podés cambiarlo 1 vez cada 7 días.</p>

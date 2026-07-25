@@ -2,7 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
     <meta name="csrf-token" content={get_csrf_token()} />
     <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Noto+Sans:wght@400;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet"/>
     <.live_title default="DaleGroup">
@@ -15,12 +15,12 @@
 
     <div id="app-wrapper" style="background-color: white; min-height: 100vh; width: 100%; margin: 0 auto; position: relative; overflow: visible;">
 
-      <svg style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;" viewBox="0 0 400 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="480" cy="80" r="340" fill="none" stroke="#1E5C1E" stroke-width="0.8" opacity="0.35"/>
-        <circle cx="480" cy="80" r="420" fill="none" stroke="#1E5C1E" stroke-width="0.5" opacity="0.22"/>
-        <circle cx="-60" cy="700" r="280" fill="none" stroke="#1E5C1E" stroke-width="0.8" opacity="0.30"/>
-        <circle cx="-60" cy="700" r="360" fill="none" stroke="#1E5C1E" stroke-width="0.5" opacity="0.18"/>
-        <circle cx="350" cy="450" r="200" fill="none" stroke="#1E5C1E" stroke-width="0.6" opacity="0.22"/>
+      <svg id="fondo-svg" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;" viewBox="0 0 400 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+        <g id="fondo-parallax">
+          <circle cx="480" cy="80" r="380" fill="none" stroke="#186904" stroke-width="0.6" opacity="0.18"/>
+          <circle cx="-60" cy="700" r="320" fill="none" stroke="#186904" stroke-width="0.6" opacity="0.16"/>
+          <circle cx="350" cy="450" r="200" fill="none" stroke="#186904" stroke-width="0.5" opacity="0.14"/>
+        </g>
       </svg>
 
       <div id="navbar" style="position: fixed; top: 0; left: 0; right: 0; z-index: 5000; background: rgba(255,255,255,0.92); backdrop-filter: blur(8px); border-bottom: 1px solid #f0f0f0; transition: transform 0.3s ease;">
@@ -129,7 +129,7 @@
 
       <!-- BARRA DE NAVEGACIÓN INFERIOR -->
       <div id="bottom-bar" style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 5000; background: rgba(255,255,255,0.96); backdrop-filter: blur(10px); border-top: 1px solid #f0f0f0; height: 11vh; display: flex; align-items: center; justify-content: space-around; padding: 0 8px; transition: none;">
-        <% ruta = @conn.request_path %>
+        <% ruta = assigns[:ruta_actual] || (assigns[:conn] && @conn.request_path) || "" %>
 
         <a href="/amigos" style={"display: flex; flex-direction: column; align-items: center; gap: 4px; text-decoration: none; flex: 1; color: #{if ruta == "/amigos", do: "#186904", else: "#9a9a9a"};"}>
           <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -248,55 +248,55 @@
 
   <div id="producto-overlay" onclick="cerrarProductoSheet()" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:9990;"></div>
 
-  <div id="producto-sheet" style="display:none; position:fixed; left:0; right:0; bottom:0; background:white; z-index:9991; border-radius:18px 18px 0 0; max-width:480px; margin:0 auto; height:60vh; transition: height 0.3s ease, border-radius 0.3s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1); overflow-y:auto; box-shadow:0 -4px 24px rgba(0,0,0,0.15);">
+  <div id="producto-sheet" style="display:none; position:fixed; left:0; right:0; bottom:0; background:white; z-index:9991; border-radius:22px 22px 0 0; max-width:480px; margin:0 auto; height:60vh; transition: height 0.3s ease, border-radius 0.3s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1); overflow-y:auto; box-shadow:0 -6px 28px rgba(0,0,0,0.18);">
     <div id="producto-sheet-handle" style="position:sticky; top:0; background:white; z-index:2; padding:14px 0 12px; display:flex; justify-content:center; cursor:pointer;" onclick="toggleProductoSheetSize()">
-      <div style="width:40px; height:4px; background:#ddd; border-radius:2px;"></div>
+      <div style="width:40px; height:4px; background:#e0e0e0; border-radius:2px;"></div>
     </div>
-    
 
     <div style="padding: 0 16px 32px;">
-      <div id="ps-img-wrap" style="position:relative; width:100%; aspect-ratio:1/1; background:#f0f0f0; border-radius:12px; overflow:hidden; margin-top:10px; margin-bottom:14px;">
-        <img id="ps-img" src="" style="width:100%; height:100%; object-fit:cover; display:block;"/>
-        <button id="ps-favorito" onclick="toggleFavoritoSheet()" style="position:absolute; top:10px; right:10px; background:white; border:1.5px solid #ddd; border-radius:50%; width:34px; height:34px; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; z-index:5;">
+      <div id="ps-img-wrap" style="position:relative; width:100%; aspect-ratio:3/4; background:#f5f5f5; border-radius:16px; overflow:hidden; margin-top:6px; margin-bottom:16px; box-shadow:0 3px 12px rgba(0,0,0,0.08);">
+        <div id="ps-carousel" style="display:flex; width:100%; height:100%; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none;"></div>
+        <div id="ps-dots" style="position:absolute; bottom:10px; left:0; right:0; display:flex; justify-content:center; gap:6px; z-index:4; pointer-events:none;"></div>
+        <button id="ps-favorito" onclick="toggleFavoritoSheet()" style="position:absolute; top:10px; right:10px; background:white; border:none; border-radius:50%; width:32px; height:32px; cursor:pointer; font-size:15px; line-height:1; display:flex; align-items:center; justify-content:center; z-index:5; box-shadow:0 2px 6px rgba(0,0,0,0.2);">
           <span id="ps-favorito-icono">🤍</span>
         </button>
       </div>
 
-      <p id="ps-nombre" style="font-size:18px; font-weight:600; color:#111; margin:0 0 4px; font-family:'Noto Sans',sans-serif; text-align:left;"></p>
+      <p id="ps-nombre" style="font-size:19px; font-weight:700; color:#1a1a1a; margin:0 0 4px; font-family:'Noto Sans',sans-serif; text-align:left;"></p>
 
       <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:18px;">
-        <span id="ps-precio-original" style="font-size:14px; color:#999; text-decoration:line-through; font-family:'Noto Sans',sans-serif;"></span>
-        <span id="ps-precio-final" style="font-size:18px; font-weight:700; color:#1E5C1E; font-family:'Noto Sans',sans-serif;"></span>
+        <span id="ps-precio-original" style="font-size:13px; color:#999; text-decoration:line-through; font-family:'Noto Sans',sans-serif;"></span>
+        <span id="ps-precio-final" style="font-size:19px; font-weight:700; color:#186904; font-family:'Noto Sans',sans-serif;"></span>
       </div>
 
-      <div style="background:#1E5C1E; margin:0 -16px; padding:16px;">
-      <button style="width:100%; padding:14px; border:none; border-radius:10px; background:white; color:#1E5C1E; cursor:pointer; font-size:14px; font-weight:700; font-family:'Noto Sans',sans-serif; margin-bottom:6px;">
-        Reclamar beneficio QR
-      </button>
+      <div style="background:#186904; border-radius:18px; padding:18px; box-shadow:0 3px 12px rgba(0,0,0,0.08); margin-bottom:24px;">
+        <button style="width:100%; padding:14px; border:none; border-radius:14px; background:white; color:#186904; cursor:pointer; font-size:14px; font-weight:800; font-family:'Noto Sans',sans-serif; margin-bottom:8px;">
+          Usar beneficio
+        </button>
 
-      <p id="ps-modalidad" style="font-size:12px; font-weight:500; color:rgba(255,255,255,0.85); font-family:'Noto Sans',sans-serif; margin:0 0 24px; text-align:left;"></p>
+        <p id="ps-modalidad" style="font-size:12px; font-weight:500; color:rgba(255,255,255,0.85); font-family:'Noto Sans',sans-serif; margin:0 0 20px; text-align:center;"></p>
 
-      <div id="ps-talles-wrap" style="margin-bottom:0;">
-        <p style="font-size:12px; font-weight:600; color:white; margin:0 0 10px; text-transform:uppercase; letter-spacing:1px; font-family:'Noto Sans',sans-serif;">Talles</p>
-        <div id="ps-talles" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
-      </div>
-      </div>
-
-      <div id="ps-descripcion-wrap" style="margin-top:24px; margin-bottom:28px;">
-        <p style="font-size:12px; font-weight:600; color:#333; margin:0 0 10px; text-transform:uppercase; letter-spacing:1px; font-family:'Noto Sans',sans-serif;">Descripción</p>
-        <p id="ps-descripcion" style="font-size:13px; color:#444; line-height:1.5; font-family:'Noto Sans',sans-serif; margin:0; text-align:left;"></p>
+        <div id="ps-talles-wrap" style="margin-bottom:0;">
+          <p style="font-size:11px; font-weight:700; color:rgba(255,255,255,0.85); margin:0 0 10px; text-transform:uppercase; letter-spacing:1px; font-family:'Noto Sans',sans-serif;">Talles</p>
+          <div id="ps-talles" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+        </div>
       </div>
 
-      <div id="ps-direccion-wrap" style="margin-bottom:28px;">
-        <p id="ps-direccion-titulo" style="font-size:12px; font-weight:600; color:#333; margin:0 0 10px; text-transform:uppercase; letter-spacing:1px; font-family:'Noto Sans',sans-serif;">Dirección</p>
-        <div id="ps-direcciones" style="font-size:13px; color:#444; line-height:1.5; font-family:'Noto Sans',sans-serif;"></div>
+      <div id="ps-descripcion-wrap" style="margin-bottom:16px; background:white; border:1px solid #f2f2f2; border-radius:18px; padding:16px; box-shadow:0 3px 12px rgba(0,0,0,0.05);">
+        <p style="font-size:11px; font-weight:700; color:#186904; margin:0 0 10px; text-transform:uppercase; letter-spacing:1px; font-family:'Noto Sans',sans-serif;">Descripción</p>
+        <p id="ps-descripcion" style="font-size:13px; color:#555; line-height:1.5; font-family:'Noto Sans',sans-serif; margin:0; text-align:left;"></p>
       </div>
 
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-top:18px; margin-bottom:14px; padding:14px 0; border-top:1.5px solid #bbb; border-bottom:1.5px solid #bbb;">
+      <div id="ps-direccion-wrap" style="margin-bottom:20px; background:white; border:1px solid #f2f2f2; border-radius:18px; padding:16px; box-shadow:0 3px 12px rgba(0,0,0,0.05);">
+        <p id="ps-direccion-titulo" style="font-size:11px; font-weight:700; color:#186904; margin:0 0 10px; text-transform:uppercase; letter-spacing:1px; font-family:'Noto Sans',sans-serif;">Dirección</p>
+        <div id="ps-direcciones" style="font-size:13px; color:#555; line-height:1.5; font-family:'Noto Sans',sans-serif;"></div>
+      </div>
+
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; padding:14px 16px; background:#fafafa; border-radius:18px;">
         <a id="ps-marca" href="#" style="font-size:15px; font-weight:700; color:#111; font-family:'Noto Sans',sans-serif; text-decoration:none; text-transform:capitalize;"></a>
         <div style="display:flex; gap:6px;">
-          <button id="ps-mapa" onclick="toggleMapaSheet()" style="padding:6px 14px; border:1.5px solid #ccc; border-radius:20px; background:white; color:#666; font-size:12px; font-weight:600; font-family:'Noto Sans',sans-serif; cursor:pointer;">+ Mapa</button>
-          <button id="ps-seguir" onclick="toggleSeguirSheet()" style="padding:6px 16px; border:none; border-radius:20px; background:#ccc; color:white; font-size:12px; font-weight:600; font-family:'Noto Sans',sans-serif; cursor:pointer;">Seguir</button>
+          <button id="ps-mapa" onclick="toggleMapaSheet()" style="padding:7px 14px; border:none; border-radius:20px; background:#f0f0f0; color:#186904; font-size:12px; font-weight:700; font-family:'Noto Sans',sans-serif; cursor:pointer;">+ Mapa</button>
+          <button id="ps-seguir" onclick="toggleSeguirSheet()" style="padding:7px 16px; border:none; border-radius:20px; background:#e0e0e0; color:white; font-size:12px; font-weight:700; font-family:'Noto Sans',sans-serif; cursor:pointer;">Seguir</button>
         </div>
       </div>
 
@@ -316,7 +316,30 @@
       const data = await res.json();
       if (!data.ok) return;
 
-      document.getElementById('ps-img').src = data.image || '';
+      const carousel = document.getElementById('ps-carousel');
+      const dots = document.getElementById('ps-dots');
+      carousel.innerHTML = '';
+      dots.innerHTML = '';
+      const imagenes = (data.images && data.images.length > 0) ? data.images : (data.image ? [data.image] : []);
+      imagenes.forEach((url, i) => {
+        const imgEl = document.createElement('img');
+        imgEl.src = url;
+        imgEl.style.cssText = 'width:100%; height:100%; object-fit:cover; flex-shrink:0; scroll-snap-align:start; display:block;';
+        carousel.appendChild(imgEl);
+        if (imagenes.length > 1) {
+          const dot = document.createElement('div');
+          dot.className = 'ps-dot';
+          dot.style.cssText = 'width:6px; height:6px; border-radius:50%; background:' + (i === 0 ? 'white' : 'rgba(255,255,255,0.5)') + '; box-shadow:0 1px 3px rgba(0,0,0,0.35); transition:background 0.2s;';
+          dots.appendChild(dot);
+        }
+      });
+      carousel.onscroll = function() {
+        const ancho = carousel.clientWidth;
+        const indice = Math.round(carousel.scrollLeft / ancho);
+        document.querySelectorAll('.ps-dot').forEach((d, i) => {
+          d.style.background = i === indice ? 'white' : 'rgba(255,255,255,0.5)';
+        });
+      };
       document.getElementById('ps-nombre').textContent = data.name;
       document.getElementById('ps-precio-original').textContent = data.original_price ? ('$' + data.original_price) : '';
       document.getElementById('ps-precio-final').textContent = data.price ? ('$' + data.price) : '';
@@ -447,7 +470,7 @@
       const sheet = document.getElementById('producto-sheet');
       psExpanded = !psExpanded;
       if (psExpanded) {
-        sheet.style.height = '100vh';
+        sheet.style.height = '100dvh';
         sheet.style.borderRadius = '0';
       } else {
         sheet.style.height = '60vh';
@@ -510,19 +533,50 @@
       });
 
       let startY = 0;
+      let startScrollTop = 0;
+      let gestoResuelto = false;
+
       sheet.addEventListener('touchstart', function(e) {
         startY = e.touches[0].clientY;
+        startScrollTop = sheet.scrollTop;
+        gestoResuelto = false;
       }, { passive: true });
-      sheet.addEventListener('touchmove', function(e) {
-        const diff = startY - e.touches[0].clientY;
-        if (diff > 50 && !psExpanded) {
+
+      sheet.addEventListener('touchend', function(e) {
+        if (gestoResuelto) return;
+        const diff = startY - e.changedTouches[0].clientY;
+
+        if (startScrollTop > 0) return;
+
+        if (!psExpanded && diff > 70) {
+          gestoResuelto = true;
           toggleProductoSheetSize();
-        } else if (diff < -80 && psExpanded && sheet.scrollTop === 0) {
+        } else if (psExpanded && diff < -70) {
+          gestoResuelto = true;
           toggleProductoSheetSize();
-        } else if (diff < -140 && !psExpanded && sheet.scrollTop === 0) {
+        } else if (!psExpanded && diff < -100) {
+          gestoResuelto = true;
           cerrarProductoSheet();
         }
       }, { passive: true });
+    })();
+  </script>
+  <script>
+    (function() {
+      const fondoParallax = document.getElementById('fondo-parallax');
+      if (!fondoParallax) return;
+      let ticking = false;
+      function actualizarFondo() {
+        const offset = window.scrollY * 0.12;
+        fondoParallax.style.transform = "translateY(-" + offset + "px)";
+        ticking = false;
+      }
+      window.addEventListener('scroll', function() {
+        if (!ticking) {
+          window.requestAnimationFrame(actualizarFondo);
+          ticking = true;
+        }
+      });
     })();
   </script>
   </body>

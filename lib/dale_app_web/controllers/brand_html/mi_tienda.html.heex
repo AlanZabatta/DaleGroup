@@ -1,31 +1,82 @@
-<div style="padding: 24px; font-family: sans-serif; max-width: 600px; margin: 0 auto; background-color: white; min-height: 100vh;">
-  <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 24px; color: #3B2505;">Mi Tienda</h1>
+<div id="aviso-error-gestion" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.45); z-index:9999; align-items:center; justify-content:center;">
+  <div style="background:#fff; border-radius:28px; width:300px; max-width:85%; padding:28px 24px 22px; box-shadow:0 12px 40px rgba(0,0,0,0.25); text-align:center;">
+    <div style="width:64px; height:64px; margin:0 auto 14px; border:4px solid #c0392b; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none"><line x1="12" y1="7" x2="12" y2="14" stroke="#c0392b" stroke-width="3.5" stroke-linecap="round"/><circle cx="12" cy="18.5" r="1.8" fill="#c0392b"/></svg>
+    </div>
+    <p style="font-size:20px; font-weight:700; color:#c0392b; margin:0 0 12px; font-family:Poppins,sans-serif;">Dirección inválida</p>
+    <div style="height:2px; width:60px; background:#c0392b; border-radius:2px; margin:0 auto 14px;"></div>
+    <p id="aviso-error-gestion-texto" style="font-size:14px; color:#555; margin:0 0 22px; line-height:1.5; font-family:Poppins,sans-serif;">Elegí una dirección de la lista de sugerencias, no la escribas libremente.</p>
+    <button onclick="document.getElementById('aviso-error-gestion').style.display='none'" style="width:100%; background:#186904; color:#fff; border:none; border-radius:14px; padding:13px 0; font-size:14px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer;">Entendido</button>
+  </div>
+</div>
+
+<div id="aviso-confirmar-vacios" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.45); z-index:9999; align-items:center; justify-content:center;">
+  <div style="background:#fff; border-radius:28px; width:300px; max-width:85%; padding:28px 24px 22px; box-shadow:0 12px 40px rgba(0,0,0,0.25); text-align:center;">
+    <div style="width:64px; height:64px; margin:0 auto 14px; border:4px solid #186904; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none"><line x1="12" y1="7" x2="12" y2="14" stroke="#186904" stroke-width="3.5" stroke-linecap="round"/><circle cx="12" cy="18.5" r="1.8" fill="#186904"/></svg>
+    </div>
+    <p style="font-size:20px; font-weight:700; color:#186904; margin:0 0 12px; font-family:Poppins,sans-serif;">Antes de continuar</p>
+    <div style="height:2px; width:60px; background:#186904; border-radius:2px; margin:0 auto 14px;"></div>
+    <p id="aviso-confirmar-vacios-texto" style="font-size:14px; color:#555; margin:0 0 22px; line-height:1.5; font-family:Poppins,sans-serif; text-align:left;"></p>
+    <div style="display:flex; gap:10px;">
+      <button onclick="continuarGuardadoGestion()" style="flex:1; background:#186904; color:#fff; border:none; border-radius:14px; padding:13px 0; font-size:14px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer;">Sí</button>
+      <button onclick="document.getElementById('aviso-confirmar-vacios').style.display='none'" style="flex:1; background:#fff; color:#186904; border:2px solid #186904; border-radius:14px; padding:11px 0; font-size:14px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer;">No</button>
+    </div>
+  </div>
+</div>
+
+<div id="aviso-salir-sin-guardar" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.45); z-index:9999; align-items:center; justify-content:center;">
+  <div style="background:#fff; border-radius:28px; width:300px; max-width:85%; padding:28px 24px 22px; box-shadow:0 12px 40px rgba(0,0,0,0.25); text-align:center;">
+    <div style="width:64px; height:64px; margin:0 auto 14px; border:4px solid #186904; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none"><line x1="12" y1="7" x2="12" y2="14" stroke="#186904" stroke-width="3.5" stroke-linecap="round"/><circle cx="12" cy="18.5" r="1.8" fill="#186904"/></svg>
+    </div>
+    <p style="font-size:20px; font-weight:700; color:#186904; margin:0 0 12px; font-family:Poppins,sans-serif;">Cambios sin guardar</p>
+    <div style="height:2px; width:60px; background:#186904; border-radius:2px; margin:0 auto 14px;"></div>
+    <p id="aviso-salir-texto" style="font-size:14px; color:#555; margin:0 0 22px; line-height:1.5; font-family:Poppins,sans-serif;"></p>
+    <div style="display:flex; gap:10px;">
+      <button onclick="guardarYSalir()" style="flex:1; background:#186904; color:#fff; border:none; border-radius:14px; padding:13px 0; font-size:14px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer;">Guardar</button>
+      <button onclick="salirSinGuardar()" style="flex:1; background:#fff; color:#186904; border:2px solid #186904; border-radius:14px; padding:11px 0; font-size:14px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer;">No guardar</button>
+    </div>
+  </div>
+</div>
+
+<div style="padding: 24px 18px 40px; font-family: Poppins, sans-serif; max-width: 600px; margin: 0 auto; background-color: white; min-height: 100vh;">
+  <a href="#" onclick="intentarVolver(event)" style="display: inline-flex; background: none; border: none; color: #186904; font-size: 22px; font-weight: 700; cursor: pointer; line-height: 1; text-decoration: none; margin-bottom: 16px;">&#x2715;</a>
+  <p style="font-size: 26px; font-weight: 800; color: #186904; margin: 0 0 20px;">Mi Tienda</p>
   <%= if @brand do %>
-    <form action={~p"/mi-tienda"} method="post">
+    <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Gestión</p>
+    <form id="form-gestion" action={~p"/mi-tienda"} method="post" onsubmit="return validarAntesDeGuardar(event)">
       <input type="hidden" name="_csrf_token" value={get_csrf_token()}/>
-      <div style="margin-bottom: 16px;">
-        <label style="display: block; margin-bottom: 6px; font-weight: bold;">Nombre de la tienda</label>
-        <input type="text" name="brand[name]" value={@brand.name} style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;"/>
+      <div style="margin-bottom: 22px;">
+        <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Nombre de la tienda</p>
+        <input type="text" name="brand[name]" id="input-nombre-tienda" value={@brand.name} oninput="gestionModificado = true" style="width: 100%; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; color: #333; outline: none; box-sizing: border-box;"/>
       </div>
-      <div style="margin-bottom: 16px;">
-        <label style="display: block; margin-bottom: 6px; font-weight: bold;">Direcciones</label>
+      <div style="margin-bottom: 22px;">
+        <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Direcciones</p>
         <div id="direcciones-container"></div>
-        <button type="button" onclick="agregarDireccion()" style="margin-top: 8px; background: none; border: 1px dashed #ccc; border-radius: 6px; padding: 8px 16px; cursor: pointer; color: #888; font-size: 14px;">+ Agregar dirección</button>
+        <button type="button" onclick="agregarDireccion()" style="margin-top: 8px; background: none; border: 1.5px dashed #e0e0e0; border-radius: 16px; padding: 10px 16px; cursor: pointer; color: #888; font-size: 13px; font-family: Poppins, sans-serif;">+ Agregar dirección</button>
         <input type="hidden" name="brand[address]" id="address-hidden" value={@brand.address}/>
+        <input type="hidden" name="brand[address_full]" id="address-full-hidden" value={@brand.address_full}/>
       </div>
-      <div style="margin-bottom: 16px;">
-        <label style="display: block; margin-bottom: 6px; font-weight: bold;">Modalidad</label>
-        <select name="brand[modalidad]" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
+      <div style="margin-bottom: 22px;">
+        <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Modalidad</p>
+        <select name="brand[modalidad]" onchange="gestionModificado = true" style="width: 100%; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; color: #333; outline: none; box-sizing: border-box;">
           <option value="presencial" selected={@brand.modalidad == "presencial"}>Presencial</option>
           <option value="digital" selected={@brand.modalidad == "digital"}>Solo Digital</option>
           <option value="ambos" selected={@brand.modalidad == "ambos"}>Presencial y Digital</option>
         </select>
       </div>
 
+      <div style="margin-bottom: 16px;">
+        <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Horario de atención</p>
+        <input type="text" name="brand[horario_atencion]" id="input-horario-tienda" value={@brand.horario_atencion} placeholder="Ej: Lun a Sáb 10 a 20hs" oninput="gestionModificado = true"
+          style="width: 100%; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; color: #333; outline: none; box-sizing: border-box;"/>
+      </div>
+
       <!-- CATEGORÍAS -->
-      <div style="margin-bottom: 24px;">
-        <label style="display: block; margin-bottom: 10px; font-weight: bold;">Categorías</label>
-        <p style="font-size: 13px; color: #888; margin-bottom: 12px;">Seleccioná las que mejor describen tu marca.</p>
+      <div style="margin-bottom: 28px;">
+        <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Categorías</p>
+        <p style="font-size: 12px; color: #888; margin: 0 0 12px; font-family: Poppins, sans-serif;">Seleccioná las que mejor describen tu marca.</p>
         <input type="hidden" name="brand[categorias]" id="categorias-hidden" value={Enum.join(@brand.categorias || [], ",")}/>
         <div style="display: flex; flex-wrap: wrap; gap: 8px;">
           <%= for cat <- ["Hombre", "Mujer", "Casual", "Elegante", "Street", "Sport", "Ropa", "Accesorios", "Calzado"] do %>
@@ -33,69 +84,276 @@
             <button type="button"
               data-cat={cat}
               onclick="toggleCategoria(this)"
-              style={"padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 13px; font-family: sans-serif; transition: all 0.2s; border: 1.5px solid #{if activa, do: "#1E5C1E", else: "#ddd"}; background: #{if activa, do: "#1E5C1E", else: "white"}; color: #{if activa, do: "white", else: "#666"};"}>
+              style={"padding: 9px 16px; border-radius: 20px; cursor: pointer; font-size: 13px; font-family: Poppins, sans-serif; font-weight: 600; transition: all 0.2s; border: 1.5px solid #{if activa, do: "#186904", else: "#e0e0e0"}; background: #{if activa, do: "#186904", else: "white"}; color: #{if activa, do: "white", else: "#666"};"}>
               <%= cat %>
             </button>
           <% end %>
         </div>
       </div>
 
-      <button type="submit" style="width: 100%; background-color: #1E5C1E; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; margin-bottom: 12px;">
+      <button type="submit" style="width: 100%; background-color: #186904; color: white; padding: 14px 0; border: none; border-radius: 16px; cursor: pointer; font-size: 15px; font-weight: 700; font-family: Poppins, sans-serif; margin-bottom: 22px;">
         Guardar cambios
       </button>
     </form>
 
+    <div style="height: 1px; background: #eee; margin: 8px 0 24px;"></div>
+    <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 20px; text-transform: uppercase; letter-spacing: 1px;">Estética</p>
+
+<%
+  pv_principal = (@brand.colores && @brand.colores["principal"]) || "#186904"
+  pv_fondo = (@brand.colores && @brand.colores["fondo"]) || "#ffffff"
+  pv_letras = (@brand.colores && @brand.colores["letras"]) || "#1a1a1a"
+  pv_gestion = (@brand.colores && @brand.colores["gestion"]) || "#ffffff"
+%>
+<div style="margin-bottom: 24px;">
+  <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 12px;">Vista previa</p>
+
+  <div style="max-width: 100%; overflow: hidden; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.12); border: 1px solid #f0f0f0;">
+    <div id="preview-tienda" style={"zoom: 0.72; width: 380px; margin: 0 auto; --c-principal:#{pv_principal}; --c-fondo:#{pv_fondo}; --c-letras:#{pv_letras}; --c-gestion:#{pv_gestion};"}>
+
+      <div style={"position: relative; width: 100%; aspect-ratio: 16/9; overflow: hidden; border-radius: 0 0 28px 28px; background-color: var(--c-principal);#{if @brand.cover_image, do: " background-image: url('#{@brand.cover_image}'); background-size: cover; background-position: center;", else: ""}"}>
+        <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0) 35%, rgba(0,0,0,0.55) 100%);"></div>
+      </div>
+
+      <div style="padding: 0 16px; margin-top: -70px; position: relative; z-index: 5;">
+        <div style="position: relative; display: inline-block;">
+          <div style="border: 1.5px solid #f0f0f0; border-radius: 16px; width: 220px; height: 140px; display: flex; align-items: center; justify-content: center; background: white; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.12);">
+            <%= if @brand.logo do %>
+              <img src={@brand.logo} style="width: 100%; height: 100%; object-fit: contain; padding: 16px; box-sizing: border-box; display: block;"/>
+            <% else %>
+              <span style="color: #ccc; font-size: 14px;">Logo</span>
+            <% end %>
+          </div>
+          <div style="position: absolute; bottom: -18px; right: -20px; background-color: var(--c-principal); color: var(--c-gestion); font-size: 34px; font-weight: 900; padding: 10px 16px; line-height: 1; font-family: 'Abril Fatface', cursive; border-radius: 16px; box-shadow: 0 6px 16px rgba(0,0,0,0.25);">
+            30%
+          </div>
+        </div>
+      </div>
+
+      <div style="padding: 16px; margin-top: 16px;">
+        <div style="background: var(--c-fondo); border-radius: 20px; padding: 18px; box-shadow: 0 4px 18px rgba(0,0,0,0.07); border: 1px solid #f2f2f2;">
+          <h1 style="font-family: 'Abril Fatface', cursive; font-size: 26px; color: var(--c-letras); margin: 0; font-weight: 400; line-height: 1.1;"><%= @brand.name %></h1>
+
+          <%= if @brand.categorias && @brand.categorias != [] do %>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px;">
+              <%= for cat <- @brand.categorias do %>
+                <span style="background: rgba(0,0,0,0.06); color: var(--c-principal); font-size: 11px; font-weight: 600; padding: 5px 11px; border-radius: 20px; font-family: 'Noto Sans', sans-serif;"><%= cat %></span>
+              <% end %>
+            </div>
+          <% end %>
+
+          <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid #f2f2f2; display: flex; align-items: stretch; gap: 12px;">
+            <div id="preview-direcciones-col" style="flex: 1; display: flex; flex-direction: column; justify-content: flex-start; gap: 6px;">
+              <%= if @brand.address do %>
+                <%= for dir <- String.split(@brand.address, "|") do %>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--c-principal)" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                    <span style="font-size: 13px; color: var(--c-letras); font-family: 'Noto Sans', sans-serif; font-weight: 500;"><%= String.trim(dir) %></span>
+                  </div>
+                <% end %>
+              <% else %>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--c-principal)" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                  <span style="font-size: 13px; color: var(--c-letras); font-family: 'Noto Sans', sans-serif; font-weight: 500;">Tu dirección acá</span>
+                </div>
+              <% end %>
+              <%= if @brand.horario_atencion && @brand.horario_atencion != "" do %>
+                <div style="display: flex; align-items: center; gap: 8px; margin-top: 2px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--c-principal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+                  <span style="font-size: 13px; color: var(--c-letras); font-family: 'Noto Sans', sans-serif; font-weight: 500;"><%= @brand.horario_atencion %></span>
+                </div>
+              <% end %>
+            </div>
+            <div id="preview-mapa-box" style="width: 140px; flex-shrink: 0; position: relative; border-radius: 16px; overflow: hidden; border: 1.5px solid #f0f0f0; background: linear-gradient(135deg, #cfe8d8 0%, #b8dcc4 40%, #a8d4b8 100%); display: flex; align-items: center; justify-content: center;">
+              <svg width="140" height="140" viewBox="0 0 140 140" style="position:absolute; top:0; left:0; opacity:0.5;" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0,40 Q40,20 70,45 T140,35" stroke="white" stroke-width="4" fill="none"/>
+                <path d="M0,90 Q50,70 90,95 T140,80" stroke="white" stroke-width="5" fill="none"/>
+                <path d="M25,0 Q40,60 20,140" stroke="white" stroke-width="3" fill="none"/>
+                <path d="M110,0 Q95,70 115,140" stroke="white" stroke-width="3" fill="none"/>
+              </svg>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="var(--c-principal)" xmlns="http://www.w3.org/2000/svg" style="position:relative; z-index:2; filter:drop-shadow(0 2px 3px rgba(0,0,0,0.3));"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding: 0 16px 16px;">
+        <div style="background: var(--c-principal); border-radius: 18px; padding: 20px; box-shadow: 0 3px 12px rgba(0,0,0,0.08);">
+          <div style="width: 100%; background-color: white; color: var(--c-principal); padding: 15px; border-radius: 16px; font-size: 15px; font-weight: 800; text-align: center; font-family: 'Noto Sans', sans-serif; box-sizing: border-box;">
+            USAR BENEFICIO
+          </div>
+          <div style="margin-top: 10px; text-align: center;">
+            <span style="color: var(--c-gestion); opacity: 0.85; font-size: 12px; font-family: 'Noto Sans', sans-serif; font-style: italic;">Mostrar al vendedor</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding: 0 16px 16px; display: flex; gap: 10px;">
+        <div style="flex: 1; display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; box-shadow: 0 3px 12px rgba(0,0,0,0.06); background: var(--c-fondo);">
+          <div style="aspect-ratio: 3/4; background: #f5f5f5; display: flex; align-items: center; justify-content: center;">
+            <span style="font-size: 40px; color: #111; font-weight: 800;">?</span>
+          </div>
+          <div style="padding: 8px 10px;">
+            <p style="font-size: 12px; color: #888; margin: 0;">Producto</p>
+            <p style="font-size: 15px; font-weight: 700; color: var(--c-principal); margin: 0;">$0000</p>
+          </div>
+        </div>
+        <div style="flex: 1; display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; box-shadow: 0 3px 12px rgba(0,0,0,0.06); background: var(--c-fondo);">
+          <div style="aspect-ratio: 3/4; background: #f5f5f5; display: flex; align-items: center; justify-content: center;">
+            <span style="font-size: 40px; color: #111; font-weight: 800;">?</span>
+          </div>
+          <div style="padding: 8px 10px;">
+            <p style="font-size: 12px; color: #888; margin: 0;">Producto</p>
+            <p style="font-size: 15px; font-weight: 700; color: var(--c-principal); margin: 0;">$0000</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-bottom: 24px;">
+  <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 12px;">Colores de tu tienda</p>
+
+  <div style="display:flex; flex-direction:column; gap:12px;">
+    <div style="display:flex; align-items:center; justify-content:space-between;">
+      <span style="font-size:13px; color:#333; font-family:Poppins,sans-serif;">Color principal</span>
+      <input type="color" id="color-input-principal" value={pv_principal} oninput="actualizarPreviewColor('principal', this.value)" style="width:40px; height:40px; border:none; border-radius:8px; cursor:pointer;"/>
+    </div>
+    <div style="display:flex; align-items:center; justify-content:space-between;">
+      <span style="font-size:13px; color:#333; font-family:Poppins,sans-serif;">Color de fondo</span>
+      <input type="color" id="color-input-fondo" value={pv_fondo} oninput="actualizarPreviewColor('fondo', this.value)" style="width:40px; height:40px; border:none; border-radius:8px; cursor:pointer;"/>
+    </div>
+    <div style="display:flex; align-items:center; justify-content:space-between;">
+      <span style="font-size:13px; color:#333; font-family:Poppins,sans-serif;">Color de letras</span>
+      <input type="color" id="color-input-letras" value={pv_letras} oninput="actualizarPreviewColor('letras', this.value)" style="width:40px; height:40px; border:none; border-radius:8px; cursor:pointer;"/>
+    </div>
+    <div style="display:flex; align-items:center; justify-content:space-between;">
+      <span style="font-size:13px; color:#333; font-family:Poppins,sans-serif;">Color de gestión</span>
+      <input type="color" id="color-input-gestion" value={pv_gestion} oninput="actualizarPreviewColor('gestion', this.value)" style="width:40px; height:40px; border:none; border-radius:8px; cursor:pointer;"/>
+    </div>
+  </div>
+
+  <div style="display:flex; gap:8px; margin-top:16px;">
+    <button type="button" onclick="aplicarPaletaRapida('#186904','#ffffff','#1a1a1a','#ffffff')" style="flex:1; padding:10px; border-radius:12px; border:1.5px solid #e0e0e0; background:white; cursor:pointer; font-size:11px; font-family:Poppins,sans-serif;">🟢 Verde/Blanco</button>
+    <button type="button" onclick="aplicarPaletaRapida('#000000','#ffffff','#111111','#ffffff')" style="flex:1; padding:10px; border-radius:12px; border:1.5px solid #e0e0e0; background:white; cursor:pointer; font-size:11px; font-family:Poppins,sans-serif;">⚫ Negro/Blanco</button>
+    <button type="button" onclick="aplicarPaletaRapida('#E91E8C','#ffffff','#1a1a1a','#ffffff')" style="flex:1; padding:10px; border-radius:12px; border:1.5px solid #e0e0e0; background:white; cursor:pointer; font-size:11px; font-family:Poppins,sans-serif;">🌸 Rosa/Blanco</button>
+  </div>
+
+  <p style="font-size:11px; color:#999; margin:12px 0 0; line-height:1.4;">Tené en cuenta que la estética de tu marca define tu convertibilidad de ventas. ¡Esforzate!</p>
+
+</div>
+
+<script>
+  let gestionModificado = false;
+  let esteticaModificado = false;
+  let omitirValidacionGestion = false;
+
+  function igualarAlturaPreview() {
+    const col = document.getElementById('preview-direcciones-col');
+    const mapa = document.getElementById('preview-mapa-box');
+    if (col && mapa) {
+      mapa.style.height = col.offsetHeight + 'px';
+    }
+  }
+  window.addEventListener('load', igualarAlturaPreview);
+  setTimeout(igualarAlturaPreview, 300);
+
+  function actualizarPreviewColor(variable, valor) {
+    esteticaModificado = true;
+    document.getElementById('preview-tienda').style.setProperty('--c-' + variable, valor);
+  }
+
+  function aplicarPaletaRapida(principal, fondo, letras, gestion) {
+    document.getElementById('color-input-principal').value = principal;
+    document.getElementById('color-input-fondo').value = fondo;
+    document.getElementById('color-input-letras').value = letras;
+    document.getElementById('color-input-gestion').value = gestion;
+    actualizarPreviewColor('principal', principal);
+    actualizarPreviewColor('fondo', fondo);
+    actualizarPreviewColor('letras', letras);
+    actualizarPreviewColor('gestion', gestion);
+  }
+
+  async function definirEstetica() {
+    const btn = document.getElementById('btn-definir-estetica');
+    btn.textContent = 'Guardando...'; btn.disabled = true;
+    const csrfToken = document.querySelector("meta[name='csrf-token']")?.getAttribute("content");
+    const formData = new FormData();
+    formData.append('_csrf_token', csrfToken);
+    formData.append('principal', document.getElementById('color-input-principal').value);
+    formData.append('fondo', document.getElementById('color-input-fondo').value);
+    formData.append('letras', document.getElementById('color-input-letras').value);
+    formData.append('gestion', document.getElementById('color-input-gestion').value);
+    const res = await fetch('/mi-tienda/colores', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (data.ok) {
+      esteticaModificado = false;
+      btn.textContent = '✅ Aplicado';
+      setTimeout(() => { btn.textContent = 'Definir estética'; btn.disabled = false; }, 1500);
+    } else {
+      btn.textContent = 'Error, reintentar';
+      btn.disabled = false;
+    }
+  }
+</script>
+
+
     <!-- LOGO -->
-    <div style="margin-bottom: 16px;">
-      <label style="display: block; margin-bottom: 6px; font-weight: bold;">Logo de la tienda</label>
+    <div style="margin-bottom: 22px;">
+      <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Logo de la tienda</p>
       <%= if @brand.logo do %>
-        <img src={@brand.logo} style="height: 60px; object-fit: contain; border: 1px solid #eee; border-radius: 8px; margin-bottom: 8px; display: block;"/>
+        <img src={@brand.logo} style="height: 60px; object-fit: contain; border: 1.5px solid #e0e0e0; border-radius: 16px; margin-bottom: 10px; display: block;"/>
       <% end %>
-      <label style="display: inline-block; background-color: #1E5C1E; color: white; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold;">
+      <label style="display: inline-block; background-color: #186904; color: white; padding: 12px 20px; border-radius: 16px; cursor: pointer; font-size: 13px; font-weight: 700; font-family: Poppins, sans-serif;">
         📷 Cambiar logo
         <input type="file" accept="image/*" style="display:none;" data-brand-id={"#{@brand.id}"} data-tipo="logo" data-ax="2" data-ay="1" onchange="abrirCropperFromInput(this)" />
       </label>
     </div>
 
     <!-- FOTO DE PUBLICACIÓN -->
-    <div style="margin-bottom: 16px;">
-      <label style="display: block; margin-bottom: 6px; font-weight: bold;">Foto de publicación</label>
-      <p style="font-size: 13px; color: #888; margin-bottom: 10px;">Esta foto aparece en la página principal como card de tu marca.</p>
+    <div style="margin-bottom: 22px;">
+      <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Foto de publicación</p>
+      <p style="font-size: 12px; color: #888; margin: 0 0 10px; font-family: Poppins, sans-serif;">Esta foto aparece en la página principal como card de tu marca.</p>
       <%= if @brand.cover_image do %>
-        <img src={@brand.cover_image} style="width: 100%; aspect-ratio: 16/7; object-fit: cover; border-radius: 8px; margin-bottom: 8px;"/>
+        <img src={@brand.cover_image} style="width: 100%; aspect-ratio: 16/7; object-fit: cover; border-radius: 16px; margin-bottom: 10px;"/>
       <% end %>
-      <label style="display: inline-block; background-color: #44BB64; color: white; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold;">
+      <label style="display: inline-block; background-color: #44BB64; color: white; padding: 12px 20px; border-radius: 16px; cursor: pointer; font-size: 13px; font-weight: 700; font-family: Poppins, sans-serif;">
         📷 Cargar foto de publicación
         <input type="file" accept="image/*" style="display:none;" data-brand-id={"#{@brand.id}"} data-tipo="cover" data-ax="16" data-ay="7" onchange="abrirCropperFromInput(this)" />
       </label>
     </div>
 
-    <a href="/mi-tienda/cupon" style="display: block; text-align: center; background-color: #3B2505; color: white; padding:12px; border-radius: 6px; text-decoration: none; margin-bottom: 12px;">
+    <button type="button" onclick="definirEstetica()" id="btn-definir-estetica" style="width:100%; margin-bottom: 22px; background:#186904; color:white; padding:14px 0; border:none; border-radius:16px; cursor:pointer; font-size:15px; font-weight:700; font-family:Poppins,sans-serif;">
+      Definir estética
+    </button>
+
+    <a href="/mi-tienda/cupon" style="display: block; text-align: center; background-color: #2b2b2b; color: white; padding: 14px; border-radius: 16px; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
       Gestionar cupón
     </a>
-    <a href="/mi-tienda/productos" style="display: block; text-align: center; background-color: #1E5C1E; color: white; padding: 12px; border-radius: 6px; text-decoration: none; margin-bottom: 12px;">
+    <a href="/mi-tienda/productos" style="display: block; text-align: center; background-color: #186904; color: white; padding: 14px; border-radius: 16px; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
       Gestionar productos
     </a>
-    <a href="/mi-tienda/cajeros" style="display: block; text-align: center; background-color: #533AB7; color: white; padding: 12px; border-radius: 6px; text-decoration: none; margin-bottom: 12px;">
+    <a href="/mi-tienda/cajeros" style="display: block; text-align: center; background-color: #E91E8C; color: white; padding: 14px; border-radius: 16px; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
       Gestionar cajeros (<%= length(@cajeros) %>)
     </a>
   <% else %>
-    <p>No tenés una tienda asignada todavía.</p>
+    <p style="font-family: Poppins, sans-serif; color: #666;">No tenés una tienda asignada todavía.</p>
   <% end %>
-  <a href="/" style="display: inline-block; margin-top: 24px; color: #1E5C1E;">← Volver al inicio</a>
+  <a href="/" style="display: inline-block; margin-top: 24px; color: #186904; font-family: Poppins, sans-serif; font-size: 13px; text-decoration: none;">← Volver al inicio</a>
 </div>
 
 <!-- MODAL CROPPER -->
 <div id="cropper-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center;">
   <div style="background:white; border-radius:16px; padding:20px; max-width:600px; width:95%; max-height:95vh; display:flex; flex-direction:column; gap:16px;">
-    <h3 style="margin:0; font-size:18px; color:#1a1a1a;">Ajustá la imagen</h3>
-    <p style="margin:0; font-size:12px; color:#888;">La imagen se sube en alta calidad — la vista previa puede verse pixelada.</p>
+    <h3 style="margin:0; font-size:18px; color:#186904; font-family: Poppins, sans-serif;">Ajustá la imagen</h3>
+    <p style="margin:0; font-size:12px; color:#888; font-family: Poppins, sans-serif;">La imagen se sube en alta calidad — la vista previa puede verse pixelada.</p>
     <div style="overflow:hidden; height:40vh;">
       <img id="cropper-img" style="display:block; max-width:100%;"/>
     </div>
     <div style="display:flex; gap:10px; flex-shrink:0;">
-      <button onclick="window.dale_confirmarCrop()" style="flex:1; background:#1E5C1E; color:white; padding:14px; border:none; border-radius:8px; font-size:15px; font-weight:bold; cursor:pointer;">✅ Confirmar</button>
-      <button onclick="window.dale_cerrarCropper()" style="flex:1; background:#f0f0f0; color:#333; padding:14px; border:none; border-radius:8px; font-size:15px; cursor:pointer;">Cancelar</button>
+      <button onclick="window.dale_confirmarCrop()" style="flex:1; background:#186904; color:white; padding:14px; border:none; border-radius:16px; font-size:15px; font-weight:700; font-family: Poppins, sans-serif; cursor:pointer;">✅ Confirmar</button>
+      <button onclick="window.dale_cerrarCropper()" style="flex:1; background:#f0f0f0; color:#333; padding:14px; border:none; border-radius:16px; font-size:15px; font-family: Poppins, sans-serif; cursor:pointer;">Cancelar</button>
     </div>
   </div>
 </div>
@@ -106,37 +364,95 @@
 <script>
   // DIRECCIONES
   const addressHidden = document.getElementById('address-hidden');
+  const addressFullHidden = document.getElementById('address-full-hidden');
   const container = document.getElementById('direcciones-container');
-  const current = addressHidden ? (addressHidden.value || '') : '';
-  const dirs = current.split('|').filter(d => d.trim() !== '');
+  const currentFull = addressFullHidden && addressFullHidden.value ? addressFullHidden.value : (addressHidden ? (addressHidden.value || '') : '');
+  const dirs = currentFull.split('|').filter(d => d.trim() !== '');
   if (dirs.length === 0) dirs.push('');
-  dirs.forEach(dir => crearInput(dir));
+  dirs.forEach(dir => crearInput(dir, true));
 
-  function crearInput(valor) {
+  function crearInput(valor, esOriginal) {
+    const fila = document.createElement('div');
+    fila.style = 'margin-bottom: 8px; position: relative;';
+
     const wrapper = document.createElement('div');
-    wrapper.style = 'display: flex; gap: 8px; margin-bottom: 8px; align-items: center;';
+    wrapper.style = 'display: flex; gap: 8px; align-items: center;';
     const input = document.createElement('input');
     input.type = 'text';
     input.value = valor;
+    if (esOriginal && valor.trim() !== '') { input.dataset.original = 'true'; }
     input.placeholder = 'Ej: Av. Corrientes 1234';
-    input.style = 'flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 6px;';
-    input.oninput = actualizarHidden;
+    input.autocomplete = 'off';
+    input.style = 'flex: 1; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box;';
+
+    const sugerenciasBox = document.createElement('div');
+    sugerenciasBox.style = 'display:none; position:absolute; top:100%; left:0; right:0; background:white; border:1.5px solid #e0e0e0; border-radius:14px; margin-top:4px; z-index:50; box-shadow:0 6px 16px rgba(0,0,0,0.1); max-height:220px; overflow-y:auto;';
+
+    let debounceTimer = null;
+    input.oninput = () => {
+      delete input.dataset.corto;
+      actualizarHidden();
+      clearTimeout(debounceTimer);
+      const q = input.value.trim();
+      if (q.length < 4) { sugerenciasBox.style.display = 'none'; return; }
+      debounceTimer = setTimeout(() => buscarSugerencias(q, sugerenciasBox, input), 400);
+    };
+    input.onblur = () => { setTimeout(() => { sugerenciasBox.style.display = 'none'; }, 150); };
+
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.textContent = '✕';
     btn.style = 'background: none; border: none; cursor: pointer; color: #ccc; font-size: 18px;';
-    btn.onclick = () => { wrapper.remove(); actualizarHidden(); };
+    btn.onclick = () => { fila.remove(); actualizarHidden(); };
+
     wrapper.appendChild(input);
     wrapper.appendChild(btn);
-    container.appendChild(wrapper);
+    fila.appendChild(wrapper);
+    fila.appendChild(sugerenciasBox);
+    container.appendChild(fila);
+  }
+
+  function buscarSugerencias(q, box, input) {
+    box.innerHTML = '<div style="padding:12px 16px; font-size:13px; color:#999; font-family:Poppins,sans-serif;">Buscando...</div>';
+    box.style.display = 'block';
+    fetch('/api/buscar-direccion?q=' + encodeURIComponent(q))
+      .then(r => r.json())
+      .then(data => {
+        box.innerHTML = '';
+        if (!data.ok || data.sugerencias.length === 0) {
+          box.innerHTML = '<div style="padding:12px 16px; font-size:13px; color:#c0392b; font-family:Poppins,sans-serif;">No se encontró esa dirección</div>';
+          return;
+        }
+        data.sugerencias.forEach(s => {
+          const item = document.createElement('div');
+          item.textContent = s.display_name;
+          item.style = 'padding:11px 16px; font-size:13px; color:#333; font-family:Poppins,sans-serif; cursor:pointer; border-bottom:1px solid #f5f5f5;';
+          item.onmouseenter = () => { item.style.background = '#f6f6f6'; };
+          item.onmouseleave = () => { item.style.background = 'white'; };
+          item.onmousedown = (e) => {
+            e.preventDefault();
+            input.value = s.display_name;
+            input.dataset.corto = s.corto || s.display_name;
+            box.style.display = 'none';
+            actualizarHidden();
+          };
+          box.appendChild(item);
+        });
+      })
+      .catch(() => {
+        box.innerHTML = '<div style="padding:12px 16px; font-size:13px; color:#c0392b; font-family:Poppins,sans-serif;">No se encontró esa dirección</div>';
+      });
   }
 
   function agregarDireccion() { crearInput(''); }
 
   function actualizarHidden() {
+    gestionModificado = true;
     const inputs = container.querySelectorAll('input');
-    const valores = Array.from(inputs).map(i => i.value.trim()).filter(v => v !== '');
-    addressHidden.value = valores.join('|');
+    const largos = Array.from(inputs).map(i => i.value.trim()).filter(v => v !== '');
+    const cortos = Array.from(inputs).filter(i => i.value.trim() !== '').map(i => (i.dataset.corto || i.value.trim()));
+    addressHidden.value = cortos.join('|');
+    addressFullHidden.value = largos.join('|');
   }
 
   // CATEGORÍAS
@@ -144,17 +460,18 @@
   let seleccionadas = categoriasHidden.value ? categoriasHidden.value.split(',').filter(c => c !== '') : [];
 
   function toggleCategoria(btn) {
+    gestionModificado = true;
     const cat = btn.getAttribute('data-cat');
     if (seleccionadas.includes(cat)) {
       seleccionadas = seleccionadas.filter(c => c !== cat);
       btn.style.background = 'white';
       btn.style.color = '#666';
-      btn.style.borderColor = '#ddd';
+      btn.style.borderColor = '#e0e0e0';
     } else {
       seleccionadas.push(cat);
-      btn.style.background = '#1E5C1E';
+      btn.style.background = '#186904';
       btn.style.color = 'white';
-      btn.style.borderColor = '#1E5C1E';
+      btn.style.borderColor = '#186904';
     }
     categoriasHidden.value = seleccionadas.join(',');
   }
@@ -236,4 +553,91 @@
         });
     }, 'image/png');
   };
+
+  function direccionesInvalidas() {
+    const inputs = document.querySelectorAll('#direcciones-container input[type="text"]');
+    for (const input of inputs) {
+      const valor = input.value.trim();
+      if (valor !== '' && !input.dataset.corto && !input.dataset.original) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function validarAntesDeGuardar(event) {
+    if (omitirValidacionGestion) {
+      omitirValidacionGestion = false;
+      return true;
+    }
+
+    if (direccionesInvalidas()) {
+      event.preventDefault();
+      document.getElementById('aviso-error-gestion').style.display = 'flex';
+      return false;
+    }
+
+    const nombre = document.getElementById('input-nombre-tienda').value.trim();
+    const horario = document.getElementById('input-horario-tienda').value.trim();
+    const direccionesHidden = document.getElementById('address-hidden').value.trim();
+    const categoriasHidden = document.getElementById('categorias-hidden').value.trim();
+
+    const faltantes = [];
+    if (!nombre) faltantes.push('No pusiste nombre a tu marca');
+    if (!direccionesHidden) faltantes.push('No pusiste ninguna dirección');
+    if (!categoriasHidden) faltantes.push('No elegiste ninguna categoría');
+    if (!horario) faltantes.push('No pusiste horario de atención');
+
+    if (faltantes.length > 0) {
+      event.preventDefault();
+      let html = '';
+      faltantes.forEach(f => { html += f + '<br>'; });
+      html += '<br>Si continuás así, tu tienda <b>no aparecerá en la búsqueda pública</b> hasta que completes estos datos.';
+      document.getElementById('aviso-confirmar-vacios-texto').innerHTML = html;
+      document.getElementById('aviso-confirmar-vacios').style.display = 'flex';
+      return false;
+    }
+
+    gestionModificado = false;
+    return true;
+  }
+
+  function continuarGuardadoGestion() {
+    document.getElementById('aviso-confirmar-vacios').style.display = 'none';
+    omitirValidacionGestion = true;
+    gestionModificado = false;
+    document.getElementById('form-gestion').submit();
+  }
+
+  function intentarVolver(event) {
+    event.preventDefault();
+    if (esteticaModificado) {
+      document.getElementById('aviso-salir-texto').textContent = 'Hiciste cambios sin guardar en Estética. ¿Querés guardarlos antes de salir?';
+      document.getElementById('aviso-salir-sin-guardar').dataset.seccion = 'estetica';
+      document.getElementById('aviso-salir-sin-guardar').style.display = 'flex';
+    } else if (gestionModificado) {
+      document.getElementById('aviso-salir-texto').textContent = 'Hiciste cambios sin guardar en Gestión. ¿Querés guardarlos antes de salir?';
+      document.getElementById('aviso-salir-sin-guardar').dataset.seccion = 'gestion';
+      document.getElementById('aviso-salir-sin-guardar').style.display = 'flex';
+    } else {
+      window.location.href = '/mi-stand';
+    }
+  }
+
+  async function guardarYSalir() {
+    const seccion = document.getElementById('aviso-salir-sin-guardar').dataset.seccion;
+    document.getElementById('aviso-salir-sin-guardar').style.display = 'none';
+    if (seccion === 'estetica') {
+      await definirEstetica();
+      window.location.href = '/mi-stand';
+    } else {
+      omitirValidacionGestion = true;
+      document.getElementById('form-gestion').submit();
+    }
+  }
+
+  function salirSinGuardar() {
+    document.getElementById('aviso-salir-sin-guardar').style.display = 'none';
+    window.location.href = '/mi-stand';
+  }
 </script>

@@ -12,6 +12,21 @@ defmodule DaleAppWeb.BrandController do
     cajeros = if brand, do: Accounts.list_cajeros(brand.id), else: []
     render(conn, :mi_tienda, brand: brand, cajeros: cajeros)
   end
+  def actualizar_colores(conn, params) do
+    user_id = get_session(conn, :user_id)
+    brand = Repo.get_by(Brand, user_id: user_id)
+    colores = %{
+      "principal" => Map.get(params, "principal", "#186904"),
+      "fondo" => Map.get(params, "fondo", "#ffffff"),
+      "letras" => Map.get(params, "letras", "#1a1a1a"),
+      "gestion" => Map.get(params, "gestion", "#ffffff")
+    }
+    case brand |> Brand.changeset(%{colores: colores}) |> Repo.update() do
+      {:ok, _} -> json(conn, %{ok: true})
+      {:error, _} -> json(conn, %{ok: false})
+    end
+  end
+
 
   def update(conn, %{"brand" => brand_params}) do
     user_id = get_session(conn, :user_id)
@@ -38,6 +53,11 @@ defmodule DaleAppWeb.BrandController do
         end
       _ -> brand_params
     end
+
+    nombre_val = (Map.get(brand_params, "name", brand.name) || "") |> String.trim()
+    categorias_val = Map.get(brand_params, "categorias", brand.categorias || [])
+    completo? = nombre_val != "" && direcciones != [] && categorias_val != []
+    brand_params = Map.put(brand_params, "active", completo?)
 
     brand
     |> Brand.changeset(brand_params)
@@ -114,6 +134,34 @@ defmodule DaleAppWeb.BrandController do
     end
   end
 
+  def buscar_direccion(conn, %{"q" => q}) do
+    url = "https://nominatim.openstreetmap.org/search"
+    case Req.get(url, params: [q: q, format: "json", limit: 5, addressdetails: 1, "accept-language": "es"], headers: [{"User-Agent", "DaleGroup/1.0"}]) do
+      {:ok, %{body: resultados}} when is_list(resultados) and resultados != [] ->
+        sugerencias = Enum.map(resultados, fn r ->
+          %{display_name: r["display_name"], lat: r["lat"], lon: r["lon"], corto: armar_direccion_corta(r["address"] || %{})}
+        end)
+        json(conn, %{ok: true, sugerencias: sugerencias})
+      _ ->
+        json(conn, %{ok: false, sugerencias: []})
+    end
+  end
+
+  defp armar_direccion_corta(address) do
+    calle = address["road"] || ""
+    numero = address["house_number"] || ""
+    calle_numero = String.trim("#{calle} #{numero}")
+
+    estado = address["state"] || ""
+    es_caba = String.contains?(estado, "Ciudad Autónoma de Buenos Aires") || String.contains?(estado, "Capital Federal")
+
+    if estado != "" && !es_caba do
+      "#{calle_numero}, #{estado}"
+    else
+      calle_numero
+    end
+  end
+
   defp geocode(address) do
     url = "https://nominatim.openstreetmap.org/search"
     case Req.get(url, params: [q: address, format: "json", limit: 1], headers: [{"User-Agent", "DaleGroup/1.0"}]) do
@@ -164,7 +212,9 @@ defmodule DaleAppWeb.BrandController do
     brand = DaleApp.Repo.get(DaleApp.Brands.Brand, id)
     if brand.user_id == user_id do
       crop_params = build_crop_params(params)
-      case DaleApp.Storage.upload_image(cover.path, cover.filename, crop_params) do
+      resultado_cover = DaleApp.Storage.upload_image(cover.path, cover.filename, crop_params)
+      IO.inspect(resultado_cover, label: "RESULTADO CLOUDINARY COVER")
+      case resultado_cover do
         {:ok, %{body: body}} when is_map(body) ->
           url = body["secure_url"]
           DaleApp.Repo.update!(Ecto.Changeset.change(brand, %{cover_image: url}))

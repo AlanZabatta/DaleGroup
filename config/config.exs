@@ -36,7 +36,7 @@ config :esbuild,
   version: "0.25.4",
   dale_app: [
     args:
-      ~w(js/app.js --bundle --target=es2022 --outdir=../priv/static/assets/js --external:/fonts/* --external:/images/* --alias:@=.),
+      ~w(js/app.js --bundle --target=es2022 --outdir=../priv/static/assets --external:/fonts/* --external:/images/* --alias:@=.),
     cd: Path.expand("../assets", __DIR__),
     env: %{"NODE_PATH" => [Path.expand("../deps", __DIR__), Mix.Project.build_path()]}
   ]
@@ -47,7 +47,7 @@ config :tailwind,
   dale_app: [
     args: ~w(
       --input=assets/css/app.css
-      --output=priv/static/assets/css/app.css
+      --output=priv/static/assets/app.css
     ),
     cd: Path.expand("..", __DIR__)
   ]
@@ -64,9 +64,13 @@ config :phoenix, :json_library, Jason
 # of this file so it overrides the configuration defined above.
 config :ueberauth, Ueberauth,
   providers: [
-    google: {Ueberauth.Strategy.Google, [default_scope: "email profile"]}
+    google: {Ueberauth.Strategy.Google, [default_scope: "email profile"]},
+    discord: {Ueberauth.Strategy.Discord, [default_scope: "identify email"]}
   ]
   config :ueberauth, Ueberauth.Strategy.Google.OAuth,
   client_id: "588329305589-v3au59d0tmgof0lpfhujn048ds5pft0n.apps.googleusercontent.com",
   client_secret: "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"
+  config :ueberauth, Ueberauth.Strategy.Discord.OAuth,
+  client_id: System.get_env("DISCORD_CLIENT_ID"),
+  client_secret: System.get_env("DISCORD_CLIENT_SECRET")
 import_config "#{config_env()}.exs"

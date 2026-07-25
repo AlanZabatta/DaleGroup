@@ -16,6 +16,16 @@ defmodule DaleApp.Accounts do
     end
   end
 
+  def find_user_by_google(google_id) do
+    Repo.get_by(User, google_id: google_id)
+  end
+
+  def create_user_from_google(attrs) do
+    %User{}
+    |> User.changeset(attrs)
+    |> Repo.insert()
+  end
+
   def get_user(id), do: Repo.get(User, id)
 
   def update_user(user, attrs) do
@@ -70,6 +80,41 @@ defmodule DaleApp.Accounts do
 
   def list_cajeros(brand_id) do
     Repo.all(from u in User, where: u.cajero_brand_id == ^brand_id)
+  end
+
+  def username_ocupado?(username) do
+    case Repo.get_by(User, username: username) do
+      nil -> false
+      _ -> true
+    end
+  end
+
+  def estado_cuenta(username) do
+    case Repo.get_by(User, username: username) do
+      nil -> :no_existe
+      %User{google_id: g} when not is_nil(g) -> :google
+      %User{discord_id: d} when not is_nil(d) -> :discord
+      _ -> :normal
+    end
+  end
+
+  def estado_cuenta_email(email) do
+    case Repo.get_by(User, email: email) do
+      nil -> :no_existe
+      %User{google_id: g} when not is_nil(g) -> :google
+      %User{discord_id: d} when not is_nil(d) -> :discord
+      _ -> :normal
+    end
+  end
+
+  def find_user_by_discord(discord_id) do
+    Repo.get_by(User, discord_id: discord_id)
+  end
+
+  def create_user_from_discord(attrs) do
+    %User{}
+    |> User.changeset(attrs)
+    |> Repo.insert()
   end
 
   def generate_username do

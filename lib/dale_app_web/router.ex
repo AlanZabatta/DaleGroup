@@ -15,8 +15,10 @@ defmodule DaleAppWeb.Router do
   scope "/", DaleAppWeb do
     pipe_through :browser
     get "/", PageController, :home
+live "/registro", RegistroLive
     get "/productos", PageController, :productos
     get "/api/buscar", PageController, :api_buscar
+    get "/api/buscar-direccion", BrandController, :buscar_direccion
     get "/amigos", PageController, :amigos
     post "/amigos/buscar", FriendController, :buscar
     post "/perfil/username", PageController, :cambiar_username
@@ -38,6 +40,9 @@ defmodule DaleAppWeb.Router do
     get "/tiendas", PageController, :tiendas
     get "/auth/google", AuthController, :request
     get "/auth/google/callback", AuthController, :callback
+    get "/auth/discord", AuthController, :request
+    get "/auth/discord/callback", AuthController, :callback
+    get "/auth/finalizar", AuthController, :finalizar
     delete "/auth/logout", AuthController, :logout
     get "/admin", AdminController, :index
     get "/admin/stats", AdminController, :stats
@@ -47,13 +52,16 @@ defmodule DaleAppWeb.Router do
     post "/admin/brand/:id/slot", AdminController, :assign_slot
     get "/mi-tienda", BrandController, :mi_tienda
     post "/mi-tienda", BrandController, :update
+    post "/mi-tienda/colores", BrandController, :actualizar_colores
     get "/mi-stand", BrandController, :mi_stand
     get "/mi-tienda/cupon", CouponController, :new
     post "/mi-tienda/cupon", CouponController, :create
     get "/mi-tienda/cajeros", BrandController, :cajeros
     get "/mi-tienda/productos", ProductoController, :index
     post "/mi-tienda/productos/crear", ProductoController, :crear
+    post "/mi-tienda/productos/:id/actualizar", ProductoController, :actualizar
     delete "/mi-tienda/productos/:id", ProductoController, :borrar
+    delete "/productos/:id/imagen/:indice", ProductoController, :borrar_imagen
     post "/mi-tienda/cajeros/:id/remove", BrandController, :remove_cajero
     get "/marcas", MarcasController, :index
     get "/marcas/:id", MarcasController, :show

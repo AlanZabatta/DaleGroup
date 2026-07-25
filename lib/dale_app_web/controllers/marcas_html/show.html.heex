@@ -1,110 +1,140 @@
+<% color_principal = (@marca.colores && @marca.colores["principal"]) || "#186904" %>
+<% hex_limpio = String.trim_leading(color_principal, "#") %>
+<% {cr, cg, cb} = if String.length(hex_limpio) == 6 do
+  {String.to_integer(String.slice(hex_limpio, 0, 2), 16), String.to_integer(String.slice(hex_limpio, 2, 2), 16), String.to_integer(String.slice(hex_limpio, 4, 2), 16)}
+else
+  {24, 105, 4}
+end %>
+<% color_rgb = "#{cr},#{cg},#{cb}" %>
+<% color_fondo = (@marca.colores && @marca.colores["fondo"]) || "#ffffff" %>
+<% color_letras = (@marca.colores && @marca.colores["letras"]) || "#1a1a1a" %>
+<% color_gestion = (@marca.colores && @marca.colores["gestion"]) || "#ffffff" %>
 <%= if @current_user && @current_user.role == "dueño" && @current_user.id == @marca.user_id do %>
   <a href="/mi-tienda" style="position: fixed; bottom: 110px; left: 20px; background-color: #44BB64; color: white; padding: 10px 16px; border-radius: 20px; text-decoration: none; font-size: 13px; font-weight: bold; z-index: 140; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
     ✏️ Editar mi tienda
   </a>
 <% end %>
 
-<div style="max-width: 480px; margin: 0 auto; overflow: hidden;">
+<div style="max-width: 480px; margin: 0 auto; overflow: visible; font-family: 'Noto Sans', sans-serif;">
 
-  <div style="padding: 16px 16px 0;">
-    <div style="position: relative; display: inline-block; overflow: visible;">
-      <div style="border: 1px solid #000; width: 220px; height: 140px; display: flex; align-items: center; justify-content: center; background: white; overflow: hidden;">
+  <!-- PORTADA -->
+  <div style={"position: relative; width: 100%; aspect-ratio: 16/9; overflow: hidden; border-radius: 0 0 28px 28px; background-color: #{color_principal};#{if @marca.cover_image, do: " background-image: url('#{@marca.cover_image}'); background-size: cover; background-position: center;", else: ""}"}>
+    <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0) 35%, rgba(0,0,0,0.55) 100%);"></div>
+  </div>
+
+  <!-- LOGO FLOTANTE -->
+  <div style="padding: 0 16px; margin-top: -70px; position: relative; z-index: 5;">
+    <div style="position: relative; display: inline-block;">
+      <div style="border: 1.5px solid #f0f0f0; border-radius: 16px; width: 220px; height: 140px; display: flex; align-items: center; justify-content: center; background: white; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.12);">
         <%= if @marca.logo do %>
           <img src={@marca.logo} style="width: 100%; height: 100%; object-fit: contain; padding: 16px; box-sizing: border-box; display: block;"/>
         <% else %>
-          <%= if @current_user && @current_user.role == "dueño" && @current_user.id == @marca.user_id do %>
-            <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:6px;width:180px;height:80px;">
-              <span style="color: #ddd; font-size: 32px;">+</span>
-              <span style="color: #ccc; font-size: 11px;">Subir logo</span>
-              <input type="file" accept="image/*" style="display:none;" data-brand-id={"#{@marca.id}"} onchange="subirLogo(this, this.dataset.brandId)"/>
-            </label>
-          <% else %>
-            <span style="color: #ccc; font-size: 14px;">Logo</span>
-          <% end %>
+          <span style="color: #ccc; font-size: 14px;">Logo</span>
         <% end %>
       </div>
       <%= if @cupon do %>
-        <div style="position: absolute; bottom: -20px; right: -30px; background-color: #1E5C1E; color: white; font-size: 45px; font-weight: 900; padding: 12px 18px; line-height: 1; font-family: 'Abril Fatface', cursive;">
+        <div style={"position: absolute; bottom: -18px; right: -20px; background-color: #{color_principal}; color: #{color_gestion}; font-size: 34px; font-weight: 900; padding: 10px 16px; line-height: 1; font-family: 'Abril Fatface', cursive; border-radius: 16px; box-shadow: 0 6px 16px rgba(#{color_rgb},0.35);"}>
           <%= @cupon.discount %>%
         </div>
       <% end %>
     </div>
   </div>
 
-  <div style="background-color: #1E5C1E; margin-top: 80px; padding: 50px 24px;">
-    <%= if @marca.address do %>
-      <div style="margin-bottom: 20px;">
-        <div style="color: #ffffff; font-size: 14px; font-weight: 700; letter-spacing: 1px; margin-bottom: 10px; font-family: 'Noto Sans', sans-serif;">DIRECCIONES</div>
-        <%= for dir <- String.split(@marca.address, "|") do %>
-          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-            <span style="font-size: 15px; color: #ffffff; font-family: 'Noto Sans', sans-serif; font-weight: 600;"><%= String.trim(dir) %></span>
-          </div>
+  <!-- TARJETA DE IDENTIDAD -->
+  <div style="padding: 16px; margin-top: 16px;">
+    <div style={"background: #{color_fondo}; border-radius: 20px; padding: 18px; box-shadow: 0 4px 18px rgba(0,0,0,0.07); border: 1px solid #f2f2f2;"}>
+      <h1 style={"font-family: 'Abril Fatface', cursive; font-size: 26px; color: #{color_letras}; margin: 0; font-weight: 400; line-height: 1.1;"}><%= @marca.name %></h1>
+      <%= if @current_user do %>
+        <%= if @en_mapa do %>
+          <button id="btn-mapa" onclick={"toggleMapa(#{@marca.id}, true)"} style="display: none;">✅ En el Mapa</button>
+        <% else %>
+          <button id="btn-mapa" onclick={"toggleMapa(#{@marca.id}, false)"} style="display: none;">📍 Ver en mapa</button>
         <% end %>
-      </div>
-    <% end %>
-    <div style="height: 20px;"></div>
+      <% else %>
+        <a href="/auth/google" id="btn-mapa" style="display: none;">📍 Ver en mapa</a>
+      <% end %>
+
+      <%= if @marca.categorias && @marca.categorias != [] do %>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px;">
+          <%= for cat <- @marca.categorias do %>
+            <span style={"background: rgba(#{color_rgb},0.08); color: #{color_principal}; font-size: 11px; font-weight: 600; padding: 5px 11px; border-radius: 20px; font-family: 'Noto Sans', sans-serif;"}><%= cat %></span>
+          <% end %>
+        </div>
+      <% end %>
+
+      <%= if @marca.address do %>
+        <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid #f2f2f2; display: flex; align-items: stretch; gap: 12px;">
+          <div style="flex: 1; display: flex; flex-direction: column; justify-content: flex-start; gap: 6px;">
+            <%= for dir <- String.split(@marca.address, "|") do %>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill={color_principal} xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                <span style={"font-size: 13px; color: #{color_letras}; font-family: 'Noto Sans', sans-serif; font-weight: 500;"}><%= String.trim(dir) %></span>
+              </div>
+            <% end %>
+            <%= if @marca.horario_atencion && @marca.horario_atencion != "" do %>
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 2px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={color_principal} stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+                <span style={"font-size: 13px; color: #{color_letras}; font-family: 'Noto Sans', sans-serif; font-weight: 500;"}><%= @marca.horario_atencion %></span>
+              </div>
+            <% end %>
+          </div>
+          <%= if @ubicaciones && @ubicaciones != [] do %>
+            <div style="width: 170px; flex-shrink: 0; position: relative; border-radius: 16px; overflow: hidden; border: 1.5px solid #f0f0f0;">
+              <div id="mini-mapa-stand" style="width: 100%; height: 100%;"></div>
+              <div style="position: absolute; bottom: 6px; right: 6px; z-index: 1000; background: white; border-radius: 20px; padding: 4px 9px; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.25); pointer-events: none;">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill={color_principal} xmlns="http://www.w3.org/2000/svg"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                <span style={"font-size: 9px; font-weight: 700; color: #{color_principal}; font-family: 'Noto Sans', sans-serif;"}>Ver mapa</span>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- CUPÓN -->
+  <div style="padding: 0 16px; margin-top: 14px;">
     <%= if @cupon do %>
-      <form action={~p"/claims"} method="post" style="margin-bottom: 10px;">
-        <input type="hidden" name="_csrf_token" value={get_csrf_token()}/>
-        <input type="hidden" name="coupon_id" value={@cupon.id}/>
-        <input type="hidden" name="brand_id" value={@marca.id}/>
-        <button type="submit" style="width: 50%; background-color: white; color: #1E5C1E; padding: 14px; border: none; border-radius: 30px; font-size: 15px; font-weight: bold; cursor: pointer;">
-          CANJEAR BENEFICIO
-        </button>
-      </form>
-      <div style="margin-top: 8px; margin-bottom: 10px; margin-left: 20px;">
-        <span style="color: white; font-size: 13px; font-family: 'Noto Sans', sans-serif; font-style: italic;">
-          <%= case @marca.modalidad do
-            "presencial" -> "Válido solo en el local"
-            "digital" -> "Válido en el sitio digital de la marca"
-            _ -> "Válido en el local y el sitio digital de la marca"
-          end %>
-        </span>
+      <div style={"background: #{color_principal}; border-radius: 18px; padding: 20px; box-shadow: 0 3px 12px rgba(0,0,0,0.08);"}>
+        <form action={~p"/claims"} method="post">
+          <input type="hidden" name="_csrf_token" value={get_csrf_token()}/>
+          <input type="hidden" name="coupon_id" value={@cupon.id}/>
+          <input type="hidden" name="brand_id" value={@marca.id}/>
+          <button type="submit" style={"width: 100%; background-color: white; color: #{color_principal}; padding: 15px; border: none; border-radius: 16px; font-size: 15px; font-weight: 800; cursor: pointer; font-family: 'Noto Sans', sans-serif;"}>
+            CANJEAR BENEFICIO
+          </button>
+        </form>
+        <div style="margin-top: 10px; text-align: center;">
+          <span style={"color: #{color_gestion}; opacity: 0.85; font-size: 12px; font-family: 'Noto Sans', sans-serif; font-style: italic;"}>
+            <%= case @marca.modalidad do
+              "presencial" -> "Válido solo en el local"
+              "digital" -> "Válido en el sitio digital de la marca"
+              _ -> "Válido en el local y el sitio digital de la marca"
+            end %>
+          </span>
+        </div>
       </div>
     <% else %>
-      <div style="width: 100%; background-color: rgba(255,255,255,0.2); border-radius: 30px; padding: 14px; text-align: center; color: white; font-size: 14px; margin-bottom: 10px;">
+      <div style="width: 100%; background-color: #f6f6f6; border-radius: 20px; padding: 18px; text-align: center; color: #999; font-size: 13px; font-family: 'Noto Sans', sans-serif; font-weight: 600;">
         Sin cupón activo
       </div>
-    <% end %>
-    <%= if @current_user do %>
-      <%= if @en_mapa do %>
-        <button id="btn-mapa" onclick={"toggleMapa(#{@marca.id}, true)"} style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 38%; background-color: white; color: #1E5C1E; padding: 12px; border: none; border-radius: 30px; font-size: 14px; font-weight: bold; cursor: pointer;">
-          ✅ En el Mapa — Quitar
-        </button>
-      <% else %>
-        <button id="btn-mapa" onclick={"toggleMapa(#{@marca.id}, false)"} style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 38%; background-color: white; color: #1E5C1E; padding: 12px; border: none; border-radius: 30px; font-size: 14px; font-weight: bold; cursor: pointer;">
-          📍 Ver en el mapa
-        </button>
-      <% end %>
-    <% else %>
-      <a href="/auth/google" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background-color: transparent; color: white; padding: 12px; border: 2px solid white; border-radius: 30px; font-size: 14px; font-weight: bold; text-decoration: none;">
-        📍 Iniciar sesión para ver en el mapa
-      </a>
     <% end %>
   </div>
 
   <!-- PRODUCTOS -->
-  <div style="padding: 30px 0 160px 40px; position: relative; overflow: hidden;">
+  <div style="padding: 30px 16px 160px; position: relative; overflow: hidden;">
 
-    <h2 style="font-family: 'Abril Fatface', cursive; font-size: 32px; color: #000; margin-bottom: 16px; position: relative; z-index: 2; text-align: right; padding-right: 16px; font-weight: 400;">COLECCIÓN</h2>
-
-    <div id="parallax-texto" style="position: absolute; left: -30px; top: 100px; z-index: 0; pointer-events: none; user-select: none; transform: rotate(-90deg); transform-origin: left top;">
-      <span style="font-size: 110px; font-weight: 900; color: #e8e8e8; white-space: nowrap; letter-spacing: -4px; display: block;">
-        <%= @marca.name %> &nbsp; <%= @marca.name %> &nbsp; <%= @marca.name %>
-      </span>
-    </div>
-
-    <div style="position: relative; z-index: 1; display: flex; gap: 10px; align-items: flex-start; padding-right: 16px;">
+    
+    <div style="position: relative; z-index: 1; display: flex; gap: 10px; align-items: flex-start;">
 
       <!-- COLUMNA IZQUIERDA -->
-      <div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 12px;">
         <%= for {producto, index} <- Enum.with_index(@productos), rem(index, 2) == 0, producto.image != nil || (@current_user != nil && @current_user.role == "dueño" && @current_user.id == @marca.user_id) do %>
-          <div style="display: flex; flex-direction: column;">
-            <div style="position: relative; overflow: hidden; background: #f0f0f0; aspect-ratio: 1/1; border: 1px solid #000;">
+          <div style={"display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; box-shadow: 0 3px 12px rgba(0,0,0,0.06); background: #{color_fondo};"}>
+            <div style="position: relative; overflow: hidden; background: #f5f5f5; aspect-ratio: 3/4;">
               <button
                 onclick={"toggleFavorito(this, #{producto.id})"}
-                style="position: absolute; top: 6px; right: 6px; z-index: 10; background: white; border: 1.5px solid #ddd; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px;">
+                style="position: absolute; top: 8px; right: 8px; z-index: 10; background: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; line-height: 1; box-shadow: 0 2px 6px rgba(0,0,0,0.2);">
                 🤍
               </button>
               <%= if producto.image do %>
@@ -120,13 +150,13 @@
               <% end %>
             </div>
             <%= if producto.image do %>
-              <div style="background: white; padding: 6px 8px; border: 1px solid #000; border-top: none;">
+              <div style={"background: #{color_fondo}; padding: 8px 10px;"}>
                 <p style="font-size: 12px; font-weight: 500; margin: 0; color: #111; font-family: 'Noto Sans', sans-serif;"><%= producto.name %></p>
                 <%= if producto.original_price do %>
                   <p style="font-size: 11px; color: #999; margin: 1px 0 0; text-decoration: line-through; font-family: 'Noto Sans', sans-serif;">$<%= producto.original_price %></p>
                 <% end %>
                 <%= if producto.price do %>
-                  <p style="font-size: 13px; font-weight: 600; color: #1E5C1E; margin: 0; font-family: 'Noto Sans', sans-serif;">$<%= producto.price %></p>
+                  <p style={"font-size: 15px; font-weight: 700; color: #{color_principal}; margin: 0; font-family: 'Noto Sans', sans-serif;"}>$<%= producto.price %></p>
                 <% end %>
               </div>
             <% end %>
@@ -135,17 +165,13 @@
       </div>
 
       <!-- COLUMNA DERECHA -->
-      <div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 12px;">
         <%= for {producto, index} <- Enum.with_index(@productos), rem(index, 2) == 1, producto.image != nil || (@current_user != nil && @current_user.role == "dueño" && @current_user.id == @marca.user_id) do %>
-          <%
-            fila = div(index, 2)
-            alto = if rem(fila, 2) == 0, do: "aspect-ratio: 1/0.85;", else: "aspect-ratio: 1/1.3;"
-          %>
-          <div style="display: flex; flex-direction: column;">
-            <div style={"position: relative; overflow: hidden; background: #f0f0f0; border: 1px solid #000; #{alto}"}>
+          <div style={"display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; box-shadow: 0 3px 12px rgba(0,0,0,0.06); background: #{color_fondo};"}>
+            <div style="position: relative; overflow: hidden; background: #f5f5f5; aspect-ratio: 3/4;">
               <button
                 onclick={"toggleFavorito(this, #{producto.id})"}
-                style="position: absolute; top: 6px; right: 6px; z-index: 10; background: white; border: 1.5px solid #ddd; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px;">
+                style="position: absolute; top: 8px; right: 8px; z-index: 10; background: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; line-height: 1; box-shadow: 0 2px 6px rgba(0,0,0,0.2);">
                 🤍
               </button>
               <%= if producto.image do %>
@@ -161,13 +187,13 @@
               <% end %>
             </div>
             <%= if producto.image do %>
-              <div style="background: white; padding: 6px 8px; border: 1px solid #000; border-top: none;">
+              <div style={"background: #{color_fondo}; padding: 8px 10px;"}>
                 <p style="font-size: 12px; font-weight: 500; margin: 0; color: #111; font-family: 'Noto Sans', sans-serif;"><%= producto.name %></p>
                 <%= if producto.original_price do %>
                   <p style="font-size: 11px; color: #999; margin: 1px 0 0; text-decoration: line-through; font-family: 'Noto Sans', sans-serif;">$<%= producto.original_price %></p>
                 <% end %>
                 <%= if producto.price do %>
-                  <p style="font-size: 13px; font-weight: 600; color: #1E5C1E; margin: 0; font-family: 'Noto Sans', sans-serif;">$<%= producto.price %></p>
+                  <p style={"font-size: 15px; font-weight: 700; color: #{color_principal}; margin: 0; font-family: 'Noto Sans', sans-serif;"}>$<%= producto.price %></p>
                 <% end %>
               </div>
             <% end %>
@@ -180,14 +206,57 @@
 
 </div>
 
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+  const ubicacionesStand = <%= raw(Jason.encode!(for u <- @ubicaciones, do: %{lat: u.latitude, lng: u.longitude})) %>;
+
+  (function() {
+    const el = document.getElementById('mini-mapa-stand');
+    if (!el || ubicacionesStand.length === 0) return;
+    el.style.height = el.offsetHeight > 0 ? el.offsetHeight + 'px' : '100%';
+    const miniMap = L.map('mini-mapa-stand', {
+      zoomControl: false,
+      dragging: false,
+      scrollWheelZoom: false,
+      doubleClickZoom: false,
+      boxZoom: false,
+      touchZoom: false,
+      attributionControl: false
+    });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(miniMap);
+
+    const icono = L.divIcon({
+      className: '',
+      html: '<div style="width:14px;height:14px;background:<%= color_principal %>;border:2px solid white;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.4);"></div>',
+      iconSize: [14, 14],
+      iconAnchor: [7, 7]
+    });
+
+    const puntos = ubicacionesStand.map(u => [u.lat, u.lng]);
+    puntos.forEach(p => L.marker(p, { icon: icono }).addTo(miniMap));
+
+    if (puntos.length === 1) {
+      miniMap.setView(puntos[0], 14);
+    } else {
+      miniMap.fitBounds(puntos, { padding: [10, 10] });
+    }
+
+    miniMap.getContainer().style.cursor = 'pointer';
+    miniMap.on('click', function() {
+      const btnMapa = document.getElementById('btn-mapa');
+      if (btnMapa) {
+        btnMapa.click();
+      } else {
+        window.location.href = '/auth/google';
+      }
+    });
+  })();
+</script>
+
 <script>
   const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content");
-
-  const parallaxTexto = document.getElementById('parallax-texto');
-  window.addEventListener('scroll', function() {
-    if (!parallaxTexto) return;
-    parallaxTexto.style.top = (100 + window.scrollY * 0.4) + 'px';
-  });
 
   function subirFoto(input, productoId) {
     const file = input.files[0];
@@ -235,9 +304,9 @@
       .then(r => r.json())
       .then(data => {
         if (data.ok) {
-          btn.innerText = "📍 Ver en el mapa";
-          btn.style.backgroundColor = "white";
-          btn.style.color = "#1E5C1E";
+          btn.innerText = "📍 Ver en mapa";
+          btn.style.backgroundColor = "#f0f0f0";
+          btn.style.color = "<%= color_principal %>";
           btn.style.border = "none";
           btn.setAttribute("onclick", "toggleMapa(" + brandId + ", false)");
         }
@@ -250,9 +319,9 @@
       .then(r => r.json())
       .then(data => {
         if (data.ok) {
-          btn.innerText = "✅ En el Mapa — Quitar";
-          btn.style.backgroundColor = "white";
-          btn.style.color = "#1E5C1E";
+          btn.innerText = "✅ En el Mapa";
+          btn.style.backgroundColor = "<%= color_principal %>";
+          btn.style.color = "<%= color_gestion %>";
           btn.style.border = "none";
           btn.setAttribute("onclick", "toggleMapa(" + brandId + ", true)");
         } else if (data.error) {
@@ -273,10 +342,8 @@
     if (data.ok) {
       if (data.action === 'added') {
         btn.innerHTML = '💚';
-        btn.style.borderColor = '#1E5C1E';
       } else {
         btn.innerHTML = '🤍';
-        btn.style.borderColor = '#ddd';
       }
     } else if (data.error === 'not_logged_in') {
       window.location.href = '/auth/google';

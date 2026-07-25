@@ -214,7 +214,10 @@ defmodule DaleAppWeb.PageController do
       not Regex.match?(~r/^[a-zA-Z0-9_]+$/, username) ->
         json(conn, %{ok: false, error: "Solo letras, números y guión bajo"})
 
-      Enum.any?(@palabras_prohibidas, fn p -> String.contains?(String.downcase(username), p) end) ->
+      Enum.any?(@palabras_prohibidas, fn p ->
+        username_lower = String.downcase(username)
+        username_lower == p or String.contains?(username_lower, "_" <> p) or String.contains?(username_lower, p <> "_")
+      end) ->
         json(conn, %{ok: false, error: "Ese nombre no está permitido"})
 
       true ->

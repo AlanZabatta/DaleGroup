@@ -25,7 +25,9 @@ defmodule DaleAppWeb.MarcasController do
     else
       false
     end
+    ubicaciones = Repo.all(from l in DaleApp.Brands.BrandLocation, where: l.brand_id == ^marca.id)
+
     Events.track("brand_view", user_id, marca.id, %{brand_name: marca.name})
-    render(conn, :show, marca: marca, cupon: cupon, productos: productos, en_mapa: en_mapa, current_user: current_user)
+    render(conn, :show, marca: marca, cupon: cupon, productos: productos, en_mapa: en_mapa, current_user: current_user, ubicaciones: ubicaciones)
   end
 end
