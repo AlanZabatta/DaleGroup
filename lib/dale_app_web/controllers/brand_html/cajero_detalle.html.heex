@@ -1,0 +1,96 @@
+<div style="padding: 24px 18px 40px; font-family: Poppins, sans-serif; max-width: 600px; margin: 0 auto; background-color: white; min-height: 100vh;">
+  <a href="/mi-tienda/cajeros" style="display: inline-flex; background: none; border: none; color: #186904; font-size: 22px; font-weight: 700; cursor: pointer; line-height: 1; text-decoration: none; margin-bottom: 16px;">&#x2715;</a>
+  <p style="font-size: 26px; font-weight: 800; color: #186904; margin: 0 0 8px;"><%= @cajero.name %></p>
+  <p style="font-size: 13px; color: #999; margin: 0 0 24px;"><%= @cajero.email %></p>
+
+  <div style="display: flex; justify-content: center; margin-bottom: 28px;">
+    <label style="position: relative; width: 110px; height: 110px; border-radius: 50%; overflow: hidden; cursor: pointer; background: #f5f5f5; border: 2px solid #e0e0e0;">
+      <img id="foto-cajero-preview" src={@cajero.avatar || ""} style={"width: 100%; height: 100%; object-fit: cover; display: #{if @cajero.avatar, do: "block", else: "none"};"}/>
+      <div id="foto-cajero-placeholder" style={"width: 100%; height: 100%; display: #{if @cajero.avatar, do: "none", else: "flex"}; align-items: center; justify-content: center;"}>
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/>
+          <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/>
+        </svg>
+      </div>
+      <div style="position: absolute; bottom: 2px; right: 2px; width: 32px; height: 32px; border-radius: 50%; background: #186904; border: 2px solid white; display: flex; align-items: center; justify-content: center;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
+        </svg>
+      </div>
+      <input type="file" accept="image/*" style="display:none;" onchange="subirFotoCajero(this)"/>
+    </label>
+  </div>
+
+  <div style="margin-bottom: 18px;">
+    <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Teléfono</p>
+    <input type="text" id="input-telefono" value={@cajero.telefono} placeholder="Ej: 11 2345 6789" oninput="empleadoModificado = true" style="width: 100%; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; color: #333; outline: none; box-sizing: border-box;"/>
+  </div>
+
+  <div style="margin-bottom: 18px;">
+    <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Sede</p>
+    <input type="text" id="input-sede" value={@cajero.sede} placeholder="Ej: Palermo" oninput="empleadoModificado = true" style="width: 100%; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; color: #333; outline: none; box-sizing: border-box;"/>
+  </div>
+
+  <div style="margin-bottom: 18px;">
+    <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Zona / puesto</p>
+    <input type="text" id="input-zona" value={@cajero.zona} placeholder="Ej: Cajero" oninput="empleadoModificado = true" style="width: 100%; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; color: #333; outline: none; box-sizing: border-box;"/>
+  </div>
+
+  <div style="margin-bottom: 28px;">
+    <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Horario laboral</p>
+    <input type="text" id="input-horario" value={@cajero.horario_laboral} placeholder="Ej: Lun a Vie 9 a 18hs" oninput="empleadoModificado = true" style="width: 100%; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; color: #333; outline: none; box-sizing: border-box;"/>
+  </div>
+
+  <button type="button" onclick="guardarCajero()" id="btn-guardar-cajero" style="width: 100%; background-color: #186904; color: white; padding: 14px 0; border: none; border-radius: 16px; cursor: pointer; font-size: 15px; font-weight: 700; font-family: Poppins, sans-serif; margin-bottom: 12px;">
+    Guardar cambios
+  </button>
+
+  <form action={~p"/mi-tienda/cajeros/#{@cajero.id}/remove"} method="post">
+    <input type="hidden" name="_csrf_token" value={get_csrf_token()}/>
+    <button type="submit" style="width: 100%; background: none; color: #c0392b; padding: 12px 0; border: 1.5px solid #c0392b; border-radius: 16px; cursor: pointer; font-size: 14px; font-weight: 700; font-family: Poppins, sans-serif;">
+      Eliminar empleado
+    </button>
+  </form>
+</div>
+
+<script>
+  let empleadoModificado = false;
+  const csrfTokenCajero = document.querySelector("meta[name='csrf-token']")?.getAttribute("content");
+  const cajeroId = <%= @cajero.id %>;
+
+  async function guardarCajero() {
+    const btn = document.getElementById('btn-guardar-cajero');
+    btn.textContent = 'Guardando...'; btn.disabled = true;
+    const formData = new FormData();
+    formData.append('_csrf_token', csrfTokenCajero);
+    formData.append('telefono', document.getElementById('input-telefono').value);
+    formData.append('sede', document.getElementById('input-sede').value);
+    formData.append('zona', document.getElementById('input-zona').value);
+    formData.append('horario_laboral', document.getElementById('input-horario').value);
+    const res = await fetch('/mi-tienda/cajeros/' + cajeroId + '/actualizar', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (data.ok) {
+      empleadoModificado = false;
+      btn.textContent = '✅ Guardado';
+      setTimeout(() => { btn.textContent = 'Guardar cambios'; btn.disabled = false; }, 1500);
+    } else {
+      btn.textContent = 'Error, reintentar';
+      btn.disabled = false;
+    }
+  }
+
+  async function subirFotoCajero(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('_csrf_token', csrfTokenCajero);
+    formData.append('foto', file, 'foto.jpg');
+    const res = await fetch('/mi-tienda/cajeros/' + cajeroId + '/foto', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (data.ok) {
+      document.getElementById('foto-cajero-preview').src = data.url;
+      document.getElementById('foto-cajero-preview').style.display = 'block';
+      document.getElementById('foto-cajero-placeholder').style.display = 'none';
+    }
+  }
+</script>

@@ -10,7 +10,28 @@ defmodule DaleAppWeb.BrandController do
     user_id = get_session(conn, :user_id)
     brand = Repo.get_by(Brand, user_id: user_id)
     cajeros = if brand, do: Accounts.list_cajeros(brand.id), else: []
-    render(conn, :mi_tienda, brand: brand, cajeros: cajeros)
+    curva_cupon = if brand do
+      hoy = Date.utc_today()
+      hace_30_dias = DateTime.utc_now() |> DateTime.add(-30, :day)
+
+      claims_por_dia =
+        from(cl in DaleApp.Claims.Claim,
+          where: cl.brand_id == ^brand.id and cl.inserted_at >= ^hace_30_dias,
+          group_by: fragment("date(?)", cl.inserted_at),
+          select: {fragment("date(?)", cl.inserted_at), count(cl.id)}
+        )
+        |> Repo.all()
+        |> Map.new()
+
+      for i <- 29..0//-1 do
+        dia = Date.add(hoy, -i)
+        Map.get(claims_por_dia, dia, 0)
+      end
+    else
+      List.duplicate(0, 30)
+    end
+
+    render(conn, :mi_tienda, brand: brand, cajeros: cajeros, curva_cupon: curva_cupon, interes_cupon: Enum.sum(curva_cupon))
   end
   def actualizar_colores(conn, params) do
     user_id = get_session(conn, :user_id)
@@ -98,6 +119,62 @@ defmodule DaleAppWeb.BrandController do
     conn
     |> put_flash(:info, "Cajero eliminado.")
     |> redirect(to: ~p"/mi-tienda/cajeros")
+  end
+
+  def cajero_detalle(conn, %{"id" => id}) do
+    user_id = get_session(conn, :user_id)
+    brand = Repo.get_by(Brand, user_id: user_id)
+    cajero = Accounts.get_user(id)
+    if brand && cajero && cajero.cajero_brand_id == brand.id do
+      render(conn, :cajero_detalle, brand: brand, cajero: cajero)
+    else
+      conn
+      |> put_flash(:error, "No encontrado.")
+      |> redirect(to: ~p"/mi-tienda/cajeros")
+    end
+  end
+
+  def actualizar_cajero(conn, %{"id" => id} = params) do
+    user_id = get_session(conn, :user_id)
+    brand = Repo.get_by(Brand, user_id: user_id)
+    cajero = Accounts.get_user(id)
+    if brand && cajero && cajero.cajero_brand_id == brand.id do
+      atributos = %{
+        "telefono" => Map.get(params, "telefono", cajero.telefono),
+        "sede" => Map.get(params, "sede", cajero.sede),
+        "zona" => Map.get(params, "zona", cajero.zona),
+        "horario_laboral" => Map.get(params, "horario_laboral", cajero.horario_laboral)
+      }
+      cajero
+      |> DaleApp.Accounts.User.changeset(atributos)
+      |> Repo.update()
+      json(conn, %{ok: true})
+    else
+      json(conn, %{ok: false})
+    end
+  end
+
+  def subir_foto_cajero(conn, %{"id" => id, "foto" => foto}) do
+    user_id = get_session(conn, :user_id)
+    brand = Repo.get_by(Brand, user_id: user_id)
+    cajero = Accounts.get_user(id)
+    if brand && cajero && cajero.cajero_brand_id == brand.id do
+      case DaleApp.Storage.upload_image(foto.path, foto.filename) do
+        {:ok, %{body: body}} when is_map(body) ->
+          url = body["secure_url"]
+          cajero |> Ecto.Changeset.change(%{avatar: url}) |> Repo.update()
+          json(conn, %{ok: true, url: url})
+        {:ok, %{body: body}} when is_binary(body) ->
+          decoded = Jason.decode!(body)
+          url = decoded["secure_url"]
+          cajero |> Ecto.Changeset.change(%{avatar: url}) |> Repo.update()
+          json(conn, %{ok: true, url: url})
+        _ ->
+          json(conn, %{ok: false, error: "Error al subir foto"})
+      end
+    else
+      json(conn, %{ok: false})
+    end
   end
 
   def mi_stand(conn, _params) do
@@ -189,15 +266,21 @@ defmodule DaleAppWeb.BrandController do
     brand = DaleApp.Repo.get(DaleApp.Brands.Brand, id)
     if brand.user_id == user_id do
       crop_params = build_crop_params(params)
+      colores_actuales = brand.colores || %{}
+      nuevos_colores = case Map.get(params, "logo_bg") do
+        nil -> colores_actuales
+        "" -> colores_actuales
+        bg -> Map.put(colores_actuales, "logo_fondo", bg)
+      end
       case DaleApp.Storage.upload_image(logo.path, logo.filename, crop_params) do
         {:ok, %{body: body}} when is_map(body) ->
           url = body["secure_url"]
-          DaleApp.Repo.update!(Ecto.Changeset.change(brand, %{logo: url}))
+          DaleApp.Repo.update!(Ecto.Changeset.change(brand, %{logo: url, colores: nuevos_colores}))
           json(conn, %{ok: true, url: url})
         {:ok, %{body: body}} when is_binary(body) ->
           decoded = Jason.decode!(body)
           url = decoded["secure_url"]
-          DaleApp.Repo.update!(Ecto.Changeset.change(brand, %{logo: url}))
+          DaleApp.Repo.update!(Ecto.Changeset.change(brand, %{logo: url, colores: nuevos_colores}))
           json(conn, %{ok: true, url: url})
         _ ->
           json(conn, %{ok: false, error: "Error al subir logo"})

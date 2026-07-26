@@ -10,6 +10,7 @@
     </.live_title>
     <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
     <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/dist/tabler-icons.min.css">
   </head>
   <body class="antialiased" style="background-color: #3B2505; margin: 0; padding: 0;">
 
@@ -95,9 +96,33 @@
 
         <div style="display: flex; flex-direction: row; align-items: center; gap: 16px; pointer-events: auto;">
           <%= if @current_user && @current_user.role == "dueño" do %>
-            <a id="btn-mi-tienda" href="/mi-stand" style="width: 72px; height: 72px; border-radius: 50%; background-color: #3B2505; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 4px 20px rgba(0,0,0,0.3); flex-shrink: 0;">
-              <span style="color: white; font-size: 10px; font-weight: bold; text-align: center; line-height: 1.3;">Mi<br>Tienda</span>
-            </a>
+            <%= if assigns[:marca] && @marca.user_id == @current_user.id do %>
+              <a id="btn-mi-tienda" href="/mi-tienda" onclick="manejarClickMiTiendaFlotante(event)" style="width: 72px; height: 72px; border-radius: 50%; background-color: white; border: 2px solid #186904; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 4px 20px rgba(0,0,0,0.2); flex-shrink: 0; position: relative;">
+                <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 21l18 0"/>
+                  <path d="M3 7v1a3 3 0 0 0 6 0v-1m0 1a3 3 0 0 0 6 0v-1m0 1a3 3 0 0 0 6 0v-1h-18l2 -4h14l2 4"/>
+                  <path d="M5 21l0 -10.15"/>
+                  <path d="M19 21l0 -10.15"/>
+                  <path d="M9 21v-4a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v4"/>
+                </svg>
+                <div style="position: absolute; bottom: -4px; right: -4px; width: 32px; height: 32px; border-radius: 50%; background-color: #186904; border: 2px solid white; display: flex; align-items: center; justify-content: center;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4"/>
+                    <path d="M13.5 6.5l4 4"/>
+                  </svg>
+                </div>
+              </a>
+            <% else %>
+              <a id="btn-mi-tienda" href="/mi-stand" onclick="manejarClickMiTiendaFlotante(event)" style="width: 72px; height: 72px; border-radius: 50%; background-color: white; border: 2px solid #186904; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 4px 20px rgba(0,0,0,0.2); flex-shrink: 0;">
+                <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 21l18 0"/>
+                  <path d="M3 7v1a3 3 0 0 0 6 0v-1m0 1a3 3 0 0 0 6 0v-1m0 1a3 3 0 0 0 6 0v-1h-18l2 -4h14l2 4"/>
+                  <path d="M5 21l0 -10.15"/>
+                  <path d="M19 21l0 -10.15"/>
+                  <path d="M9 21v-4a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v4"/>
+                </svg>
+              </a>
+            <% end %>
           <% end %>
           <%= if @current_user && @current_user.role == "cajero" do %>
             <a href="/cajero/scanear" style="width: 72px; height: 72px; border-radius: 50%; background-color: #1E5C1E; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 4px 20px rgba(0,0,0,0.3); flex-shrink: 0;">
@@ -120,13 +145,14 @@
         </div>
       </div>
 
+
       <script>
-        const btnMiTienda = document.getElementById('btn-mi-tienda');
-        if (btnMiTienda && (window.location.pathname.startsWith('/marcas') || window.location.pathname.startsWith('/mi-tienda') || window.location.pathname === '/mi-stand')) {
-          btnMiTienda.style.display = 'none';
+        function manejarClickMiTiendaFlotante(e) {
+          if (typeof intentarVolver === 'function') {
+            intentarVolver(e);
+          }
         }
       </script>
-
       <!-- BARRA DE NAVEGACIÓN INFERIOR -->
       <div id="bottom-bar" style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 5000; background: rgba(255,255,255,0.96); backdrop-filter: blur(10px); border-top: 1px solid #f0f0f0; height: 11vh; display: flex; align-items: center; justify-content: space-around; padding: 0 8px; transition: none;">
         <% ruta = assigns[:ruta_actual] || (assigns[:conn] && @conn.request_path) || "" %>

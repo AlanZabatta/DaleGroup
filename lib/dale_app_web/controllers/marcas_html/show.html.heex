@@ -9,11 +9,6 @@ end %>
 <% color_fondo = (@marca.colores && @marca.colores["fondo"]) || "#ffffff" %>
 <% color_letras = (@marca.colores && @marca.colores["letras"]) || "#1a1a1a" %>
 <% color_gestion = (@marca.colores && @marca.colores["gestion"]) || "#ffffff" %>
-<%= if @current_user && @current_user.role == "dueño" && @current_user.id == @marca.user_id do %>
-  <a href="/mi-tienda" style="position: fixed; bottom: 110px; left: 20px; background-color: #44BB64; color: white; padding: 10px 16px; border-radius: 20px; text-decoration: none; font-size: 13px; font-weight: bold; z-index: 140; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-    ✏️ Editar mi tienda
-  </a>
-<% end %>
 
 <div style="max-width: 480px; margin: 0 auto; overflow: visible; font-family: 'Noto Sans', sans-serif;">
 

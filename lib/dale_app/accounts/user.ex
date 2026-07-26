@@ -16,6 +16,10 @@ defmodule DaleApp.Accounts.User do
     field :username_changed_at, :naive_datetime
     field :friend_code, :string
     field :perfil_config, :map, default: %{}
+    field :telefono, :string
+    field :sede, :string
+    field :zona, :string
+    field :horario_laboral, :string
     belongs_to :referral_brand, DaleApp.Brands.Brand, foreign_key: :referral_brand_id
     belongs_to :cajero_brand, DaleApp.Brands.Brand, foreign_key: :cajero_brand_id
 
@@ -24,7 +28,7 @@ defmodule DaleApp.Accounts.User do
 
   def changeset(user, attrs) do
     user
-    |> cast(attrs, [:email, :name, :avatar, :role, :banned, :google_id, :discord_id, :points, :is_referral, :referral_brand_id, :cajero_brand_id, :username, :friend_code, :username_changed_at, :perfil_config])
+    |> cast(attrs, [:email, :name, :avatar, :role, :banned, :google_id, :discord_id, :points, :is_referral, :referral_brand_id, :cajero_brand_id, :username, :friend_code, :username_changed_at, :perfil_config, :telefono, :sede, :zona, :horario_laboral])
     |> unique_constraint(:username)
     |> validate_required([:email])
     |> unique_constraint(:email)

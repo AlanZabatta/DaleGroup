@@ -57,6 +57,9 @@ live "/registro", RegistroLive
     get "/mi-tienda/cupon", CouponController, :new
     post "/mi-tienda/cupon", CouponController, :create
     get "/mi-tienda/cajeros", BrandController, :cajeros
+    get "/mi-tienda/cajeros/:id", BrandController, :cajero_detalle
+    post "/mi-tienda/cajeros/:id/actualizar", BrandController, :actualizar_cajero
+    post "/mi-tienda/cajeros/:id/foto", BrandController, :subir_foto_cajero
     get "/mi-tienda/productos", ProductoController, :index
     post "/mi-tienda/productos/crear", ProductoController, :crear
     post "/mi-tienda/productos/:id/actualizar", ProductoController, :actualizar
