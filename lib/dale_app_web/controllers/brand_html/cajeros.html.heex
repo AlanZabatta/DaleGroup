@@ -10,7 +10,7 @@
       <p style="font-size:18px; font-weight:700; color:#186904; margin:0 0 6px; font-family:Poppins,sans-serif;">Sumá un empleado</p>
       <p style="font-size:13px; color:#666; margin:0 0 18px; font-family:Poppins,sans-serif;">Que escanee este código con su celular</p>
       <div style="background:white; border-radius:16px; padding:16px; display:inline-block; border:1.5px solid #e0e0e0;">
-        <%= raw EQRCode.encode("http://192.168.1.104:4000/unirse/#{@brand.id}") |> EQRCode.svg(width: 180) %>
+        <%= raw EQRCode.encode("https://shawl-stipend-composed.ngrok-free.dev/unirse/#{@brand.id}") |> EQRCode.svg(width: 180) %>
       </div>
       <button onclick="document.getElementById('modal-qr-empleado').style.display='none'" style="width:100%; margin-top:18px; background:#186904; color:#fff; border:none; border-radius:14px; padding:12px 0; font-size:14px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer;">Cerrar</button>
     </div>

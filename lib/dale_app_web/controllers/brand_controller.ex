@@ -189,15 +189,15 @@ defmodule DaleAppWeb.BrandController do
 
   def unirse(conn, %{"brand_id" => brand_id}) do
     user_id = get_session(conn, :user_id)
+    user = if user_id, do: Accounts.get_user(user_id), else: nil
 
-    if is_nil(user_id) do
+    if is_nil(user) do
       conn
+      |> clear_session()
       |> put_session(:join_brand_id, brand_id)
       |> redirect(to: ~p"/auth/google")
     else
-      user = Accounts.get_user(user_id)
       brand = Repo.get(Brand, brand_id)
-
       case Accounts.assign_cajero(user, String.to_integer(brand_id)) do
         {:ok, _} ->
           conn
