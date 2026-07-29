@@ -5,6 +5,7 @@ defmodule DaleApp.Brands.BrandLocation do
   schema "brand_locations" do
     field :nombre, :string
     field :address, :string
+    field :direccion_completa, :string
     field :latitude, :float
     field :longitude, :float
     belongs_to :brand, DaleApp.Brands.Brand
@@ -14,7 +15,7 @@ defmodule DaleApp.Brands.BrandLocation do
 
   def changeset(location, attrs) do
     location
-    |> cast(attrs, [:nombre, :address, :latitude, :longitude, :brand_id])
+    |> cast(attrs, [:nombre, :address, :direccion_completa, :latitude, :longitude, :brand_id])
     |> validate_required([:brand_id])
   end
 end

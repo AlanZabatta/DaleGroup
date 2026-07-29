@@ -25,7 +25,7 @@ defmodule DaleAppWeb.SedesLive do
     {:noreply, assign(socket, editando: nil)}
   end
 
-  def handle_event("guardar_nombre", %{"id" => id, "nombre" => nombre}, socket) do
+  def handle_event("guardar_nombre", %{"location_id" => id, "nombre" => nombre}, socket) do
     location = Repo.get(BrandLocation, String.to_integer(id))
 
     if location && location.brand_id == socket.assigns.brand.id do
@@ -58,7 +58,7 @@ defmodule DaleAppWeb.SedesLive do
                 <div style="flex: 1; min-width: 0;">
                   <%= if @editando == sede.id do %>
                     <form phx-submit="guardar_nombre" style="display: flex; flex-direction: column; gap: 8px;">
-                      <input type="hidden" name="id" value={sede.id} />
+                      <input type="hidden" name="location_id" value={sede.id} />
                       <input type="text" name="nombre" value={sede.nombre || ""} placeholder={"Sede #{i + 1}"} autofocus style="width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1.5px solid #186904; border-radius: 10px; font-size: 14px; font-family: Poppins, sans-serif; outline: none;" />
                       <div style="display: flex; gap: 8px;">
                         <button type="submit" style="flex: 1; background: #186904; color: white; border: none; border-radius: 10px; padding: 8px; font-size: 13px; font-weight: 700; font-family: Poppins, sans-serif; cursor: pointer;">Guardar</button>
@@ -75,7 +75,7 @@ defmodule DaleAppWeb.SedesLive do
                       </button>
                     </div>
                     <p style="font-size: 12px; color: #888; margin: 3px 0 0; font-family: Poppins, sans-serif; line-height: 1.3;">
-                      <%= sede.address %>
+                      <%= if sede.direccion_completa && sede.direccion_completa != "", do: sede.direccion_completa, else: sede.address %>
                     </p>
                   <% end %>
                 </div>

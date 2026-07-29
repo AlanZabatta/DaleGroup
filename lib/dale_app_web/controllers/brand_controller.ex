@@ -84,15 +84,18 @@ defmodule DaleAppWeb.BrandController do
     |> Brand.changeset(brand_params)
     |> Repo.update()
 
+    completas_actuales = (Map.get(brand_params, "address_full") || brand.address_full || "") |> String.split("|") |> Enum.map(&String.trim/1) |> Enum.reject(&(&1 == ""))
     Repo.delete_all(from l in DaleApp.Brands.BrandLocation, where: l.brand_id == ^brand.id)
-
-    Enum.each(direcciones, fn dir ->
+    direcciones
+    |> Enum.with_index()
+    |> Enum.each(fn {dir, i} ->
       case geocode(dir) do
         {:ok, lat, lng} ->
           %DaleApp.Brands.BrandLocation{}
           |> DaleApp.Brands.BrandLocation.changeset(%{
             brand_id: brand.id,
             address: dir,
+            direccion_completa: Enum.at(completas_actuales, i),
             latitude: lat,
             longitude: lng
           })
