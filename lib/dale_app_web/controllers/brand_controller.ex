@@ -294,6 +294,21 @@ defmodule DaleAppWeb.BrandController do
     end
   end
 
+  def fichar_gate(conn, %{"brand_id" => brand_id}) do
+    user_id = get_session(conn, :user_id)
+    user = if user_id, do: Accounts.get_user(user_id), else: nil
+
+    if is_nil(user) do
+      conn
+      |> clear_session()
+      |> put_session(:fichar_brand_id, brand_id)
+      |> redirect(to: ~p"/auth/google")
+    else
+      conn
+      |> redirect(to: "/fichar/#{brand_id}/pantalla")
+    end
+  end
+
   def unirse(conn, %{"brand_id" => brand_id}) do
     user_id = get_session(conn, :user_id)
     user = if user_id, do: Accounts.get_user(user_id), else: nil

@@ -77,6 +77,8 @@ live "/registro", RegistroLive
     post "/claims", ClaimController, :create
     get "/cajero/scanear", ClaimController, :redeem
     get "/unirse/:brand_id", BrandController, :unirse
+    get "/fichar/:brand_id", BrandController, :fichar_gate
+    live "/fichar/:brand_id/pantalla", FicharLive
     get "/catalogo", PageController, :home
     get "/categorias", PageController, :home
     get "/beneficios", PageController, :home

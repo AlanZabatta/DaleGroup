@@ -28,19 +28,25 @@ defmodule DaleAppWeb.AuthController do
 
       user ->
         join_brand_id = get_session(conn, :join_brand_id)
+        fichar_brand_id = get_session(conn, :fichar_brand_id)
         conn = conn
         |> put_session(:user_id, user.id)
         |> delete_session(:join_brand_id)
-        if join_brand_id do
-          DaleApp.Accounts.assign_cajero(user, String.to_integer(join_brand_id))
-          brand = DaleApp.Repo.get(DaleApp.Brands.Brand, join_brand_id)
-          conn
-          |> put_flash(:info, "Bienvenido #{user.name}! Ahora sos cajero de #{brand.name}.")
-          |> redirect(to: ~p"/")
-        else
-          conn
-          |> put_flash(:info, "Bienvenido #{user.name}!")
-          |> redirect(to: ~p"/")
+        |> delete_session(:fichar_brand_id)
+        cond do
+          join_brand_id ->
+            DaleApp.Accounts.assign_cajero(user, String.to_integer(join_brand_id))
+            brand = DaleApp.Repo.get(DaleApp.Brands.Brand, join_brand_id)
+            conn
+            |> put_flash(:info, "Bienvenido #{user.name}! Ahora sos cajero de #{brand.name}.")
+            |> redirect(to: ~p"/")
+          fichar_brand_id ->
+            conn
+            |> redirect(to: "/fichar/#{fichar_brand_id}")
+          true ->
+            conn
+            |> put_flash(:info, "Bienvenido #{user.name}!")
+            |> redirect(to: ~p"/")
         end
     end
   end
@@ -52,25 +58,34 @@ defmodule DaleAppWeb.AuthController do
   def finalizar(conn, %{"user_id" => user_id}) do
     user = DaleApp.Accounts.get_user(user_id)
     join_brand_id = get_session(conn, :join_brand_id)
+    fichar_brand_id = get_session(conn, :fichar_brand_id)
 
     conn =
       conn
       |> put_session(:user_id, user.id)
       |> delete_session(:auth_pendiente)
       |> delete_session(:join_brand_id)
+      |> delete_session(:fichar_brand_id)
 
-    if join_brand_id do
-      DaleApp.Accounts.assign_cajero(user, String.to_integer(join_brand_id))
-      brand = DaleApp.Repo.get(DaleApp.Brands.Brand, join_brand_id)
-      conn
-      |> put_flash(:info, "Bienvenido #{user.name}! Ahora sos cajero de #{brand.name}.")
-      |> redirect(to: ~p"/")
-    else
-      conn
-      |> put_flash(:info, "Bienvenido #{user.name}!")
-      |> redirect(to: ~p"/")
+    cond do
+      join_brand_id ->
+        DaleApp.Accounts.assign_cajero(user, String.to_integer(join_brand_id))
+        brand = DaleApp.Repo.get(DaleApp.Brands.Brand, join_brand_id)
+        conn
+        |> put_flash(:info, "Bienvenido #{user.name}! Ahora sos cajero de #{brand.name}.")
+        |> redirect(to: ~p"/")
+
+      fichar_brand_id ->
+        conn
+        |> redirect(to: "/fichar/#{fichar_brand_id}")
+
+      true ->
+        conn
+        |> put_flash(:info, "Bienvenido #{user.name}!")
+        |> redirect(to: ~p"/")
     end
   end
+
   def logout(conn, _params) do
     conn
     |> clear_session()
