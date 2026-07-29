@@ -5,14 +5,29 @@ defmodule DaleAppWeb.CajerosLive do
   alias DaleApp.Brands.Brand
   alias DaleApp.Accounts
   alias DaleApp.Accounts.Asistencia
+  alias DaleApp.Accounts.EmpleadoSede
+  alias DaleApp.Brands.BrandLocation
 
   def mount(_params, session, socket) do
     user_id = session["user_id"]
     brand = if user_id, do: Repo.get_by(Brand, user_id: user_id), else: nil
     cajeros = if brand, do: Accounts.list_cajeros(brand.id), else: []
     ranking_puntualidad = calcular_ranking(brand)
+    sedes_por_empleado = if brand, do: calcular_sedes_por_empleado(brand.id), else: %{}
 
-    {:ok, assign(socket, brand: brand, cajeros: cajeros, ranking_puntualidad: ranking_puntualidad)}
+    {:ok, assign(socket, brand: brand, cajeros: cajeros, ranking_puntualidad: ranking_puntualidad, sedes_por_empleado: sedes_por_empleado)}
+  end
+
+  defp calcular_sedes_por_empleado(brand_id) do
+    from(es in EmpleadoSede,
+      join: l in BrandLocation, on: l.id == es.brand_location_id,
+      where: l.brand_id == ^brand_id,
+      select: {es.user_id, l.id, l.nombre}
+    )
+    |> Repo.all()
+    |> Enum.group_by(fn {user_id, _lid, _nombre} -> user_id end, fn {_uid, lid, nombre} ->
+      if nombre && nombre != "", do: nombre, else: "Sede ##{lid}"
+    end)
   end
 
   def handle_event("toggle_asistencia", _params, socket) do
@@ -134,8 +149,11 @@ defmodule DaleAppWeb.CajerosLive do
               <%= if apellido_mostrar != "" do %>
                 <p style="font-size: 13px; color: #999; margin: 2px 0 0; font-family: Poppins, sans-serif;"><%= nombre_mostrar %></p>
               <% end %>
-              <%= if cajero.sede && cajero.sede != "" do %>
-                <p style="font-size: 11px; color: #888; margin: 4px 0 0; font-family: Poppins, sans-serif;">Sede: <%= cajero.sede %></p>
+              <%
+                sedes_nombres = Map.get(@sedes_por_empleado, cajero.id, [])
+              %>
+              <%= if sedes_nombres != [] do %>
+                <p style="font-size: 11px; color: #888; margin: 4px 0 0; font-family: Poppins, sans-serif;"><%= Enum.join(sedes_nombres, ", ") %></p>
               <% end %>
               <%= if cajero.zona && cajero.zona != "" do %>
                 <p style="font-size: 11px; color: #888; margin: 2px 0 0; font-family: Poppins, sans-serif;">Zona: <%= cajero.zona %></p>

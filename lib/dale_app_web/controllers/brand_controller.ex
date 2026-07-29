@@ -215,7 +215,9 @@ defmodule DaleAppWeb.BrandController do
     brand = Repo.get_by(Brand, user_id: user_id)
     cajero = Accounts.get_user(id)
     if brand && cajero && cajero.cajero_brand_id == brand.id do
-      render(conn, :cajero_detalle, brand: brand, cajero: cajero)
+      sedes_disponibles = from(l in DaleApp.Brands.BrandLocation, where: l.brand_id == ^brand.id, order_by: [asc: l.id]) |> Repo.all()
+      sedes_asignadas_ids = from(es in DaleApp.Accounts.EmpleadoSede, where: es.user_id == ^cajero.id, select: es.brand_location_id) |> Repo.all()
+      render(conn, :cajero_detalle, brand: brand, cajero: cajero, sedes_disponibles: sedes_disponibles, sedes_asignadas_ids: sedes_asignadas_ids)
     else
       conn
       |> put_flash(:error, "No encontrado.")
@@ -230,7 +232,6 @@ defmodule DaleAppWeb.BrandController do
     if brand && cajero && cajero.cajero_brand_id == brand.id do
       atributos = %{
         "telefono" => Map.get(params, "telefono", cajero.telefono),
-        "sede" => Map.get(params, "sede", cajero.sede),
         "zona" => Map.get(params, "zona", cajero.zona),
         "horario_laboral" => Map.get(params, "horario_laboral", cajero.horario_laboral),
         "nombre_visible" => Map.get(params, "nombre_visible", cajero.nombre_visible),
@@ -239,6 +240,21 @@ defmodule DaleAppWeb.BrandController do
       cajero
       |> DaleApp.Accounts.User.changeset(atributos)
       |> Repo.update()
+
+      sedes_ids =
+        (Map.get(params, "sedes_ids", "") || "")
+        |> String.split(",")
+        |> Enum.map(&String.trim/1)
+        |> Enum.reject(&(&1 == ""))
+        |> Enum.map(&String.to_integer/1)
+
+      Repo.delete_all(from es in DaleApp.Accounts.EmpleadoSede, where: es.user_id == ^cajero.id)
+      Enum.each(sedes_ids, fn location_id ->
+        %DaleApp.Accounts.EmpleadoSede{}
+        |> DaleApp.Accounts.EmpleadoSede.changeset(%{user_id: cajero.id, brand_location_id: location_id})
+        |> Repo.insert()
+      end)
+
       json(conn, %{ok: true})
     else
       json(conn, %{ok: false})

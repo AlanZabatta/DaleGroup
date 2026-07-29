@@ -4,12 +4,22 @@ defmodule DaleAppWeb.SedesLive do
   alias DaleApp.Repo
   alias DaleApp.Brands.Brand
   alias DaleApp.Brands.BrandLocation
+  alias DaleApp.Accounts.EmpleadoSede
 
   def mount(_params, session, socket) do
     user_id = session["user_id"]
     brand = if user_id, do: Repo.get_by(Brand, user_id: user_id), else: nil
     sedes = if brand, do: listar_sedes(brand.id), else: []
-    {:ok, assign(socket, brand: brand, sedes: sedes, editando: nil)}
+    conteos = contar_empleados_por_sede(sedes)
+    {:ok, assign(socket, brand: brand, sedes: sedes, conteos: conteos, editando: nil)}
+  end
+
+  defp contar_empleados_por_sede(sedes) do
+    ids = Enum.map(sedes, & &1.id)
+
+    from(es in EmpleadoSede, where: es.brand_location_id in ^ids, group_by: es.brand_location_id, select: {es.brand_location_id, count(es.id)})
+    |> Repo.all()
+    |> Map.new()
   end
 
   defp listar_sedes(brand_id) do
@@ -35,7 +45,8 @@ defmodule DaleAppWeb.SedesLive do
     end
 
     sedes = listar_sedes(socket.assigns.brand.id)
-    {:noreply, assign(socket, sedes: sedes, editando: nil)}
+    conteos = contar_empleados_por_sede(sedes)
+    {:noreply, assign(socket, sedes: sedes, conteos: conteos, editando: nil)}
   end
 
   def render(assigns) do
@@ -76,6 +87,12 @@ defmodule DaleAppWeb.SedesLive do
                     </div>
                     <p style="font-size: 12px; color: #888; margin: 3px 0 0; font-family: Poppins, sans-serif; line-height: 1.3;">
                       <%= if sede.direccion_completa && sede.direccion_completa != "", do: sede.direccion_completa, else: sede.address %>
+                    </p>
+                    <p style="font-size: 11px; color: #186904; margin: 6px 0 0; font-family: Poppins, sans-serif; font-weight: 600;">
+                      <%
+                        cantidad = Map.get(@conteos, sede.id, 0)
+                      %>
+                      <%= cantidad %> <%= if cantidad == 1, do: "empleado", else: "empleados" %>
                     </p>
                   <% end %>
                 </div>
