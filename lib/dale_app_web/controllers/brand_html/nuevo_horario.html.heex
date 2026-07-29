@@ -1,0 +1,157 @@
+<div style="padding: 24px 18px 40px; font-family: Poppins, sans-serif; max-width: 600px; margin: 0 auto; background-color: white; min-height: 100vh;">
+  <a href="/mi-tienda/horarios" style="display: inline-flex; background: none; border: none; color: #186904; font-size: 22px; font-weight: 700; cursor: pointer; line-height: 1; text-decoration: none; margin-bottom: 16px;">&#x2715;</a>
+  <p style="font-size: 26px; font-weight: 800; color: #186904; margin: 0 0 24px;">Nuevo Horario</p>
+
+  <div style="margin-bottom: 22px;">
+    <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Nombre (opcional)</p>
+    <input type="text" id="input-nombre-horario" placeholder="Ej: Turno mañana" style="width: 100%; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; color: #333; outline: none; box-sizing: border-box;"/>
+  </div>
+
+  <div style="margin-bottom: 22px;">
+    <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Días que se trabaja</p>
+    <div id="dias-chips" style="display: flex; flex-wrap: wrap; gap: 8px;">
+      <button type="button" class="chip-dia" data-dia="lunes" onclick="toggleDia(this)" style="padding: 9px 14px; border-radius: 20px; border: 1.5px solid #e0e0e0; background: white; color: #666; font-size: 13px; font-family: Poppins, sans-serif; font-weight: 600; cursor: pointer;">Lun</button>
+      <button type="button" class="chip-dia" data-dia="martes" onclick="toggleDia(this)" style="padding: 9px 14px; border-radius: 20px; border: 1.5px solid #e0e0e0; background: white; color: #666; font-size: 13px; font-family: Poppins, sans-serif; font-weight: 600; cursor: pointer;">Mar</button>
+      <button type="button" class="chip-dia" data-dia="miercoles" onclick="toggleDia(this)" style="padding: 9px 14px; border-radius: 20px; border: 1.5px solid #e0e0e0; background: white; color: #666; font-size: 13px; font-family: Poppins, sans-serif; font-weight: 600; cursor: pointer;">Mié</button>
+      <button type="button" class="chip-dia" data-dia="jueves" onclick="toggleDia(this)" style="padding: 9px 14px; border-radius: 20px; border: 1.5px solid #e0e0e0; background: white; color: #666; font-size: 13px; font-family: Poppins, sans-serif; font-weight: 600; cursor: pointer;">Jue</button>
+      <button type="button" class="chip-dia" data-dia="viernes" onclick="toggleDia(this)" style="padding: 9px 14px; border-radius: 20px; border: 1.5px solid #e0e0e0; background: white; color: #666; font-size: 13px; font-family: Poppins, sans-serif; font-weight: 600; cursor: pointer;">Vie</button>
+      <button type="button" class="chip-dia" data-dia="sabado" onclick="toggleDia(this)" style="padding: 9px 14px; border-radius: 20px; border: 1.5px solid #e0e0e0; background: white; color: #666; font-size: 13px; font-family: Poppins, sans-serif; font-weight: 600; cursor: pointer;">Sáb</button>
+      <button type="button" class="chip-dia" data-dia="domingo" onclick="toggleDia(this)" style="padding: 9px 14px; border-radius: 20px; border: 1.5px solid #e0e0e0; background: white; color: #666; font-size: 13px; font-family: Poppins, sans-serif; font-weight: 600; cursor: pointer;">Dom</button>
+    </div>
+  </div>
+
+  <div style="margin-bottom: 18px;">
+    <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Tipo de horario</p>
+    <div style="display: flex; gap: 8px;">
+      <button type="button" id="btn-tipo-general" onclick="elegirTipo('general')" style="flex: 1; padding: 12px; border-radius: 16px; border: 1.5px solid #186904; background: #186904; color: white; font-size: 13px; font-family: Poppins, sans-serif; font-weight: 700; cursor: pointer;">Horario general</button>
+      <button type="button" id="btn-tipo-especifico" onclick="elegirTipo('especifico')" style="flex: 1; padding: 12px; border-radius: 16px; border: 1.5px solid #e0e0e0; background: white; color: #666; font-size: 13px; font-family: Poppins, sans-serif; font-weight: 700; cursor: pointer;">Específico por día</button>
+    </div>
+  </div>
+
+  <div id="zona-horario-general" style="margin-bottom: 24px; display: flex; gap: 10px;">
+    <div style="flex: 1;">
+      <p style="font-size: 12px; color: #888; margin: 0 0 6px; font-family: Poppins, sans-serif;">Hora de entrada</p>
+      <input type="time" id="input-hora-entrada-general" style="width: 100%; padding: 12px 14px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; color: #333; outline: none; box-sizing: border-box;"/>
+    </div>
+    <div style="flex: 1;">
+      <p style="font-size: 12px; color: #888; margin: 0 0 6px; font-family: Poppins, sans-serif;">Hora de salida</p>
+      <input type="time" id="input-hora-salida-general" style="width: 100%; padding: 12px 14px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; color: #333; outline: none; box-sizing: border-box;"/>
+    </div>
+  </div>
+
+  <div id="zona-horario-especifico" style="display: none; margin-bottom: 24px;">
+    <p style="font-size: 12px; color: #999; margin: 0 0 10px; font-family: Poppins, sans-serif;">Elegí primero los días de arriba para configurar cada uno.</p>
+    <div id="filas-especifico"></div>
+  </div>
+
+  <div style="margin-bottom: 24px;">
+    <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 10px;">Asignar a empleados</p>
+    <div id="lista-empleados" style="display: flex; flex-direction: column; gap: 8px;">
+      <%= for cajero <- @cajeros do %>
+        <label style="display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1.5px solid #e0e0e0; border-radius: 16px; cursor: pointer; font-family: Poppins, sans-serif; font-size: 14px; color: #333;">
+          <input type="checkbox" class="check-empleado" data-id={cajero.id} style="width: 18px; height: 18px; accent-color: #186904;"/>
+          <%= cajero.name %>
+        </label>
+      <% end %>
+    </div>
+  </div>
+
+  <button type="button" onclick="guardarHorario()" id="btn-guardar-horario" style="width: 100%; background-color: #186904; color: white; padding: 14px 0; border: none; border-radius: 16px; cursor: pointer; font-size: 15px; font-weight: 700; font-family: Poppins, sans-serif;">
+    Guardar horario
+  </button>
+
+  <form id="form-horario" action={~p"/mi-tienda/horarios/crear"} method="post" style="display:none;">
+    <input type="hidden" name="_csrf_token" value={get_csrf_token()}/>
+    <input type="hidden" name="nombre" id="form-nombre"/>
+    <input type="hidden" name="dias" id="form-dias"/>
+    <input type="hidden" name="tipo" id="form-tipo"/>
+    <input type="hidden" name="hora_entrada_general" id="form-hora-entrada-general"/>
+    <input type="hidden" name="hora_salida_general" id="form-hora-salida-general"/>
+    <input type="hidden" name="horario_por_dia_json" id="form-horario-por-dia-json"/>
+    <input type="hidden" name="empleados" id="form-empleados"/>
+  </form>
+</div>
+
+<script>
+  const nombresDias = {
+    lunes: "Lunes", martes: "Martes", miercoles: "Miércoles", jueves: "Jueves",
+    viernes: "Viernes", sabado: "Sábado", domingo: "Domingo"
+  };
+  let diasSeleccionados = [];
+  let tipoHorario = "general";
+  let horarioPorDia = {};
+
+  function toggleDia(btn) {
+    const dia = btn.dataset.dia;
+    if (diasSeleccionados.includes(dia)) {
+      diasSeleccionados = diasSeleccionados.filter(d => d !== dia);
+      btn.style.background = 'white'; btn.style.color = '#666'; btn.style.borderColor = '#e0e0e0';
+      delete horarioPorDia[dia];
+    } else {
+      diasSeleccionados.push(dia);
+      btn.style.background = '#186904'; btn.style.color = 'white'; btn.style.borderColor = '#186904';
+    }
+    if (tipoHorario === 'especifico') renderFilasEspecifico();
+  }
+
+  function elegirTipo(tipo) {
+    tipoHorario = tipo;
+    const btnGeneral = document.getElementById('btn-tipo-general');
+    const btnEspecifico = document.getElementById('btn-tipo-especifico');
+    const zonaGeneral = document.getElementById('zona-horario-general');
+    const zonaEspecifico = document.getElementById('zona-horario-especifico');
+
+    if (tipo === 'general') {
+      btnGeneral.style.background = '#186904'; btnGeneral.style.color = 'white'; btnGeneral.style.borderColor = '#186904';
+      btnEspecifico.style.background = 'white'; btnEspecifico.style.color = '#666'; btnEspecifico.style.borderColor = '#e0e0e0';
+      zonaGeneral.style.display = 'flex';
+      zonaEspecifico.style.display = 'none';
+    } else {
+      btnEspecifico.style.background = '#186904'; btnEspecifico.style.color = 'white'; btnEspecifico.style.borderColor = '#186904';
+      btnGeneral.style.background = 'white'; btnGeneral.style.color = '#666'; btnGeneral.style.borderColor = '#e0e0e0';
+      zonaGeneral.style.display = 'none';
+      zonaEspecifico.style.display = 'block';
+      renderFilasEspecifico();
+    }
+  }
+
+  function renderFilasEspecifico() {
+    const cont = document.getElementById('filas-especifico');
+    cont.innerHTML = '';
+    diasSeleccionados.forEach(dia => {
+      const fila = document.createElement('div');
+      fila.style.cssText = 'display:flex; gap:10px; align-items:center; margin-bottom:10px;';
+      fila.innerHTML = `
+        <span style="width:70px; font-size:13px; font-weight:600; color:#333; font-family:Poppins,sans-serif;">${nombresDias[dia]}</span>
+        <input type="time" data-dia="${dia}" data-campo="entrada" onchange="actualizarHorarioPorDia(this)" style="flex:1; padding:10px 12px; border:1.5px solid #e0e0e0; border-radius:14px; font-family:Poppins,sans-serif; font-size:13px; outline:none; box-sizing:border-box;"/>
+        <input type="time" data-dia="${dia}" data-campo="salida" onchange="actualizarHorarioPorDia(this)" style="flex:1; padding:10px 12px; border:1.5px solid #e0e0e0; border-radius:14px; font-family:Poppins,sans-serif; font-size:13px; outline:none; box-sizing:border-box;"/>
+      `;
+      cont.appendChild(fila);
+    });
+  }
+
+  function actualizarHorarioPorDia(input) {
+    const dia = input.dataset.dia;
+    const campo = input.dataset.campo;
+    if (!horarioPorDia[dia]) horarioPorDia[dia] = {};
+    horarioPorDia[dia][campo] = input.value;
+  }
+
+  async function guardarHorario() {
+    if (diasSeleccionados.length === 0) {
+      window.mostrarAviso ? window.mostrarAviso('Elegí al menos un día.') : alert('Elegí al menos un día.');
+      return;
+    }
+    const empleadosSeleccionados = Array.from(document.querySelectorAll('.check-empleado:checked')).map(el => el.dataset.id);
+
+    document.getElementById('form-nombre').value = document.getElementById('input-nombre-horario').value;
+    document.getElementById('form-dias').value = diasSeleccionados.join(',');
+    document.getElementById('form-tipo').value = tipoHorario;
+    document.getElementById('form-hora-entrada-general').value = document.getElementById('input-hora-entrada-general').value;
+    document.getElementById('form-hora-salida-general').value = document.getElementById('input-hora-salida-general').value;
+    document.getElementById('form-horario-por-dia-json').value = JSON.stringify(horarioPorDia);
+    document.getElementById('form-empleados').value = empleadosSeleccionados.join(',');
+
+    document.getElementById('form-horario').submit();
+  }
+</script>

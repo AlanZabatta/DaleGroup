@@ -3,22 +3,40 @@
   <p style="font-size: 26px; font-weight: 800; color: #186904; margin: 0 0 8px;"><%= @cajero.name %></p>
   <p style="font-size: 13px; color: #999; margin: 0 0 24px;"><%= @cajero.email %></p>
 
+<%
+  colores_perfil = ["#E91E8C", "#186904", "#2b2b2b", "#0066cc", "#e67e22", "#8e44ad", "#c0392b", "#16a085"]
+  color_cajero = Enum.at(colores_perfil, rem(@cajero.id, length(colores_perfil)))
+%>
   <div style="display: flex; justify-content: center; margin-bottom: 28px;">
-    <label style="position: relative; width: 110px; height: 110px; border-radius: 50%; overflow: hidden; cursor: pointer; background: #f5f5f5; border: 2px solid #e0e0e0;">
-      <img id="foto-cajero-preview" src={@cajero.avatar || ""} style={"width: 100%; height: 100%; object-fit: cover; display: #{if @cajero.avatar, do: "block", else: "none"};"}/>
-      <div id="foto-cajero-placeholder" style={"width: 100%; height: 100%; display: #{if @cajero.avatar, do: "none", else: "flex"}; align-items: center; justify-content: center;"}>
-        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/>
-          <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/>
-        </svg>
-      </div>
-      <div style="position: absolute; bottom: 2px; right: 2px; width: 32px; height: 32px; border-radius: 50%; background: #186904; border: 2px solid white; display: flex; align-items: center; justify-content: center;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
-        </svg>
-      </div>
-      <input type="file" accept="image/*" style="display:none;" onchange="subirFotoCajero(this)"/>
-    </label>
+    <div style={"width: 110px; height: 110px; border-radius: 50%; background: #{color_cajero}; display: flex; align-items: flex-end; justify-content: center; overflow: hidden;"}>
+      <svg width="90" height="90" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/>
+        <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/>
+      </svg>
+    </div>
+  </div>
+
+<%
+  nombre_default = if @cajero.nombre_visible && @cajero.nombre_visible != "" do
+    @cajero.nombre_visible
+  else
+    (@cajero.name || "") |> String.split(" ", parts: 2) |> List.first() || ""
+  end
+  apellido_default = if @cajero.apellido_visible && @cajero.apellido_visible != "" do
+    @cajero.apellido_visible
+  else
+    (@cajero.name || "") |> String.split(" ", parts: 2) |> Enum.at(1, "")
+  end
+%>
+
+  <div style="margin-bottom: 18px;">
+    <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Nombre</p>
+    <input type="text" id="input-nombre-visible" value={nombre_default} placeholder="Nombre" oninput="empleadoModificado = true" style="width: 100%; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; color: #333; outline: none; box-sizing: border-box;"/>
+  </div>
+
+  <div style="margin-bottom: 18px;">
+    <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Apellido</p>
+    <input type="text" id="input-apellido-visible" value={apellido_default} placeholder="Apellido" oninput="empleadoModificado = true" style="width: 100%; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; color: #333; outline: none; box-sizing: border-box;"/>
   </div>
 
   <div style="margin-bottom: 18px;">
@@ -40,17 +58,90 @@
     <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Horario laboral</p>
     <input type="text" id="input-horario" value={@cajero.horario_laboral} placeholder="Ej: Lun a Vie 9 a 18hs" oninput="empleadoModificado = true" style="width: 100%; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; color: #333; outline: none; box-sizing: border-box;"/>
   </div>
-
-  <button type="button" onclick="guardarCajero()" id="btn-guardar-cajero" style="width: 100%; background-color: #186904; color: white; padding: 14px 0; border: none; border-radius: 16px; cursor: pointer; font-size: 15px; font-weight: 700; font-family: Poppins, sans-serif; margin-bottom: 12px;">
+  <button type="button" onclick="guardarCajero()" id="btn-guardar-cajero" style="width: 100%; background-color: #186904; color: white; padding: 14px 0; border: none; border-radius: 16px; cursor: pointer; font-size: 15px; font-weight: 700; font-family: Poppins, sans-serif; margin-bottom: 22px;">
     Guardar cambios
   </button>
 
-  <form action={~p"/mi-tienda/cajeros/#{@cajero.id}/remove"} method="post">
+  <div style="height: 1px; background: #eee; margin: 0 0 20px;"></div>
+  <p style="font-size: 13px; font-weight: 700; color: #186904; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 1px;">EmpleoPuntos</p>
+  <button type="button" style="width: 100%; background: linear-gradient(135deg, #d4af37, #b8860b); color: white; padding: 14px 0; border: none; border-radius: 16px; cursor: pointer; font-size: 15px; font-weight: 700; font-family: Poppins, sans-serif; margin-bottom: 24px; box-shadow: 0 3px 10px rgba(184,134,11,0.3);">
+    ⭐ Premiar empleado
+  </button>
+
+  <div style="height: 1px; background: #eee; margin: 0 0 20px;"></div>
+  <p style="font-size: 13px; font-weight: 700; color: #186904; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 1px;">Gestión</p>
+  <button type="button" onclick="document.getElementById('modal-despedir').style.display='flex'" style="width: 100%; background: none; color: #c0392b; padding: 12px 0; border: 1.5px solid #c0392b; border-radius: 16px; cursor: pointer; font-size: 14px; font-weight: 700; font-family: Poppins, sans-serif;">
+    Despedir empleado
+  </button>
+
+  <form id="form-despedir" action={~p"/mi-tienda/cajeros/#{@cajero.id}/remove"} method="post" style="display:none;">
     <input type="hidden" name="_csrf_token" value={get_csrf_token()}/>
-    <button type="submit" style="width: 100%; background: none; color: #c0392b; padding: 12px 0; border: 1.5px solid #c0392b; border-radius: 16px; cursor: pointer; font-size: 14px; font-weight: 700; font-family: Poppins, sans-serif;">
-      Eliminar empleado
-    </button>
+    <input type="hidden" name="razon" id="input-razon-despido" value=""/>
   </form>
+
+  <div id="modal-despedir" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.45); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:28px; width:320px; max-width:88%; padding:26px 22px; box-shadow:0 12px 40px rgba(0,0,0,0.25); text-align:center; max-height:85vh; overflow-y:auto;">
+      <div style="width:60px; height:60px; margin:0 auto 12px; border:4px solid #c0392b; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><line x1="12" y1="7" x2="12" y2="14" stroke="#c0392b" stroke-width="3.5" stroke-linecap="round"/><circle cx="12" cy="18.5" r="1.8" fill="#c0392b"/></svg>
+      </div>
+      <p style="font-size:17px; font-weight:700; color:#c0392b; margin:0 0 8px; font-family:Poppins,sans-serif;">Estás eliminando a este empleado</p>
+      <div style="height:2px; width:50px; background:#c0392b; border-radius:2px; margin:0 auto 14px;"></div>
+      <p style="font-size:13px; color:#666; margin:0 0 16px; line-height:1.4; font-family:Poppins,sans-serif;">¿Querés dejar asentada la razón en tus registros de tu local?</p>
+
+      <p style="font-size:11px; font-weight:700; color:#186904; margin:0 0 10px; text-transform:uppercase; letter-spacing:1px; font-family:Poppins,sans-serif; text-align:left;">Razón</p>
+      <div id="razones-chips" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;">
+        <button type="button" class="chip-razon" data-razon="Faltas o llegadas tarde reiteradas" onclick="elegirRazon(this)" style="padding:7px 12px; border-radius:20px; border:1.5px solid #e0e0e0; background:white; color:#666; font-size:11px; font-family:Poppins,sans-serif; cursor:pointer;">Faltas o llegadas tarde</button>
+        <button type="button" class="chip-razon" data-razon="Bajo rendimiento" onclick="elegirRazon(this)" style="padding:7px 12px; border-radius:20px; border:1.5px solid #e0e0e0; background:white; color:#666; font-size:11px; font-family:Poppins,sans-serif; cursor:pointer;">Bajo rendimiento</button>
+        <button type="button" class="chip-razon" data-razon="Mala conducta o falta de respeto" onclick="elegirRazon(this)" style="padding:7px 12px; border-radius:20px; border:1.5px solid #e0e0e0; background:white; color:#666; font-size:11px; font-family:Poppins,sans-serif; cursor:pointer;">Mala conducta</button>
+        <button type="button" class="chip-razon" data-razon="Incumplimiento de normas del local" onclick="elegirRazon(this)" style="padding:7px 12px; border-radius:20px; border:1.5px solid #e0e0e0; background:white; color:#666; font-size:11px; font-family:Poppins,sans-serif; cursor:pointer;">Incumplió normas</button>
+        <button type="button" class="chip-razon" data-razon="Motivos económicos del negocio" onclick="elegirRazon(this)" style="padding:7px 12px; border-radius:20px; border:1.5px solid #e0e0e0; background:white; color:#666; font-size:11px; font-family:Poppins,sans-serif; cursor:pointer;">Motivos económicos</button>
+        <button type="button" class="chip-razon" id="chip-otra" onclick="elegirOtra()" style="padding:7px 12px; border-radius:20px; border:1.5px solid #e0e0e0; background:white; color:#666; font-size:11px; font-family:Poppins,sans-serif; cursor:pointer;">Otra</button>
+      </div>
+
+      <input type="text" id="input-otra-razon" placeholder="Escribí la razón..." oninput="actualizarRazonOtra(this)" style="display:none; width:100%; padding:11px 14px; border:1.5px solid #e0e0e0; border-radius:14px; font-family:Poppins,sans-serif; font-size:13px; margin-bottom:14px; box-sizing:border-box; outline:none;"/>
+
+      <div style="display:flex; gap:10px; margin-top:6px;">
+        <button type="button" id="btn-continuar-despido" onclick="confirmarDespido()" style="flex:1; background:#c0392b; color:#fff; border:none; border-radius:14px; padding:13px 0; font-size:13px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer;">Continuar sin asentar</button>
+        <button type="button" onclick="document.getElementById('modal-despedir').style.display='none'" style="flex:1; background:#fff; color:#666; border:2px solid #e0e0e0; border-radius:14px; padding:11px 0; font-size:13px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer;">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let razonSeleccionada = '';
+
+    function elegirRazon(btn) {
+      document.querySelectorAll('.chip-razon').forEach(c => { c.style.background = 'white'; c.style.color = '#666'; c.style.borderColor = '#e0e0e0'; });
+      btn.style.background = '#186904'; btn.style.color = 'white'; btn.style.borderColor = '#186904';
+      document.getElementById('input-otra-razon').style.display = 'none';
+      razonSeleccionada = btn.dataset.razon;
+      actualizarBotonDespido();
+    }
+
+    function elegirOtra() {
+      document.querySelectorAll('.chip-razon').forEach(c => { c.style.background = 'white'; c.style.color = '#666'; c.style.borderColor = '#e0e0e0'; });
+      const chip = document.getElementById('chip-otra');
+      chip.style.background = '#186904'; chip.style.color = 'white'; chip.style.borderColor = '#186904';
+      document.getElementById('input-otra-razon').style.display = 'block';
+      razonSeleccionada = document.getElementById('input-otra-razon').value.trim();
+      actualizarBotonDespido();
+    }
+
+    function actualizarRazonOtra(input) {
+      razonSeleccionada = input.value.trim();
+      actualizarBotonDespido();
+    }
+
+    function actualizarBotonDespido() {
+      const btn = document.getElementById('btn-continuar-despido');
+      btn.textContent = razonSeleccionada !== '' ? 'Continuar' : 'Continuar sin asentar';
+    }
+
+    function confirmarDespido() {
+      document.getElementById('input-razon-despido').value = razonSeleccionada;
+      document.getElementById('form-despedir').submit();
+    }
+  </script>
 </div>
 
 <script>
@@ -63,6 +154,8 @@
     btn.textContent = 'Guardando...'; btn.disabled = true;
     const formData = new FormData();
     formData.append('_csrf_token', csrfTokenCajero);
+    formData.append('nombre_visible', document.getElementById('input-nombre-visible').value);
+    formData.append('apellido_visible', document.getElementById('input-apellido-visible').value);
     formData.append('telefono', document.getElementById('input-telefono').value);
     formData.append('sede', document.getElementById('input-sede').value);
     formData.append('zona', document.getElementById('input-zona').value);

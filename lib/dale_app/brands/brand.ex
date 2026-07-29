@@ -11,6 +11,8 @@ defmodule DaleApp.Brands.Brand do
     field :address_full, :string
     field :horario_atencion, :string
     field :colores, :map, default: %{}
+    field :asistencia_activa, :boolean, default: false
+    field :asistencia_activada_en, :utc_datetime
     field :latitude, :float
     field :longitude, :float
     field :image_limit, :integer, default: 12
@@ -26,7 +28,7 @@ defmodule DaleApp.Brands.Brand do
 
   def changeset(brand, attrs) do
     brand
-    |> cast(attrs, [:name, :logo, :cover_image, :description, :address, :address_full, :horario_atencion, :colores, :latitude, :longitude, :image_limit, :active, :modalidad, :featured_slot, :user_id, :discount, :categorias])
+    |> cast(attrs, [:name, :logo, :cover_image, :description, :address, :address_full, :horario_atencion, :colores, :latitude, :longitude, :image_limit, :active, :modalidad, :featured_slot, :user_id, :discount, :categorias, :asistencia_activa, :asistencia_activada_en])
     |> validate_required([:user_id])
     |> validate_inclusion(:modalidad, ["presencial", "digital", "ambos"])
     |> validate_number(:discount, greater_than_or_equal_to: 0, less_than_or_equal_to: 100)

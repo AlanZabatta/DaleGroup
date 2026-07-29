@@ -113,11 +113,97 @@ defmodule DaleAppWeb.BrandController do
     render(conn, :cajeros, brand: brand, cajeros: cajeros)
   end
 
-  def remove_cajero(conn, %{"id" => id}) do
+  def toggle_asistencia(conn, _params) do
+    user_id = get_session(conn, :user_id)
+    brand = Repo.get_by(Brand, user_id: user_id)
+
+    if brand do
+      brand
+      |> Brand.changeset(%{asistencia_activa: !brand.asistencia_activa})
+      |> Repo.update()
+    end
+
+    conn
+    |> redirect(to: ~p"/mi-tienda/cajeros")
+  end
+
+  def horarios(conn, _params) do
+    user_id = get_session(conn, :user_id)
+    brand = Repo.get_by(Brand, user_id: user_id)
+    horarios = if brand, do: Repo.all(from h in DaleApp.Brands.HorarioTrabajo, where: h.brand_id == ^brand.id), else: []
+    cajeros = if brand, do: Accounts.list_cajeros(brand.id), else: []
+    render(conn, :horarios, brand: brand, horarios: horarios, cajeros: cajeros)
+  end
+
+  def nuevo_horario(conn, _params) do
+    user_id = get_session(conn, :user_id)
+    brand = Repo.get_by(Brand, user_id: user_id)
+    cajeros = if brand, do: Accounts.list_cajeros(brand.id), else: []
+    render(conn, :nuevo_horario, brand: brand, cajeros: cajeros)
+  end
+
+  def crear_horario(conn, params) do
+    user_id = get_session(conn, :user_id)
+    brand = Repo.get_by(Brand, user_id: user_id)
+
+    dias = params |> Map.get("dias", "") |> String.split(",") |> Enum.reject(&(&1 == ""))
+    empleados_ids = params |> Map.get("empleados", "") |> String.split(",") |> Enum.reject(&(&1 == ""))
+    tipo = Map.get(params, "tipo", "general")
+
+    atributos = %{
+      brand_id: brand.id,
+      nombre: Map.get(params, "nombre", ""),
+      dias: dias,
+      tipo: tipo,
+      hora_entrada_general: Map.get(params, "hora_entrada_general"),
+      hora_salida_general: Map.get(params, "hora_salida_general"),
+      horario_por_dia: Map.get(params, "horario_por_dia_json", "{}") |> Jason.decode!()
+    }
+
+    case %DaleApp.Brands.HorarioTrabajo{} |> DaleApp.Brands.HorarioTrabajo.changeset(atributos) |> Repo.insert() do
+      {:ok, horario} ->
+        Enum.each(empleados_ids, fn eid ->
+          case Accounts.get_user(eid) do
+            nil -> :ok
+            empleado -> empleado |> Ecto.Changeset.change(%{horario_id: horario.id}) |> Repo.update()
+          end
+        end)
+        conn
+        |> put_flash(:info, "Horario creado.")
+        |> redirect(to: ~p"/mi-tienda/horarios")
+
+      {:error, _} ->
+        conn
+        |> put_flash(:error, "Error al crear el horario.")
+        |> redirect(to: ~p"/mi-tienda/horarios/nuevo")
+    end
+  end
+
+  def remove_cajero(conn, %{"id" => id} = params) do
     user = Accounts.get_user(id)
+    razon = Map.get(params, "razon", "") |> String.trim()
+    hay_razon = razon != ""
+
+    if user && user.cajero_brand_id do
+      atributos = if hay_razon do
+        %{
+          brand_id: user.cajero_brand_id,
+          nombre_empleado: user.name,
+          email_empleado: user.email,
+          razon: razon
+        }
+      else
+        %{brand_id: user.cajero_brand_id}
+      end
+
+      %DaleApp.Accounts.BajaEmpleado{}
+      |> DaleApp.Accounts.BajaEmpleado.changeset(atributos)
+      |> Repo.insert()
+    end
+
     Accounts.remove_cajero(user)
     conn
-    |> put_flash(:info, "Cajero eliminado.")
+    |> put_flash(:info, "Empleado despedido.")
     |> redirect(to: ~p"/mi-tienda/cajeros")
   end
 
@@ -143,7 +229,9 @@ defmodule DaleAppWeb.BrandController do
         "telefono" => Map.get(params, "telefono", cajero.telefono),
         "sede" => Map.get(params, "sede", cajero.sede),
         "zona" => Map.get(params, "zona", cajero.zona),
-        "horario_laboral" => Map.get(params, "horario_laboral", cajero.horario_laboral)
+        "horario_laboral" => Map.get(params, "horario_laboral", cajero.horario_laboral),
+        "nombre_visible" => Map.get(params, "nombre_visible", cajero.nombre_visible),
+        "apellido_visible" => Map.get(params, "apellido_visible", cajero.apellido_visible)
       }
       cajero
       |> DaleApp.Accounts.User.changeset(atributos)

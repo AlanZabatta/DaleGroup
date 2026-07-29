@@ -56,7 +56,12 @@ live "/registro", RegistroLive
     get "/mi-stand", BrandController, :mi_stand
     get "/mi-tienda/cupon", CouponController, :new
     post "/mi-tienda/cupon", CouponController, :create
-    get "/mi-tienda/cajeros", BrandController, :cajeros
+    live "/mi-tienda/cajeros", CajerosLive
+    post "/mi-tienda/asistencia/toggle", BrandController, :toggle_asistencia
+    get "/mi-tienda/horarios", BrandController, :horarios
+    get "/mi-tienda/horarios/nuevo", BrandController, :nuevo_horario
+    post "/mi-tienda/horarios/crear", BrandController, :crear_horario
+    live "/mi-tienda/cajeros/asistencia", AsistenciaLive
     get "/mi-tienda/cajeros/:id", BrandController, :cajero_detalle
     post "/mi-tienda/cajeros/:id/actualizar", BrandController, :actualizar_cajero
     post "/mi-tienda/cajeros/:id/foto", BrandController, :subir_foto_cajero
