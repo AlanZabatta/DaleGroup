@@ -3,6 +3,7 @@ defmodule DaleApp.Brands.BrandLocation do
   import Ecto.Changeset
 
   schema "brand_locations" do
+    field :nombre, :string
     field :address, :string
     field :latitude, :float
     field :longitude, :float
@@ -13,7 +14,7 @@ defmodule DaleApp.Brands.BrandLocation do
 
   def changeset(location, attrs) do
     location
-    |> cast(attrs, [:address, :latitude, :longitude, :brand_id])
+    |> cast(attrs, [:nombre, :address, :latitude, :longitude, :brand_id])
     |> validate_required([:brand_id])
   end
 end

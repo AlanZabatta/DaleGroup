@@ -57,6 +57,7 @@ live "/registro", RegistroLive
     get "/mi-tienda/cupon", CouponController, :new
     post "/mi-tienda/cupon", CouponController, :create
     live "/mi-tienda/cajeros", CajerosLive
+    live "/mi-tienda/sedes", SedesLive
     post "/mi-tienda/asistencia/toggle", BrandController, :toggle_asistencia
     get "/mi-tienda/horarios", BrandController, :horarios
     get "/mi-tienda/horarios/nuevo", BrandController, :nuevo_horario
