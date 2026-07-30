@@ -513,6 +513,58 @@
     <a href="/mi-tienda/sedes" style="display: block; text-align: center; background-color: #186904; color: white; padding: 14px; border-radius: 16px; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
       Gestionar mis sedes
     </a>
+
+    <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 28px 0 16px; text-transform: uppercase; letter-spacing: 1px;">Seguridad</p>
+    <%= if @brand.pin_hash do %>
+      <div style="width: 100%; text-align: center; background-color: #f0f0f0; color: #888; padding: 14px; border-radius: 16px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px; box-sizing: border-box;">
+        🔒 Mi PIN (ya configurado)
+      </div>
+      <p style="font-size: 11px; color: #999; margin: 8px 4px 0; font-family: Poppins, sans-serif; line-height: 1.4;">Si lo olvidaste, contactá a soporte para restablecerlo.</p>
+    <% else %>
+      <button type="button" onclick="document.getElementById('modal-crear-pin').style.display='flex'" style="width: 100%; text-align: center; background-color: #186904; color: white; padding: 14px; border-radius: 16px; border: none; cursor: pointer; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
+        Mi PIN
+      </button>
+      <p style="font-size: 11px; color: #999; margin: 8px 4px 0; font-family: Poppins, sans-serif; line-height: 1.4;">Te va a servir para autorizar cambios manuales, como corregir un día de asistencia.</p>
+    <% end %>
+
+    <div id="modal-crear-pin" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.45); z-index:9999; align-items:center; justify-content:center;">
+      <div style="background:#fff; border-radius:28px; width:300px; max-width:85%; padding:28px 24px; box-shadow:0 12px 40px rgba(0,0,0,0.25); text-align:center;">
+        <div id="pin-paso-inicial">
+          <p style="font-size:18px; font-weight:700; color:#186904; margin:0 0 6px; font-family:Poppins,sans-serif;">Crear tu PIN</p>
+          <p style="font-size:13px; color:#666; margin:0 0 18px; font-family:Poppins,sans-serif; line-height:1.5;">Se va a generar un PIN de 4 dígitos. Lo vas a poder ver solo esta vez — anotalo en un lugar seguro.</p>
+          <button onclick="crearPinAhora()" style="width:100%; background:#186904; color:#fff; border:none; border-radius:14px; padding:12px 0; font-size:14px; font-weight:700; font-family:Poppins,sans-serif; cursor:pointer;">Generar mi PIN</button>
+          <button onclick="document.getElementById('modal-crear-pin').style.display='none'" style="width:100%; margin-top:10px; background:none; color:#999; border:none; padding:8px 0; font-size:13px; font-family:Poppins,sans-serif; cursor:pointer;">Cancelar</button>
+        </div>
+        <div id="pin-paso-mostrado" style="display:none;">
+          <p style="font-size:18px; font-weight:700; color:#186904; margin:0 0 6px; font-family:Poppins,sans-serif;">Tu PIN es:</p>
+          <p id="pin-valor" style="font-size:36px; font-weight:800; color:#111; letter-spacing:8px; margin:14px 0; font-family:Poppins,sans-serif;"></p>
+          <p style="font-size:12px; color:#c0392b; margin:0 0 18px; font-family:Poppins,sans-serif; line-height:1.5; font-weight:600;">⚠ Anotalo ahora. No lo vas a poder volver a ver. Si lo perdés, vas a tener que contactar a soporte.</p>
+          <button onclick="document.getElementById('modal-crear-pin').style.display='none'; location.reload();" style="width:100%; background:#186904; color:#fff; border:none; border-radius:14px; padding:12px 0; font-size:14px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer;">Ya lo anoté</button>
+        </div>
+        <p id="pin-error" style="display:none; color:#c0392b; font-size:12px; margin-top:12px; font-family:Poppins,sans-serif;"></p>
+      </div>
+    </div>
+
+    <script>
+      const csrfTokenPin = document.querySelector("meta[name='csrf-token']")?.getAttribute("content");
+      async function crearPinAhora() {
+        const res = await fetch('/mi-tienda/pin/generar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ _csrf_token: csrfTokenPin })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          document.getElementById('pin-paso-inicial').style.display = 'none';
+          document.getElementById('pin-paso-mostrado').style.display = 'block';
+          document.getElementById('pin-valor').textContent = data.pin;
+        } else {
+          const err = document.getElementById('pin-error');
+          err.textContent = data.mensaje || 'Error al generar el PIN.';
+          err.style.display = 'block';
+        }
+      }
+    </script>
   <% else %>
     <p style="font-family: Poppins, sans-serif; color: #666;">No tenés una tienda asignada todavía.</p>
   <% end %>

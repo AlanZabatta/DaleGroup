@@ -64,6 +64,7 @@ defmodule DaleApp.MixProject do
 {:ueberauth_google, "~> 0.12"},
       {:ueberauth_discord, "~> 0.7"},
 {:eqrcode, "~> 0.2"},
+      {:bcrypt_elixir, "~> 3.0"},
       {:telemetry_metrics, "~> 1.0"},
       {:telemetry_poller, "~> 1.0"},
       {:gettext, "~> 1.0"},

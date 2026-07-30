@@ -21,6 +21,8 @@ defmodule DaleApp.Brands.Brand do
     field :featured_slot, :integer
     field :discount, :integer, default: 0
     field :categorias, {:array, :string}, default: []
+    field :pin_hash, :string
+    field :pin_visto, :boolean, default: false
     belongs_to :user, DaleApp.Accounts.User
 
     timestamps()
@@ -33,5 +35,18 @@ defmodule DaleApp.Brands.Brand do
     |> validate_inclusion(:modalidad, ["presencial", "digital", "ambos"])
     |> validate_number(:discount, greater_than_or_equal_to: 0, less_than_or_equal_to: 100)
     |> validate_inclusion(:image_limit, [12, 14, 18, 22, 30])
+  end
+
+  def crear_pin_changeset(brand, pin) do
+    hash = Bcrypt.hash_pwd_salt(pin)
+    cast(brand, %{pin_hash: hash}, [:pin_hash])
+  end
+
+  def marcar_pin_visto_changeset(brand) do
+    cast(brand, %{pin_visto: true}, [:pin_visto])
+  end
+
+  def pin_valido?(brand, pin) do
+    Bcrypt.verify_pass(pin, brand.pin_hash || "")
   end
 end

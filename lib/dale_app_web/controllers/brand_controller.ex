@@ -309,6 +309,22 @@ defmodule DaleAppWeb.BrandController do
     end
   end
 
+  def generar_pin(conn, _params) do
+    user_id = get_session(conn, :user_id)
+    brand = Repo.get_by(Brand, user_id: user_id)
+
+    if brand && is_nil(brand.pin_hash) do
+      pin = 1..4 |> Enum.map(fn _ -> Enum.random(0..9) end) |> Enum.join()
+
+      case brand |> Brand.crear_pin_changeset(pin) |> Repo.update() do
+        {:ok, _} -> json(conn, %{ok: true, pin: pin})
+        {:error, _} -> json(conn, %{ok: false, mensaje: "No se pudo generar el PIN."})
+      end
+    else
+      json(conn, %{ok: false, mensaje: "Ya tenés un PIN configurado. Si lo olvidaste, contactá a soporte."})
+    end
+  end
+
   def unirse(conn, %{"brand_id" => brand_id}) do
     user_id = get_session(conn, :user_id)
     user = if user_id, do: Accounts.get_user(user_id), else: nil
