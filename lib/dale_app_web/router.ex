@@ -58,6 +58,8 @@ live "/registro", RegistroLive
     post "/mi-tienda/cupon", CouponController, :create
     live "/mi-tienda/cajeros", CajerosLive
     live "/mi-tienda/sedes", SedesLive
+    live "/mi-tienda/stock", StockPanoramicoLive
+    post "/mi-tienda/categorias/:id/imagen", BrandController, :upload_imagen_categoria
     live "/mi-tienda/productos/:id/stock", StockLive
     post "/mi-tienda/pin/generar", BrandController, :generar_pin
     post "/mi-tienda/asistencia/toggle", BrandController, :toggle_asistencia

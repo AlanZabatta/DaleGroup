@@ -399,6 +399,30 @@ defmodule DaleAppWeb.BrandController do
     end
   end
 
+  def upload_imagen_categoria(conn, %{"id" => id, "imagen" => imagen}) do
+    user_id = get_session(conn, :user_id)
+    categoria = DaleApp.Repo.get(DaleApp.Products.CategoriaCustom, id)
+    brand = categoria && DaleApp.Repo.get(DaleApp.Brands.Brand, categoria.brand_id)
+
+    if brand && brand.user_id == user_id do
+      case DaleApp.Storage.upload_image(imagen.path, imagen.filename) do
+        {:ok, %{body: body}} when is_map(body) ->
+          url = body["secure_url"]
+          DaleApp.Repo.update!(Ecto.Changeset.change(categoria, %{imagen_url: url}))
+          json(conn, %{ok: true, url: url})
+        {:ok, %{body: body}} when is_binary(body) ->
+          decoded = Jason.decode!(body)
+          url = decoded["secure_url"]
+          DaleApp.Repo.update!(Ecto.Changeset.change(categoria, %{imagen_url: url}))
+          json(conn, %{ok: true, url: url})
+        _ ->
+          json(conn, %{ok: false, error: "Error al subir imagen"})
+      end
+    else
+      json(conn, %{ok: false})
+    end
+  end
+
   def upload_logo(conn, %{"id" => id, "logo" => logo} = params) do
     user_id = get_session(conn, :user_id)
     brand = DaleApp.Repo.get(DaleApp.Brands.Brand, id)

@@ -17,6 +17,8 @@ defmodule DaleApp.Products.Product do
     field :position_in_brand, :integer, default: 1
     field :position_global, :integer, default: 0
     field :active, :boolean, default: false
+    field :codigo_tipo, :string
+    field :codigo_numero, :string
     belongs_to :brand, DaleApp.Brands.Brand
 
     timestamps()
@@ -24,7 +26,7 @@ defmodule DaleApp.Products.Product do
 
   def changeset(product, attrs) do
     product
-    |> cast(attrs, [:name, :price, :original_price, :image, :images, :gender, :tipo, :talles, :categorias, :estilo, :description, :position_in_brand, :position_global, :active, :brand_id])
+    |> cast(attrs, [:name, :price, :original_price, :image, :images, :gender, :tipo, :talles, :categorias, :estilo, :description, :position_in_brand, :position_global, :active, :brand_id, :codigo_tipo, :codigo_numero])
     |> validate_required([:brand_id])
     |> validate_inclusion(:gender, ["hombre", "mujer", "unisex"])
   end
