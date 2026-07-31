@@ -58,7 +58,11 @@ defmodule DaleAppWeb.ProductoController do
             procesar_url_imagen(conn, product, decoded["secure_url"], imagenes_actuales)
           _ ->
             if imagenes_actuales == [] do
-              Products.delete_product(product)
+      if product.codigo_tipo && product.codigo_numero do
+        DaleApp.Products.Dale9.liberar_numero(product.brand_id, product.codigo_tipo, product.codigo_numero)
+      end
+
+      Products.delete_product(product)
             end
             json(conn, %{ok: false, error: "Upload failed"})
         end
@@ -131,12 +135,32 @@ defmodule DaleAppWeb.ProductoController do
     product = Products.get_product(id)
     brand = Repo.get(Brand, product.brand_id)
     if brand.user_id == user_id do
+      imagenes_a_borrar = (product.images || []) ++ (if product.image, do: [product.image], else: [])
+
+      imagenes_a_borrar
+      |> Enum.uniq()
+      |> Enum.each(fn url ->
+        case extraer_public_id(url) do
+          nil -> :ok
+          public_id -> DaleApp.Storage.delete_image(public_id)
+        end
+      end)
+
       Products.delete_product(product)
       json(conn, %{ok: true})
     else
       json(conn, %{ok: false})
     end
   end
+
+  defp extraer_public_id(url) when is_binary(url) do
+    case Regex.run(~r{/upload/(?:v\d+/)?(.+)\.[a-zA-Z0-9]+(?:\?.*)?$}, url) do
+      [_, public_id] -> public_id
+      _ -> nil
+    end
+  end
+
+  defp extraer_public_id(_), do: nil
 
   def update_nombre(conn, %{"id" => id, "nombre" => nombre}) do
     user_id = get_session(conn, :user_id)
