@@ -551,13 +551,13 @@ defmodule DaleAppWeb.StockPanoramicoLive do
             </div>
 
             <div id="talles-letra-stock" style="display: flex; flex-wrap: wrap; gap: 8px;">
-              <%= for %{nombre: nombre} <- @talles_fijos_render do %>
-                <button type="button" data-talle={nombre} onclick="toggleTalleStock(this)" style="padding: 8px 16px; border-radius: 20px; border: 1.5px solid #cfe4cf; background: white; color: #186904; cursor: pointer; font-size: 13px; font-weight: 600; font-family: Poppins, sans-serif;">
+              <%= for %{nombre: nombre, codigo: codigo} <- @talles_fijos_render do %>
+                <button type="button" data-talle={nombre} data-codigo-talle={codigo} onclick="toggleTalleStock(this)" style="padding: 8px 16px; border-radius: 20px; border: 1.5px solid #cfe4cf; background: white; color: #186904; cursor: pointer; font-size: 13px; font-weight: 600; font-family: Poppins, sans-serif;">
                   <%= nombre %>
                 </button>
               <% end %>
               <%= for t <- @talles_custom do %>
-                <button type="button" data-talle={t.nombre} onclick="toggleTalleStock(this)" style="padding: 8px 16px; border-radius: 20px; border: 1.5px solid #cfe4cf; background: white; color: #186904; cursor: pointer; font-size: 13px; font-weight: 600; font-family: Poppins, sans-serif;">
+                <button type="button" data-talle={t.nombre} data-codigo-talle={t.codigo_talle} onclick="toggleTalleStock(this)" style="padding: 8px 16px; border-radius: 20px; border: 1.5px solid #cfe4cf; background: white; color: #186904; cursor: pointer; font-size: 13px; font-weight: 600; font-family: Poppins, sans-serif;">
                   <%= t.nombre %>
                 </button>
               <% end %>
@@ -580,8 +580,8 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   "Dorado" => "#c9a227", "Plateado" => "#b0b0b0"
                 }
               %>
-              <%= for {_codigo, nombre} <- Enum.sort_by(DaleApp.Products.StockItem.colores(), fn {c, _n} -> c end) do %>
-                <button type="button" data-color={nombre} onclick="seleccionarColorStock(this)" title={nombre} style={"width: 36px; height: 36px; border-radius: 50%; padding: 0; cursor: pointer; position: relative; background: none; border: none;"}>
+              <%= for {codigo_c, nombre} <- Enum.sort_by(DaleApp.Products.StockItem.colores(), fn {c, _n} -> c end) do %>
+                <button type="button" data-color={nombre} data-codigo-color={codigo_c} onclick="seleccionarColorStock(this)" title={nombre} style={"width: 36px; height: 36px; border-radius: 50%; padding: 0; cursor: pointer; position: relative; background: none; border: none;"}>
                   <span class="anillo-color-stock" style="position: absolute; inset: -4px; border-radius: 50%; border: 2.5px solid transparent; transition: border-color 0.15s;"></span>
                   <span style={"position: absolute; inset: 0; border-radius: 50%; background: #{Map.get(mapa_hex_colores, nombre, "#ccc")}; box-shadow: 0 2px 5px rgba(0,0,0,0.18); #{if nombre == "Blanco", do: "border: 1.5px solid #e2e2e2;", else: ""}"}></span>
                   <svg class="check-color-stock" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={if nombre in ["Blanco", "Amarillo", "Beige", "Plateado"], do: "#333", else: "white"} stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; inset: 0; margin: auto; opacity: 0; transition: opacity 0.15s;">
@@ -591,6 +591,34 @@ defmodule DaleAppWeb.StockPanoramicoLive do
               <% end %>
             </div>
             <p id="color-elegido-texto-stock" style="font-size: 12px; color: #999; margin: 14px 0 0; font-family: Poppins, sans-serif;"></p>
+          </div>
+
+          <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px; text-align: center;">
+            <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 10px;">Código DALE9</p>
+            <svg viewBox="0 0 200 60" style="width: 100%; max-width: 220px; height: 60px;">
+              <%= for x <- [4,8,10,15,18,22,28,32,35,40,44,48,54,58,60,65,70,74,80,84,88,94,98,102,108,112,116,122,126,130,136,140,144,150,154,158,164,168,172,178,182,186,192,196] do %>
+                <rect x={x} y="4" width={if rem(x, 3) == 0, do: "3", else: "2"} height="52" fill="#186904"/>
+              <% end %>
+            </svg>
+            <p id="texto-dale9-stock" style="font-size: 13px; font-weight: 700; color: #333; letter-spacing: 2px; margin: 6px 0 0; font-family: monospace;">··· ·· ··· ··</p>
+          </div>
+
+          <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px; text-align: center;">
+            <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 10px;">Código EAN-13</p>
+            <svg viewBox="0 0 200 60" style="width: 100%; max-width: 220px; height: 60px;">
+              <%= for x <- [3,6,9,14,16,20,25,29,33,38,42,46,51,55,59,64,68,72,77,81,85,90,94,98,103,107,111,116,120,124,129,133,137,142,146,150,155,159,163,168,172,176,181,185,189,194] do %>
+                <rect x={x} y="4" width={if rem(x, 4) == 0, do: "3", else: "2"} height="52" fill="#186904"/>
+              <% end %>
+            </svg>
+            <p id="texto-ean13-stock" style="font-size: 13px; font-weight: 700; color: #333; letter-spacing: 2px; margin: 6px 0 0; font-family: monospace;">Se genera al guardar</p>
+          </div>
+
+          <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px; text-align: center;">
+            <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 10px;">Código QR</p>
+            <div id="qr-dale9-stock" style="display: flex; justify-content: center;">
+              {raw(EQRCode.encode("DALE9-preview") |> EQRCode.svg(width: 110))}
+            </div>
+            <p style="font-size: 11px; color: #aaa; margin: 8px 0 0; font-family: Poppins, sans-serif;">Se genera al guardar</p>
           </div>
 
           <button id="boton-guardar-stock" onclick="guardarProductoStock()" style="display: none; width: 100%; background: #186904; color: white; border: none; border-radius: 16px; padding: 15px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Poppins, sans-serif; box-shadow: 0 3px 10px rgba(24,105,4,0.25);">
@@ -625,6 +653,28 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   document.getElementById('prev-precio-stock').textContent = precio ? '$' + parseInt(precio).toLocaleString() : '';
                 };
 
+                let colorCodigoElegido = null;
+                let talleCodigoElegido = null;
+
+                window.actualizarPreviewCodigoStock = () => {
+                  const tipo = codigoTipo || '\u00b7\u00b7';
+                  const color = colorCodigoElegido || '\u00b7\u00b7';
+                  const numero = '\u00b7\u00b7\u00b7';
+                  let talle = talleCodigoElegido;
+
+                  const divNum = document.getElementById('talles-numerico-stock');
+                  const modoNumerico = divNum && divNum.style.display !== 'none';
+                  if (modoNumerico) {
+                    const valorNum = document.getElementById('input-talle-numerico-stock').value.trim();
+                    talle = valorNum ? valorNum.padStart(2, '0').slice(-2) : '\u00b7\u00b7';
+                  } else if (!talle) {
+                    talle = '\u00b7\u00b7';
+                  }
+
+                  const textoEl = document.getElementById('texto-dale9-stock');
+                  if (textoEl) textoEl.textContent = tipo + ' ' + color + ' ' + numero + ' ' + talle;
+                };
+
                 window.seleccionarColorStock = (btn) => {
                   document.querySelectorAll('#colores-stock button').forEach(b => {
                     const anillo = b.querySelector('.anillo-color-stock');
@@ -636,9 +686,11 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   const checkElegido = btn.querySelector('.check-color-stock');
                   if (anilloElegido) anilloElegido.style.borderColor = '#186904';
                   if (checkElegido) checkElegido.style.opacity = '1';
-
                   const texto = document.getElementById('color-elegido-texto-stock');
                   if (texto) texto.textContent = 'Color elegido: ' + btn.getAttribute('data-color');
+
+                  colorCodigoElegido = btn.getAttribute('data-codigo-color');
+                  actualizarPreviewCodigoStock();
                 };
 
                 window.cambiarModoTalleStock = (modo) => {
@@ -646,7 +698,6 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   const btnNumerico = document.getElementById('btn-modo-numerico-stock');
                   const divLetra = document.getElementById('talles-letra-stock');
                   const divNumerico = document.getElementById('talles-numerico-stock');
-
                   if (modo === 'letra') {
                     divLetra.style.display = 'flex';
                     divNumerico.style.display = 'none';
@@ -658,17 +709,18 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                     btnNumerico.style.background = '#186904'; btnNumerico.style.color = 'white';
                     btnLetra.style.background = 'white'; btnLetra.style.color = '#186904';
                   }
+                  actualizarPreviewCodigoStock();
                 };
 
                 window.toggleTalleStock = (btn) => {
-                  const talle = btn.getAttribute('data-talle');
-                  if (tallesSeleccionadosStock.includes(talle)) {
-                    tallesSeleccionadosStock = tallesSeleccionadosStock.filter(t => t !== talle);
-                    btn.style.background = 'white'; btn.style.color = '#666'; btn.style.borderColor = '#ddd';
-                  } else {
-                    tallesSeleccionadosStock.push(talle);
-                    btn.style.background = '#186904'; btn.style.color = 'white'; btn.style.borderColor = '#186904';
-                  }
+                  document.querySelectorAll('#talles-letra-stock button').forEach(b => {
+                    b.style.background = 'white'; b.style.color = '#186904'; b.style.borderColor = '#cfe4cf';
+                  });
+                  btn.style.background = '#186904'; btn.style.color = 'white'; btn.style.borderColor = '#186904';
+
+                  talleCodigoElegido = btn.getAttribute('data-codigo-talle');
+                  actualizarPreviewCodigoStock();
+
                 };
 
                 window.guardarProductoStock = () => {
