@@ -22,9 +22,11 @@ defmodule DaleApp.Products.StockItem do
   }
 
   @colores %{
-    "01" => "Negro", "02" => "Blanco", "03" => "Rojo", "04" => "Azul",
-    "05" => "Verde", "06" => "Amarillo", "07" => "Gris", "08" => "Rosa",
-    "09" => "Beige", "10" => "Marrón", "11" => "Naranja", "12" => "Violeta"
+    "11" => "Negro", "21" => "Blanco", "31" => "Gris", "41" => "Beige",
+    "51" => "Rojo", "61" => "Bordó", "71" => "Rosa", "81" => "Naranja",
+    "91" => "Amarillo", "12" => "Verde", "22" => "Verde oscuro", "32" => "Celeste",
+    "42" => "Azul", "52" => "Azul marino", "62" => "Violeta", "72" => "Marrón",
+    "82" => "Dorado", "92" => "Plateado"
   }
 
   @talles %{

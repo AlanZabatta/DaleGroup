@@ -342,10 +342,15 @@ defmodule DaleAppWeb.StockPanoramicoLive do
   def render(assigns) do
     ~H"""
     <div style="padding: 24px 18px 40px; font-family: Poppins, sans-serif; max-width: 600px; margin: 0 auto; background-color: white; min-height: 100vh; position: relative;">
-      <%= if @categoria_seleccionada do %>
-        <button type="button" phx-click="volver_categorias" style="display: inline-flex; background: none; border: none; color: #186904; font-size: 22px; font-weight: 700; cursor: pointer; line-height: 1; padding: 0; margin-bottom: 16px;">&#x2715;</button>
-      <% else %>
-        <a href="/mi-tienda" style="display: inline-flex; background: none; border: none; color: #186904; font-size: 22px; font-weight: 700; cursor: pointer; line-height: 1; text-decoration: none; margin-bottom: 16px;">&#x2715;</a>
+      <%= cond do %>
+        <% @categoria_seleccionada && @mostrar_formulario_producto -> %>
+          <button type="button" phx-click="cerrar_formulario_producto" style="width: 34px; height: 34px; border-radius: 50%; background: white; border: 1.5px solid #e0e0e0; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; padding: 0;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          </button>
+        <% @categoria_seleccionada -> %>
+          <button type="button" phx-click="volver_categorias" style="display: inline-flex; background: none; border: none; color: #186904; font-size: 22px; font-weight: 700; cursor: pointer; line-height: 1; padding: 0; margin-bottom: 16px;">&#x2715;</button>
+        <% true -> %>
+          <a href="/mi-tienda" style="display: inline-flex; background: none; border: none; color: #186904; font-size: 22px; font-weight: 700; cursor: pointer; line-height: 1; text-decoration: none; margin-bottom: 16px;">&#x2715;</a>
       <% end %>
 
       <%= if @categoria_seleccionada do %>
@@ -368,7 +373,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
         .busqueda-animada { animation: blurCambioBusqueda 0.6s ease; }
       </style>
 
-      <form phx-change="buscar" phx-submit="buscar" id="form-buscar-stock" phx-hook=".BuscadorStock" style="position: relative; width: 100%; margin-bottom: 20px;">
+      <form phx-change="buscar" phx-submit="buscar" id="form-buscar-stock" phx-hook=".BuscadorStock" style={"position: relative; width: 100%; margin-bottom: 20px; #{if @categoria_seleccionada && @mostrar_formulario_producto, do: "display: none;", else: ""}"}>
         <input
           type="text"
           name="termino"
@@ -508,46 +513,87 @@ defmodule DaleAppWeb.StockPanoramicoLive do
 
       <%= if @categoria_seleccionada && @mostrar_formulario_producto do %>
         <div id="form-producto-stock" phx-hook=".FormularioProductoStock" data-codigo-tipo={@categoria_seleccionada && @categoria_seleccionada.codigo} style="margin-bottom: 24px;">
-          <button type="button" phx-click="cerrar_formulario_producto" style="background: none; border: none; color: #186904; font-size: 14px; cursor: pointer; padding: 0; margin-bottom: 16px;">← Volver</button>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
-            <div style="border-radius: 16px; overflow: hidden; border: 1px solid #f2f2f2; position: relative; box-shadow: 0 3px 10px rgba(0,0,0,0.06);">
-              <div style="aspect-ratio: 3/4; background: #f0f0f0; position: relative; overflow: hidden;">
-                <img id="preview-img-stock" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;"/>
-                <div id="preview-placeholder-stock" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="document.getElementById('file-input-stock').click()">
-                  <svg width="45%" height="45%" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;">
-                    <%= if @categoria_seleccionada do %>
-                      {raw(icono_svg_por_codigo(@categoria_seleccionada.codigo, @categorias))}
-                    <% end %>
-                  </svg>
-                </div>
-                <input type="file" id="file-input-stock" accept="image/*" style="display: none;" onchange="previsualizarImagenStock(this)"/>
+          <div style="border-radius: 16px; overflow: hidden; border: 1px solid #f2f2f2; position: relative; box-shadow: 0 3px 10px rgba(0,0,0,0.06); margin-bottom: 16px;">
+            <div style="aspect-ratio: 16/9; background: #f0f0f0; position: relative; overflow: hidden;">
+              <img id="preview-img-stock" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;"/>
+              <div id="preview-placeholder-stock" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="document.getElementById('file-input-stock').click()">
+                <svg width="20%" height="20%" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;">
+                  <%= if @categoria_seleccionada do %>
+                    {raw(icono_svg_por_codigo(@categoria_seleccionada.codigo, @categorias))}
+                  <% end %>
+                </svg>
               </div>
-              <div style="background: white; padding: 8px 10px;">
-                <p id="prev-nombre-stock" style="font-size: 12px; font-weight: 500; margin: 0; color: #111; min-height: 16px;"></p>
-                <p id="prev-precio-stock" style="font-size: 13px; font-weight: 600; color: #186904; margin: 0; min-height: 16px;"></p>
-              </div>
+              <input type="file" id="file-input-stock" accept="image/*" style="display: none;" onchange="previsualizarImagenStock(this)"/>
             </div>
-
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-              <input id="input-nombre-stock" type="text" placeholder="Nombre de la prenda" oninput="actualizarPreviewStock()" style="width: 100%; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; outline: none;"/>
-              <input id="input-precio-stock" type="number" placeholder="Precio" oninput="actualizarPreviewStock()" style="width: 100%; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; outline: none;"/>
-              <textarea id="input-descripcion-stock" placeholder="Descripción (opcional)" style="width: 100%; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; resize: none; height: 70px; outline: none;"></textarea>
+            <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); padding: 10px 14px; border-top: 1.5px solid #d9ead9;">
+              <p id="prev-nombre-stock" style="font-size: 13px; font-weight: 700; margin: 0; color: #111; min-height: 16px;"></p>
+              <p id="prev-precio-stock" style="font-size: 14px; font-weight: 800; color: #186904; margin: 2px 0 0; min-height: 17px;"></p>
             </div>
           </div>
 
-          <div style="margin-bottom: 24px;">
-            <p style="font-size: 13px; font-weight: 500; color: #333; margin: 0 0 8px;">Talles</p>
-            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-              <%= for talle <- ["XS", "S", "M", "L", "XL", "XXL"] do %>
-                <button type="button" data-talle={talle} onclick="toggleTalleStock(this)" style="padding: 8px 16px; border-radius: 20px; border: 1.5px solid #e0e0e0; background: white; color: #666; cursor: pointer; font-size: 13px; font-weight: 600; font-family: Poppins, sans-serif;">
-                  <%= talle %>
+          <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10);">
+            <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 6px;">Nombre del producto</p>
+            <input id="input-nombre-stock" type="text" placeholder="Ej: Buzo oversize" oninput="actualizarPreviewStock()" style="width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; outline: none; background: white;"/>
+
+            <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 16px 0 6px;">Precio del producto</p>
+            <input id="input-precio-stock" type="number" placeholder="$" oninput="actualizarPreviewStock()" style="width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; outline: none; background: white;"/>
+
+            <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 16px 0 6px;">Descripción (opcional)</p>
+            <textarea id="input-descripcion-stock" placeholder="Detalles del producto" style="width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; resize: none; height: 70px; outline: none; background: white;"></textarea>
+          </div>
+
+          <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px;">
+            <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 10px;">Talles</p>
+
+            <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+              <button type="button" id="btn-modo-letra-stock" onclick="cambiarModoTalleStock('letra')" style="flex: 1; padding: 9px; border-radius: 12px; border: 1.5px solid #186904; background: #186904; color: white; cursor: pointer; font-size: 13px; font-weight: 700; font-family: Poppins, sans-serif;">Letra</button>
+              <button type="button" id="btn-modo-numerico-stock" onclick="cambiarModoTalleStock('numerico')" style="flex: 1; padding: 9px; border-radius: 12px; border: 1.5px solid #cfe4cf; background: white; color: #186904; cursor: pointer; font-size: 13px; font-weight: 700; font-family: Poppins, sans-serif;">Numérico</button>
+            </div>
+
+            <div id="talles-letra-stock" style="display: flex; flex-wrap: wrap; gap: 8px;">
+              <%= for %{nombre: nombre} <- @talles_fijos_render do %>
+                <button type="button" data-talle={nombre} onclick="toggleTalleStock(this)" style="padding: 8px 16px; border-radius: 20px; border: 1.5px solid #cfe4cf; background: white; color: #186904; cursor: pointer; font-size: 13px; font-weight: 600; font-family: Poppins, sans-serif;">
+                  <%= nombre %>
+                </button>
+              <% end %>
+              <%= for t <- @talles_custom do %>
+                <button type="button" data-talle={t.nombre} onclick="toggleTalleStock(this)" style="padding: 8px 16px; border-radius: 20px; border: 1.5px solid #cfe4cf; background: white; color: #186904; cursor: pointer; font-size: 13px; font-weight: 600; font-family: Poppins, sans-serif;">
+                  <%= t.nombre %>
                 </button>
               <% end %>
             </div>
+
+            <div id="talles-numerico-stock" style="display: none;">
+              <input id="input-talle-numerico-stock" type="text" placeholder="Ej: 38, 40, 42" style="width: 100%; padding: 12px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; outline: none; background: white;"/>
+            </div>
           </div>
 
-          <button id="boton-guardar-stock" onclick="guardarProductoStock()" style="width: 100%; background: #186904; color: white; border: none; border-radius: 16px; padding: 15px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Poppins, sans-serif; box-shadow: 0 3px 10px rgba(24,105,4,0.25);">
+          <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px;">
+            <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 12px;">Color Principal</p>
+            <div id="colores-stock" style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px 10px; justify-items: center;">
+              <%
+                mapa_hex_colores = %{
+                  "Negro" => "#1a1a1a", "Blanco" => "#ffffff", "Gris" => "#9e9e9e", "Beige" => "#e8dcc8",
+                  "Rojo" => "#d32f2f", "Bordó" => "#6d1b1b", "Rosa" => "#e91e8c", "Naranja" => "#f57c00",
+                  "Amarillo" => "#fbc02d", "Verde" => "#43a047", "Verde oscuro" => "#1b5e20", "Celeste" => "#4fc3f7",
+                  "Azul" => "#1565c0", "Azul marino" => "#0d1b4c", "Violeta" => "#7b1fa2", "Marrón" => "#5d3a1a",
+                  "Dorado" => "#c9a227", "Plateado" => "#b0b0b0"
+                }
+              %>
+              <%= for {_codigo, nombre} <- Enum.sort_by(DaleApp.Products.StockItem.colores(), fn {c, _n} -> c end) do %>
+                <button type="button" data-color={nombre} onclick="seleccionarColorStock(this)" title={nombre} style={"width: 36px; height: 36px; border-radius: 50%; padding: 0; cursor: pointer; position: relative; background: none; border: none;"}>
+                  <span class="anillo-color-stock" style="position: absolute; inset: -4px; border-radius: 50%; border: 2.5px solid transparent; transition: border-color 0.15s;"></span>
+                  <span style={"position: absolute; inset: 0; border-radius: 50%; background: #{Map.get(mapa_hex_colores, nombre, "#ccc")}; box-shadow: 0 2px 5px rgba(0,0,0,0.18); #{if nombre == "Blanco", do: "border: 1.5px solid #e2e2e2;", else: ""}"}></span>
+                  <svg class="check-color-stock" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={if nombre in ["Blanco", "Amarillo", "Beige", "Plateado"], do: "#333", else: "white"} stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; inset: 0; margin: auto; opacity: 0; transition: opacity 0.15s;">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </button>
+              <% end %>
+            </div>
+            <p id="color-elegido-texto-stock" style="font-size: 12px; color: #999; margin: 14px 0 0; font-family: Poppins, sans-serif;"></p>
+          </div>
+
+          <button id="boton-guardar-stock" onclick="guardarProductoStock()" style="display: none; width: 100%; background: #186904; color: white; border: none; border-radius: 16px; padding: 15px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Poppins, sans-serif; box-shadow: 0 3px 10px rgba(24,105,4,0.25);">
             Guardar producto
           </button>
 
@@ -577,6 +623,41 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   const precio = document.getElementById('input-precio-stock').value;
                   document.getElementById('prev-nombre-stock').textContent = nombre;
                   document.getElementById('prev-precio-stock').textContent = precio ? '$' + parseInt(precio).toLocaleString() : '';
+                };
+
+                window.seleccionarColorStock = (btn) => {
+                  document.querySelectorAll('#colores-stock button').forEach(b => {
+                    const anillo = b.querySelector('.anillo-color-stock');
+                    const check = b.querySelector('.check-color-stock');
+                    if (anillo) anillo.style.borderColor = 'transparent';
+                    if (check) check.style.opacity = '0';
+                  });
+                  const anilloElegido = btn.querySelector('.anillo-color-stock');
+                  const checkElegido = btn.querySelector('.check-color-stock');
+                  if (anilloElegido) anilloElegido.style.borderColor = '#186904';
+                  if (checkElegido) checkElegido.style.opacity = '1';
+
+                  const texto = document.getElementById('color-elegido-texto-stock');
+                  if (texto) texto.textContent = 'Color elegido: ' + btn.getAttribute('data-color');
+                };
+
+                window.cambiarModoTalleStock = (modo) => {
+                  const btnLetra = document.getElementById('btn-modo-letra-stock');
+                  const btnNumerico = document.getElementById('btn-modo-numerico-stock');
+                  const divLetra = document.getElementById('talles-letra-stock');
+                  const divNumerico = document.getElementById('talles-numerico-stock');
+
+                  if (modo === 'letra') {
+                    divLetra.style.display = 'flex';
+                    divNumerico.style.display = 'none';
+                    btnLetra.style.background = '#186904'; btnLetra.style.color = 'white';
+                    btnNumerico.style.background = 'white'; btnNumerico.style.color = '#186904';
+                  } else {
+                    divLetra.style.display = 'none';
+                    divNumerico.style.display = 'block';
+                    btnNumerico.style.background = '#186904'; btnNumerico.style.color = 'white';
+                    btnLetra.style.background = 'white'; btnLetra.style.color = '#186904';
+                  }
                 };
 
                 window.toggleTalleStock = (btn) => {
