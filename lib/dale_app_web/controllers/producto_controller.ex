@@ -25,7 +25,9 @@ defmodule DaleAppWeb.ProductoController do
     talles = params |> Map.get("talles", "") |> String.split(",") |> Enum.reject(&(&1 == ""))
     categorias = params |> Map.get("categorias", "") |> String.split(",") |> Enum.reject(&(&1 == ""))
     count = length(Products.list_brand_products(brand.id))
-    case Products.create_product(%{
+    codigo_tipo = Map.get(params, "codigo_tipo")
+
+    atributos_base = %{
       brand_id: brand.id,
       name: nombre,
       original_price: precio_original,
@@ -35,7 +37,17 @@ defmodule DaleAppWeb.ProductoController do
       categorias: categorias,
       position_in_brand: count + 1,
       active: false
-    }) do
+    }
+
+    atributos =
+      if codigo_tipo && codigo_tipo != "" do
+        codigo_numero = DaleApp.Products.Dale9.proximo_numero(brand.id, codigo_tipo)
+        Map.merge(atributos_base, %{codigo_tipo: codigo_tipo, codigo_numero: codigo_numero})
+      else
+        atributos_base
+      end
+
+    case Products.create_product(atributos) do
       {:ok, product} -> json(conn, %{ok: true, id: product.id})
       {:error, _} -> json(conn, %{ok: false})
     end

@@ -3,7 +3,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
   import Ecto.Query, only: [from: 2]
   alias DaleApp.Repo
   alias DaleApp.Brands.Brand
-  alias DaleApp.Products.{Product, StockItem, CategoriaCustom}
+  alias DaleApp.Products.{Product, StockItem, CategoriaCustom, TalleCustom}
 
   @categorias_fijas [
     %{codigo: "01", nombre: "Remeras", icono: "remera"},
@@ -12,12 +12,22 @@ defmodule DaleAppWeb.StockPanoramicoLive do
     %{codigo: "04", nombre: "Camperas", icono: "campera"}
   ]
 
+  @talles_fijos [
+    %{codigo: "02", nombre: "S"},
+    %{codigo: "03", nombre: "M"},
+    %{codigo: "04", nombre: "L"},
+    %{codigo: "05", nombre: "XL"}
+  ]
+
   def mount(_params, session, socket) do
     user_id = session["user_id"]
     brand = if user_id, do: Repo.get_by(Brand, user_id: user_id), else: nil
     if brand, do: asegurar_categorias_fijas(brand.id)
     productos_todos = if brand, do: listar_productos_con_stock(brand.id), else: []
     categorias = if brand, do: listar_categorias(brand.id), else: []
+    talles_custom = if brand, do: listar_talles_custom(brand.id), else: []
+    panel = if brand, do: calcular_panel(brand, productos_todos), else: nil
+    talles_totales = if brand, do: calcular_talles_totales(brand.id, talles_custom), else: []
 
     {:ok,
      assign(socket,
@@ -27,31 +37,47 @@ defmodule DaleAppWeb.StockPanoramicoLive do
        termino: "",
        categoria_seleccionada: nil,
        categorias: categorias,
+       talles_custom: talles_custom,
        mostrar_modal_categoria: false,
+       mostrar_modal_talle: false,
        icono_elegido: nil,
        imagen_subida_url: nil,
        error_categoria: nil,
-       editando_categoria_id: nil
+       error_talle: nil,
+       editando_categoria_id: nil,
+       panel: panel,
+       talles_totales: talles_totales,
+       talles_fijos_render: @talles_fijos,
+       panel_tab: "control",
+       mostrar_formulario_producto: false
      )}
   end
 
-  defp asegurar_categorias_fijas(brand_id) do
-    codigos_existentes =
-      from(c in CategoriaCustom, where: c.brand_id == ^brand_id, select: c.codigo_tipo)
-      |> Repo.all()
-      |> MapSet.new()
+  def handle_event("abrir_formulario_producto", _params, socket) do
+    {:noreply, assign(socket, mostrar_formulario_producto: true)}
+  end
 
-    Enum.each(@categorias_fijas, fn cat ->
-      unless MapSet.member?(codigos_existentes, cat.codigo) do
-        %CategoriaCustom{}
-        |> CategoriaCustom.changeset(%{nombre: cat.nombre, icono: cat.icono, codigo_tipo: cat.codigo, brand_id: brand_id})
-        |> Repo.insert()
-      end
-    end)
+  def handle_event("cerrar_formulario_producto", _params, socket) do
+    {:noreply, assign(socket, mostrar_formulario_producto: false)}
+  end
+
+  def handle_event("producto_creado_ok", _params, socket) do
+    productos_todos = listar_productos_con_stock(socket.assigns.brand.id)
+    panel = calcular_panel(socket.assigns.brand, productos_todos)
+
+    {:noreply,
+     socket
+     |> assign(productos_todos: productos_todos, productos: productos_todos, panel: panel)
+     |> assign(mostrar_formulario_producto: false)}
+  end
+
+  def handle_event("cambiar_tab_panel", %{"tab" => tab}, socket) do
+    {:noreply, assign(socket, panel_tab: tab)}
   end
 
   def handle_event("buscar", %{"termino" => termino}, socket) do
     termino_norm = termino |> String.trim() |> String.downcase()
+    termino_traducido = traducir_si_es_ean13(termino_norm)
 
     productos =
       if termino_norm == "" do
@@ -60,11 +86,19 @@ defmodule DaleAppWeb.StockPanoramicoLive do
         Enum.filter(socket.assigns.productos_todos, fn {producto, _total, codigos} ->
           nombre_match = producto.name && String.contains?(String.downcase(producto.name), termino_norm)
           codigo_match = Enum.any?(codigos, fn c -> String.contains?(String.downcase(c), termino_norm) end)
-          nombre_match || codigo_match
+          codigo_match_ean = termino_traducido && Enum.any?(codigos, fn c -> String.contains?(String.downcase(c), termino_traducido) end)
+          nombre_match || codigo_match || codigo_match_ean
         end)
       end
 
     {:noreply, assign(socket, productos: productos, termino: termino)}
+  end
+
+  defp traducir_si_es_ean13(termino) do
+    case StockItem.desde_ean13(termino) do
+      {:ok, dale9} -> dale9
+      {:error, _} -> nil
+    end
   end
 
   def handle_event("elegir_categoria", %{"tipo" => tipo, "nombre" => nombre}, socket) do
@@ -145,6 +179,36 @@ defmodule DaleAppWeb.StockPanoramicoLive do
     end
   end
 
+  def handle_event("abrir_modal_talle", _params, socket) do
+    {:noreply, assign(socket, mostrar_modal_talle: true, error_talle: nil)}
+  end
+
+  def handle_event("cerrar_modal_talle", _params, socket) do
+    {:noreply, assign(socket, mostrar_modal_talle: false)}
+  end
+
+  def handle_event("crear_talle", %{"nombre" => nombre}, socket) do
+    nombre = String.trim(nombre)
+
+    if nombre == "" do
+      {:noreply, assign(socket, error_talle: "Ponele un nombre al talle.")}
+    else
+      codigo_talle = proximo_codigo_talle(socket.assigns.brand.id)
+
+      case %TalleCustom{}
+           |> TalleCustom.changeset(%{nombre: nombre, codigo_talle: codigo_talle, brand_id: socket.assigns.brand.id})
+           |> Repo.insert() do
+        {:ok, _} ->
+          talles_custom = listar_talles_custom(socket.assigns.brand.id)
+          talles_totales = calcular_talles_totales(socket.assigns.brand.id, talles_custom)
+          {:noreply, assign(socket, talles_custom: talles_custom, talles_totales: talles_totales, mostrar_modal_talle: false, error_talle: nil)}
+
+        {:error, _} ->
+          {:noreply, assign(socket, error_talle: "No se pudo crear el talle.")}
+      end
+    end
+  end
+
   defp proximo_codigo_tipo(brand_id) do
     usados_fijos = Enum.map(@categorias_fijas, & &1.codigo)
 
@@ -159,9 +223,77 @@ defmodule DaleAppWeb.StockPanoramicoLive do
     |> String.pad_leading(2, "0")
   end
 
+  defp proximo_codigo_talle(brand_id) do
+    usados_fijos = ["01", "02", "03", "04", "05", "06"]
+
+    usados_custom =
+      from(t in TalleCustom, where: t.brand_id == ^brand_id, select: t.codigo_talle)
+      |> Repo.all()
+
+    usados = MapSet.new(usados_fijos ++ usados_custom)
+
+    Enum.find(7..99, fn n -> not MapSet.member?(usados, String.pad_leading(Integer.to_string(n), 2, "0")) end)
+    |> Integer.to_string()
+    |> String.pad_leading(2, "0")
+  end
+
   defp listar_categorias(brand_id) do
     from(c in CategoriaCustom, where: c.brand_id == ^brand_id, order_by: [asc: c.codigo_tipo])
     |> Repo.all()
+  end
+
+  defp listar_talles_custom(brand_id) do
+    from(t in TalleCustom, where: t.brand_id == ^brand_id, order_by: [asc: t.codigo_talle])
+    |> Repo.all()
+  end
+
+  defp asegurar_categorias_fijas(brand_id) do
+    codigos_existentes =
+      from(c in CategoriaCustom, where: c.brand_id == ^brand_id, select: c.codigo_tipo)
+      |> Repo.all()
+      |> MapSet.new()
+
+    Enum.each(@categorias_fijas, fn cat ->
+      unless MapSet.member?(codigos_existentes, cat.codigo) do
+        %CategoriaCustom{}
+        |> CategoriaCustom.changeset(%{nombre: cat.nombre, icono: cat.icono, codigo_tipo: cat.codigo, brand_id: brand_id})
+        |> Repo.insert()
+      end
+    end)
+  end
+
+  defp calcular_panel(brand, productos_todos) do
+    total = length(productos_todos)
+    limite_dale = brand.image_limit || 12
+    productos_dale = Enum.count(productos_todos, fn {p, _t, _c} -> p.active end)
+
+    sin_stock =
+      productos_todos
+      |> Enum.filter(fn {p, total_stock, _c} -> p.active && total_stock == 0 end)
+      |> Enum.map(fn {p, _t, _c} -> %{id: p.id, nombre: p.name, imagen: p.image, codigo_tipo: p.codigo_tipo} end)
+
+    %{total: total, productos_dale: productos_dale, limite_dale: limite_dale, sin_stock: sin_stock}
+  end
+
+  defp calcular_talles_totales(brand_id, talles_custom) do
+    totales_db =
+      from(s in StockItem,
+        join: p in Product, on: p.id == s.product_id,
+        where: p.brand_id == ^brand_id,
+        group_by: s.codigo_talle,
+        select: {s.codigo_talle, sum(s.cantidad)}
+      )
+      |> Repo.all()
+      |> Map.new()
+
+    nombres_custom = Map.new(talles_custom, fn t -> {t.codigo_talle, t.nombre} end)
+
+    (@talles_fijos ++ Enum.map(talles_custom, fn t -> %{codigo: t.codigo_talle, nombre: t.nombre} end))
+    |> Enum.map(fn %{codigo: codigo, nombre: nombre} ->
+      nombre_real = Map.get(nombres_custom, codigo, nombre)
+      total = Map.get(totales_db, codigo, 0)
+      {codigo, nombre_real, total}
+    end)
   end
 
   defp listar_productos_con_stock(brand_id) do
@@ -201,6 +333,11 @@ defmodule DaleAppWeb.StockPanoramicoLive do
   defp icono_svg("anteojos"), do: ~s(<circle cx="6.5" cy="12" r="3.5"/><circle cx="17.5" cy="12" r="3.5"/><line x1="10" y1="11" x2="14" y2="11"/><path d="M3 11l-1 1"/><path d="M21 11l1 1"/>)
   defp icono_svg("bolso"), do: ~s(<rect x="3" y="8" width="18" height="12" rx="2"/><path d="M8 8v-2a4 4 0 0 1 8 0v2"/>)
   defp icono_svg(_), do: ~s(<circle cx="12" cy="12" r="8"/>)
+
+  defp icono_svg_por_codigo(codigo, categorias) do
+    cat = Enum.find(categorias, fn c -> c.codigo_tipo == codigo end)
+    icono_svg(cat && cat.icono)
+  end
 
   def render(assigns) do
     ~H"""
@@ -286,6 +423,218 @@ defmodule DaleAppWeb.StockPanoramicoLive do
           }
         </script>
       </form>
+
+      <%= if is_nil(@categoria_seleccionada) && @panel do %>
+        <div style="display: flex; gap: 6px; margin-bottom: 10px;">
+          <button type="button" phx-click="cambiar_tab_panel" phx-value-tab="control" style={"padding: 8px 16px; border-radius: 12px 12px 0 0; border: none; cursor: pointer; font-family: Poppins, sans-serif; font-size: 12.5px; font-weight: 700; background: #{if @panel_tab == "control", do: "#186904", else: "#f0f0f0"}; color: #{if @panel_tab == "control", do: "white", else: "#888"};"}>Control</button>
+          <button type="button" phx-click="cambiar_tab_panel" phx-value-tab="talle" style={"padding: 8px 16px; border-radius: 12px 12px 0 0; border: none; cursor: pointer; font-family: Poppins, sans-serif; font-size: 12.5px; font-weight: 700; background: #{if @panel_tab == "talle", do: "#186904", else: "#f0f0f0"}; color: #{if @panel_tab == "talle", do: "white", else: "#888"};"}>Talle</button>
+        </div>
+
+        <div style="border: 1.5px solid #f0f0f0; border-radius: 4px 18px 18px 18px; padding: 16px; margin-bottom: 16px; box-shadow: 0 3px 12px rgba(0,0,0,0.06); background: white;">
+          <p style="font-size: 12px; font-weight: 700; color: #186904; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 1px;">Panorama</p>
+
+          <%= if @panel_tab == "control" do %>
+            <p style="font-size: 13px; color: #555; margin: 0 0 8px;">Cantidad de productos: <span style="font-weight: 800; color: #186904;"><%= @panel.total %></span></p>
+            <p style="font-size: 13px; color: #555; margin: 0 0 8px;">Cantidad de productos Dale: <span style="font-weight: 800; color: #186904;"><%= @panel.productos_dale %>/<%= @panel.limite_dale %></span></p>
+
+            <%= if @panel.sin_stock != [] do %>
+              <div style="border-top: 1px solid #f0f0f0; margin-top: 10px; padding-top: 12px;">
+                <p style="font-size: 12px; font-weight: 700; color: #c0392b; margin: 0 0 10px;">⚠ Sin unidades cargadas (<%= length(@panel.sin_stock) %>)</p>
+                <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px;">
+                  <%= for p <- @panel.sin_stock do %>
+                    <div style="flex-shrink: 0; width: 88px; border-radius: 14px; overflow: hidden; border: 1px solid #f2f2f2; box-shadow: 0 3px 8px rgba(0,0,0,0.06); background: white;">
+                      <div style="aspect-ratio: 3/4; background: #faf5f4; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                        <%= if p.imagen do %>
+                          <img src={p.imagen} style="width: 100%; height: 100%; object-fit: cover;" />
+                        <% else %>
+                          <span style="font-size: 28px; font-weight: 800; color: #222;">?</span>
+                        <% end %>
+                      </div>
+                      <div style="padding: 6px 8px;">
+                        <p style="font-size: 10px; font-weight: 700; color: #111; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= p.nombre %></p>
+                        <p style="font-size: 9px; color: #c0392b; margin: 2px 0 0; font-weight: 700; text-transform: uppercase;">Sin stock</p>
+                      </div>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          <% else %>
+            <p style="font-size: 13px; color: #555; margin: 0 0 10px;">Talles:</p>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;">
+              <%= for %{nombre: nombre} <- @talles_fijos_render do %>
+                <span style="padding: 6px 14px; border-radius: 16px; background: #f7f5ef; color: #333; font-size: 12.5px; font-weight: 600;"><%= nombre %></span>
+              <% end %>
+              <%= for t <- @talles_custom do %>
+                <span style="padding: 6px 14px; border-radius: 16px; background: #f7f5ef; color: #333; font-size: 12.5px; font-weight: 600;"><%= t.nombre %></span>
+              <% end %>
+              <button type="button" phx-click="abrir_modal_talle" style="width: 30px; height: 30px; border-radius: 50%; border: 1.5px dashed #ccc; background: white; color: #999; cursor: pointer; font-size: 16px; font-weight: 300; display: flex; align-items: center; justify-content: center;">+</button>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <%= for {_codigo, nombre, total} <- @talles_totales do %>
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 2px; border-bottom: 1px solid #f5f5f5;">
+                  <p style="font-size: 13px; color: #555; margin: 0;">Talle <%= nombre %>:</p>
+                  <p style="font-size: 13px; font-weight: 700; color: #186904; margin: 0;"><%= total %></p>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+
+      <%= if @mostrar_modal_talle do %>
+        <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.45); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+          <div style="background: #fff; border-radius: 24px; width: 300px; max-width: 88%; padding: 24px 20px; box-shadow: 0 12px 40px rgba(0,0,0,0.25);">
+            <p style="font-size: 18px; font-weight: 700; color: #186904; margin: 0 0 14px; text-align: center;">Nuevo talle</p>
+            <form phx-submit="crear_talle">
+              <input type="text" name="nombre" placeholder="Ej: 38, Único, 2XL" autocomplete="off" style="width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1.5px solid #e0e0e0; border-radius: 14px; font-family: Poppins, sans-serif; font-size: 14px; outline: none; margin-bottom: 12px;" />
+              <%= if @error_talle do %>
+                <p style="color: #c0392b; font-size: 12px; margin: 0 0 10px; font-family: Poppins, sans-serif;"><%= @error_talle %></p>
+              <% end %>
+              <button type="submit" style="width: 100%; background: #186904; color: white; border: none; border-radius: 14px; padding: 12px 0; font-size: 14px; font-weight: 700; font-family: Poppins, sans-serif; cursor: pointer;">Crear talle</button>
+            </form>
+            <button type="button" phx-click="cerrar_modal_talle" style="width: 100%; margin-top: 8px; background: none; color: #999; border: none; padding: 8px 0; font-size: 13px; font-family: Poppins, sans-serif; cursor: pointer;">Cancelar</button>
+          </div>
+        </div>
+      <% end %>
+
+      <%= if @categoria_seleccionada && !@mostrar_formulario_producto do %>
+        <button type="button" phx-click="abrir_formulario_producto" style="width: 100%; display: flex; align-items: center; gap: 12px; padding: 16px; border: 1.5px solid #186904; border-radius: 16px; background: white; cursor: pointer; font-size: 15px; font-weight: 600; color: #186904; margin-bottom: 24px;">
+          <span style="font-size: 28px; line-height: 1; font-weight: 300;">+</span>
+          Crear producto en <%= @categoria_seleccionada.nombre %>
+        </button>
+      <% end %>
+
+      <%= if @categoria_seleccionada && @mostrar_formulario_producto do %>
+        <div id="form-producto-stock" phx-hook=".FormularioProductoStock" data-codigo-tipo={@categoria_seleccionada && @categoria_seleccionada.codigo} style="margin-bottom: 24px;">
+          <button type="button" phx-click="cerrar_formulario_producto" style="background: none; border: none; color: #186904; font-size: 14px; cursor: pointer; padding: 0; margin-bottom: 16px;">← Volver</button>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
+            <div style="border-radius: 16px; overflow: hidden; border: 1px solid #f2f2f2; position: relative; box-shadow: 0 3px 10px rgba(0,0,0,0.06);">
+              <div style="aspect-ratio: 3/4; background: #f0f0f0; position: relative; overflow: hidden;">
+                <img id="preview-img-stock" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;"/>
+                <div id="preview-placeholder-stock" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="document.getElementById('file-input-stock').click()">
+                  <svg width="45%" height="45%" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;">
+                    <%= if @categoria_seleccionada do %>
+                      {raw(icono_svg_por_codigo(@categoria_seleccionada.codigo, @categorias))}
+                    <% end %>
+                  </svg>
+                </div>
+                <input type="file" id="file-input-stock" accept="image/*" style="display: none;" onchange="previsualizarImagenStock(this)"/>
+              </div>
+              <div style="background: white; padding: 8px 10px;">
+                <p id="prev-nombre-stock" style="font-size: 12px; font-weight: 500; margin: 0; color: #111; min-height: 16px;"></p>
+                <p id="prev-precio-stock" style="font-size: 13px; font-weight: 600; color: #186904; margin: 0; min-height: 16px;"></p>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <input id="input-nombre-stock" type="text" placeholder="Nombre de la prenda" oninput="actualizarPreviewStock()" style="width: 100%; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; outline: none;"/>
+              <input id="input-precio-stock" type="number" placeholder="Precio" oninput="actualizarPreviewStock()" style="width: 100%; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; outline: none;"/>
+              <textarea id="input-descripcion-stock" placeholder="Descripción (opcional)" style="width: 100%; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; resize: none; height: 70px; outline: none;"></textarea>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 24px;">
+            <p style="font-size: 13px; font-weight: 500; color: #333; margin: 0 0 8px;">Talles</p>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+              <%= for talle <- ["XS", "S", "M", "L", "XL", "XXL"] do %>
+                <button type="button" data-talle={talle} onclick="toggleTalleStock(this)" style="padding: 8px 16px; border-radius: 20px; border: 1.5px solid #e0e0e0; background: white; color: #666; cursor: pointer; font-size: 13px; font-weight: 600; font-family: Poppins, sans-serif;">
+                  <%= talle %>
+                </button>
+              <% end %>
+            </div>
+          </div>
+
+          <button id="boton-guardar-stock" onclick="guardarProductoStock()" style="width: 100%; background: #186904; color: white; border: none; border-radius: 16px; padding: 15px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Poppins, sans-serif; box-shadow: 0 3px 10px rgba(24,105,4,0.25);">
+            Guardar producto
+          </button>
+
+          <script :type={Phoenix.LiveView.ColocatedHook} name=".FormularioProductoStock">
+            export default {
+              mounted() {
+                const codigoTipo = this.el.dataset.codigoTipo || "";
+                let imagenBlobStock = null;
+                let tallesSeleccionadosStock = [];
+                const csrfTokenStock = document.querySelector("meta[name='csrf-token']")?.getAttribute("content");
+
+                window.previsualizarImagenStock = (input) => {
+                  const file = input.files[0];
+                  if (!file) return;
+                  imagenBlobStock = file;
+                  const reader = new FileReader();
+                  reader.onload = (e) => {
+                    document.getElementById('preview-img-stock').src = e.target.result;
+                    document.getElementById('preview-img-stock').style.display = 'block';
+                    document.getElementById('preview-placeholder-stock').style.display = 'none';
+                  };
+                  reader.readAsDataURL(file);
+                };
+
+                window.actualizarPreviewStock = () => {
+                  const nombre = document.getElementById('input-nombre-stock').value;
+                  const precio = document.getElementById('input-precio-stock').value;
+                  document.getElementById('prev-nombre-stock').textContent = nombre;
+                  document.getElementById('prev-precio-stock').textContent = precio ? '$' + parseInt(precio).toLocaleString() : '';
+                };
+
+                window.toggleTalleStock = (btn) => {
+                  const talle = btn.getAttribute('data-talle');
+                  if (tallesSeleccionadosStock.includes(talle)) {
+                    tallesSeleccionadosStock = tallesSeleccionadosStock.filter(t => t !== talle);
+                    btn.style.background = 'white'; btn.style.color = '#666'; btn.style.borderColor = '#ddd';
+                  } else {
+                    tallesSeleccionadosStock.push(talle);
+                    btn.style.background = '#186904'; btn.style.color = 'white'; btn.style.borderColor = '#186904';
+                  }
+                };
+
+                window.guardarProductoStock = () => {
+                  const nombre = document.getElementById('input-nombre-stock').value.trim();
+                  const precio = parseInt(document.getElementById('input-precio-stock').value) || 0;
+                  const descripcion = document.getElementById('input-descripcion-stock').value.trim();
+
+                  if (!nombre) { alert('Ponele un nombre al producto.'); return; }
+
+                  enviarProductoStock(nombre, precio, descripcion);
+                };
+
+                const enviarProductoStock = async (nombre, precio, descripcion) => {
+                  const formData = new FormData();
+                  formData.append('_csrf_token', csrfTokenStock);
+                  formData.append('nombre', nombre);
+                  formData.append('precio_original', precio);
+                  formData.append('precio_final', precio);
+                  formData.append('descripcion', descripcion);
+                  formData.append('talles', tallesSeleccionadosStock.join(','));
+                  formData.append('categorias', '');
+                  formData.append('codigo_tipo', codigoTipo);
+
+                  const btn = document.getElementById('boton-guardar-stock');
+                  btn.textContent = "Guardando..."; btn.disabled = true;
+
+                  const res = await fetch('/mi-tienda/productos/crear', { method: 'POST', body: formData });
+                  const data = await res.json();
+
+                  if (data.ok) {
+                    if (imagenBlobStock) {
+                      const imgForm = new FormData();
+                      imgForm.append('_csrf_token', csrfTokenStock);
+                      imgForm.append('imagen', imagenBlobStock, 'producto.jpg');
+                      await fetch('/productos/' + data.id + '/imagen', { method: 'POST', body: imgForm });
+                    }
+                    window.location.href = '/mi-tienda/productos/' + data.id + '/stock';
+                  } else {
+                    btn.textContent = "Guardar producto"; btn.disabled = false;
+                    alert('Error al guardar.');
+                  }
+                };
+              }
+            }
+          </script>
+        </div>
+      <% end %>
 
       <%= if is_nil(@categoria_seleccionada) do %>
         <p style="font-size: 12px; font-weight: 700; color: #186904; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 1px;">Categorías</p>
