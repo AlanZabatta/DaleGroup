@@ -1,0 +1,85 @@
+<div style="padding: 24px 18px 40px; font-family: Poppins, sans-serif; max-width: 600px; margin: 0 auto; background-color: white; min-height: 100vh;">
+  <a href="/mi-tienda" style="display: inline-flex; background: none; border: none; color: #186904; font-size: 22px; font-weight: 700; cursor: pointer; line-height: 1; text-decoration: none; margin-bottom: 16px;">&#x2715;</a>
+  <p style="font-size: 26px; font-weight: 800; color: #186904; margin: 0 0 20px;">Mis Empleados</p>
+  <button type="button" onclick="document.getElementById('modal-qr-empleado').style.display='flex'" style="width: 100%; text-align: center; background-color: #f0f0f0; color: #186904; padding: 12px; border-radius: 16px; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 13px; border: none; cursor: pointer;">
+    + Agregar nuevo empleado
+  </button>
+
+  <a href="/mi-tienda/horarios" style="display: block; text-align: center; background-color: white; color: #186904; padding: 12px; border-radius: 16px; margin-bottom: 20px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 13px; border: 1.5px solid #186904; text-decoration: none;">
+    Ver Horarios
+  </a>
+
+  <div id="modal-qr-empleado" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.45); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:28px; width:300px; max-width:85%; padding:28px 24px; box-shadow:0 12px 40px rgba(0,0,0,0.25); text-align:center;">
+      <p style="font-size:18px; font-weight:700; color:#186904; margin:0 0 6px; font-family:Poppins,sans-serif;">Sumá un empleado</p>
+      <p style="font-size:13px; color:#666; margin:0 0 18px; font-family:Poppins,sans-serif;">Que escanee este código con su celular</p>
+      <div style="background:white; border-radius:16px; padding:16px; display:inline-block; border:1.5px solid #e0e0e0;">
+        <%= raw EQRCode.encode("https://shawl-stipend-composed.ngrok-free.dev/unirse/#{@brand.id}") |> EQRCode.svg(width: 180) %>
+      </div>
+      <button onclick="document.getElementById('modal-qr-empleado').style.display='none'" style="width:100%; margin-top:18px; background:#186904; color:#fff; border:none; border-radius:14px; padding:12px 0; font-size:14px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer;">Cerrar</button>
+    </div>
+  </div>
+
+  <%= if Enum.empty?(@cajeros) do %>
+    <p style="color: #999; font-family: Poppins, sans-serif; font-size: 14px; text-align: center; padding: 40px 0;">Todavía no tenés empleados asignados.</p>
+  <% else %>
+    <%
+      colores = ["#E91E8C", "#186904", "#2b2b2b", "#0066cc", "#e67e22", "#8e44ad", "#c0392b", "#16a085"]
+      cajeros_con_color = @cajeros |> Enum.map(fn cajero -> {cajero, Enum.at(colores, rem(cajero.id, length(colores)))} end)
+    %>
+    <div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between;">
+      <%= for {{cajero, color}, i} <- Enum.with_index(cajeros_con_color) do %>
+        <a href={"/mi-tienda/cajeros/#{cajero.id}"} class={if i < 4, do: "cajero-tarjeta-visible", else: "cajero-tarjeta-oculta"} style={"display: #{if i < 4, do: "flex", else: "none"}; width: 47%; flex-direction: column; align-items: center; text-align: center; background: white; border: 1.5px solid #f0f0f0; border-radius: 20px; padding: 18px 10px; box-shadow: 0 3px 12px rgba(0,0,0,0.06); text-decoration: none; box-sizing: border-box;"}>
+          <div style={"width: 64px; height: 64px; border-radius: 50%; background: #{color}; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 10px; overflow: hidden; flex-shrink: 0;"}>
+            <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/>
+              <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/>
+            </svg>
+          </div>
+<%
+            apellido_mostrar = if cajero.apellido_visible && cajero.apellido_visible != "" do
+              cajero.apellido_visible
+            else
+              (cajero.name || "") |> String.split(" ", parts: 2) |> Enum.at(1, "")
+            end
+            nombre_mostrar = if cajero.nombre_visible && cajero.nombre_visible != "" do
+              cajero.nombre_visible
+            else
+              (cajero.name || "") |> String.split(" ", parts: 2) |> List.first() || ""
+            end
+          %>
+          <p style="font-size: 16px; font-weight: 700; color: #111; margin: 0; font-family: Poppins, sans-serif;"><%= if apellido_mostrar != "", do: apellido_mostrar, else: nombre_mostrar %></p>
+          <%= if apellido_mostrar != "" do %>
+            <p style="font-size: 13px; color: #999; margin: 2px 0 0; font-family: Poppins, sans-serif;"><%= nombre_mostrar %></p>
+          <% end %>
+          <%= if cajero.sede && cajero.sede != "" do %>
+            <p style="font-size: 11px; color: #888; margin: 4px 0 0; font-family: Poppins, sans-serif;">Sede: <%= cajero.sede %></p>
+          <% end %>
+          <%= if cajero.zona && cajero.zona != "" do %>
+            <p style="font-size: 11px; color: #888; margin: 2px 0 0; font-family: Poppins, sans-serif;">Zona: <%= cajero.zona %></p>
+          <% end %>
+        </a>
+      <% end %>
+    </div>
+
+    <%= if length(@cajeros) > 4 do %>
+      <button type="button" onclick="document.querySelectorAll('.cajero-tarjeta-oculta').forEach(el => el.style.display = 'flex'); this.style.display = 'none';" style="display: block; width: 100%; margin-top: 16px; background: none; border: 1.5px dashed #e0e0e0; border-radius: 16px; padding: 12px; cursor: pointer; color: #186904; font-family: Poppins, sans-serif; font-weight: 700; font-size: 13px;">
+        Ver todos (<%= length(@cajeros) %>)
+      </button>
+    <% end %>
+  <% end %>
+
+
+
+  <div style="height: 1px; background: #eee; margin: 24px 0 20px;"></div>
+
+  <div style="display: flex; align-items: center; justify-content: space-between;">
+    <p style="font-size: 13px; font-weight: 700; color: #186904; margin: 0; text-transform: uppercase; letter-spacing: 1px;">Asistencia</p>
+    <form action={~p"/mi-tienda/asistencia/toggle"} method="post">
+      <input type="hidden" name="_csrf_token" value={get_csrf_token()}/>
+      <button type="submit" style={"width: 50px; height: 28px; border-radius: 20px; border: none; cursor: pointer; padding: 3px; display: flex; align-items: center; background: #{if @brand.asistencia_activa, do: "#186904", else: "#ccc"}; justify-content: #{if @brand.asistencia_activa, do: "flex-end", else: "flex-start"}; transition: background 0.2s;"}>
+        <div style="width: 22px; height: 22px; border-radius: 50%; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></div>
+      </button>
+    </form>
+  </div>
+</div>

@@ -20,9 +20,18 @@ defmodule DaleAppWeb.FicharLive do
        brand: brand,
        user: user,
        es_empleado: es_empleado,
-       estado: :esperando_ubicacion,
-       mensaje: nil
+       estado: :consentimiento,
+       mensaje: nil,
+       mostrar_terminos: false
      )}
+  end
+
+  def handle_event("aceptar_consentimiento", _params, socket) do
+    {:noreply, assign(socket, estado: :esperando_ubicacion)}
+  end
+
+  def handle_event("toggle_terminos", _params, socket) do
+    {:noreply, assign(socket, mostrar_terminos: !socket.assigns.mostrar_terminos)}
   end
 
   def handle_event("ubicacion_recibida", %{"lat" => lat, "lng" => lng}, socket) do
@@ -30,8 +39,16 @@ defmodule DaleAppWeb.FicharLive do
     {:noreply, assign(socket, estado: elem(resultado, 0), mensaje: elem(resultado, 1))}
   end
 
-  def handle_event("ubicacion_error", _params, socket) do
-    {:noreply, assign(socket, estado: :error, mensaje: "No pudimos obtener tu ubicación. Activá el GPS y dale permiso al navegador.")}
+  def handle_event("ubicacion_error", %{"tipo" => tipo}, socket) do
+    mensaje =
+      case tipo do
+        "denegado" -> "Le negaste el permiso de ubicación al navegador. Sin eso no podemos confirmar tu fichaje. Activalo en la configuración del navegador e intentá de nuevo."
+        "timeout" -> "Tardó demasiado en encontrar tu ubicación. Fijate que tengas el GPS activado e intentá de nuevo."
+        "no_disponible" -> "No pudimos obtener tu ubicación en este momento. Probá salir a un lugar con mejor señal."
+        _ -> "No pudimos obtener tu ubicación. Activá el GPS y dale permiso al navegador."
+      end
+
+    {:noreply, assign(socket, estado: :error, mensaje: mensaje)}
   end
 
   defp procesar_fichaje(user, brand, lat, lng) do
@@ -145,50 +162,119 @@ defmodule DaleAppWeb.FicharLive do
       <%= cond do %>
         <% is_nil(@user) -> %>
           <p style="font-size: 16px; color: #666;">Necesitás iniciar sesión para fichar.</p>
+
         <% !@es_empleado -> %>
           <p style="font-size: 16px; color: #666;">No sos empleado de <%= @brand.name %>.</p>
+
+        <% @estado == :consentimiento -> %>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 16px; width: 100%;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            <p style="font-size: 18px; font-weight: 700; color: #186904; margin: 0;">Fichando en <%= @brand.name %></p>
+            <p style="font-size: 13px; color: #555; line-height: 1.6; margin: 0; text-align: left; background: #f7f5ef; border-radius: 14px; padding: 14px 16px;">
+              Para registrar tu llegada, vamos a pedirte tu ubicación por única vez. Solo usamos el punto exacto donde estás en este instante para confirmar que llegaste al local — no guardamos tu recorrido ni te rastreamos durante el día.
+            </p>
+            <button type="button" phx-click="aceptar_consentimiento" style="width: 100%; background: #186904; color: white; border: none; border-radius: 16px; padding: 14px; font-size: 15px; font-weight: 700; font-family: Poppins, sans-serif; cursor: pointer;">
+              Aceptar y fichar mi llegada
+            </button>
+            <button type="button" phx-click="toggle_terminos" style="background: none; border: none; color: #186904; font-size: 12px; text-decoration: underline; cursor: pointer; font-family: Poppins, sans-serif;">
+              Ver términos de uso de tu ubicación
+            </button>
+            <%= if @mostrar_terminos do %>
+              <div style="text-align: left; font-size: 11px; color: #777; line-height: 1.6; background: white; border: 1.5px solid #f0f0f0; border-radius: 12px; padding: 14px;">
+                <strong>Uso de datos de ubicación para fichaje.</strong><br/><br/>
+                Al tocar "Aceptar", autorizás a <%= @brand.name %> a solicitar tu ubicación GPS en el momento en que fiches tu entrada. Este dato se usa únicamente para verificar que te encontrás dentro de las inmediaciones de una de las sedes de la marca (radio de 200m), como parte del registro de asistencia laboral.<br/><br/>
+                No recopilamos tu ubicación en ningún otro momento del día, ni hacemos seguimiento continuo de tus movimientos. El registro guardado incluye la fecha, hora y puntaje de puntualidad de tu fichaje — no las coordenadas exactas de tu ubicación.<br/><br/>
+                Podés retirar este consentimiento en cualquier momento hablando con tu empleador. Este texto es informativo y de buena fe; no reemplaza asesoramiento legal profesional sobre normativa laboral y de protección de datos aplicable.
+              </div>
+            <% end %>
+          </div>
+
         <% @estado == :esperando_ubicacion -> %>
           <div id="ficha-gps" phx-hook=".PedirUbicacion" style="display: flex; flex-direction: column; align-items: center; gap: 16px;">
             <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-            <p style="font-size: 18px; font-weight: 700; color: #186904; margin: 0;">Fichando en <%= @brand.name %></p>
-            <p style="font-size: 13px; color: #999; margin: 0;">Buscando tu ubicación...</p>
+            <p style="font-size: 18px; font-weight: 700; color: #186904; margin: 0;">Buscando tu ubicación...</p>
+            <p id="ficha-gps-detalle" style="font-size: 13px; color: #999; margin: 0;">Un momento</p>
             <script :type={Phoenix.LiveView.ColocatedHook} name=".PedirUbicacion">
               export default {
                 mounted() {
+                  const detalle = document.getElementById("ficha-gps-detalle");
+                  const UMBRAL_METROS = 50;
+                  const TIEMPO_MAX_MS = 9000;
+                  let mejorLectura = null;
+                  let watchId = null;
+                  let inicio = Date.now();
+
                   if (!navigator.geolocation) {
-                    this.pushEvent("ubicacion_error", {});
+                    this.pushEvent("ubicacion_error", { tipo: "no_disponible" });
                     return;
                   }
-                  navigator.geolocation.getCurrentPosition(
-                    (pos) => {
+
+                  const terminar = () => {
+                    if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+                    if (mejorLectura) {
                       this.pushEvent("ubicacion_recibida", {
-                        lat: pos.coords.latitude,
-                        lng: pos.coords.longitude
+                        lat: mejorLectura.coords.latitude,
+                        lng: mejorLectura.coords.longitude
                       });
+                    } else {
+                      this.pushEvent("ubicacion_error", { tipo: "timeout" });
+                    }
+                  };
+
+                  const evaluarLectura = (pos) => {
+                    if (!mejorLectura || pos.coords.accuracy < mejorLectura.coords.accuracy) {
+                      mejorLectura = pos;
+                    }
+                    if (detalle) {
+                      detalle.textContent = "Precisión: " + Math.round(pos.coords.accuracy) + "m";
+                    }
+                    if (pos.coords.accuracy <= UMBRAL_METROS) {
+                      terminar();
+                    }
+                  };
+
+                  watchId = navigator.geolocation.watchPosition(
+                    evaluarLectura,
+                    (err) => {
+                      if (err.code === 1) {
+                        this.pushEvent("ubicacion_error", { tipo: "denegado" });
+                        if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+                      }
                     },
-                    () => {
-                      this.pushEvent("ubicacion_error", {});
-                    },
-                    { enableHighAccuracy: true, timeout: 10000 }
+                    { enableHighAccuracy: true, maximumAge: 0, timeout: TIEMPO_MAX_MS }
                   );
+
+                  setTimeout(() => {
+                    if (Date.now() - inicio >= TIEMPO_MAX_MS) terminar();
+                  }, TIEMPO_MAX_MS);
                 }
               }
             </script>
           </div>
+
         <% @estado == :exito -> %>
           <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
             <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>
             <p style="font-size: 17px; font-weight: 700; color: #186904; margin: 0;"><%= @mensaje %></p>
           </div>
+
         <% @estado == :fuera_de_rango -> %>
           <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
             <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             <p style="font-size: 15px; color: #c0392b; margin: 0; font-weight: 600;"><%= @mensaje %></p>
           </div>
+
         <% @estado == :ya_fichado -> %>
           <p style="font-size: 15px; color: #666; margin: 0;"><%= @mensaje %></p>
+
         <% @estado == :error -> %>
-          <p style="font-size: 15px; color: #c0392b; margin: 0;"><%= @mensaje %></p>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 16px;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <p style="font-size: 14px; color: #c0392b; margin: 0; line-height: 1.5;"><%= @mensaje %></p>
+            <button type="button" phx-click="aceptar_consentimiento" style="background: #186904; color: white; border: none; border-radius: 14px; padding: 12px 24px; font-size: 14px; font-weight: 700; font-family: Poppins, sans-serif; cursor: pointer;">
+              Reintentar
+            </button>
+          </div>
       <% end %>
     </div>
     """

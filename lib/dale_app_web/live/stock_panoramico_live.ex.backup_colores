@@ -102,8 +102,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
   end
 
   def handle_event("elegir_categoria", %{"tipo" => tipo, "nombre" => nombre}, socket) do
-    numero_preview = DaleApp.Products.Dale9.proximo_numero(socket.assigns.brand.id, tipo)
-    {:noreply, assign(socket, categoria_seleccionada: %{codigo: tipo, nombre: nombre, numero_preview: numero_preview})}
+    {:noreply, assign(socket, categoria_seleccionada: %{codigo: tipo, nombre: nombre})}
   end
 
   def handle_event("volver_categorias", _params, socket) do
@@ -513,11 +512,10 @@ defmodule DaleAppWeb.StockPanoramicoLive do
       <% end %>
 
       <%= if @categoria_seleccionada && @mostrar_formulario_producto do %>
-        <div id="form-producto-stock" phx-hook=".FormularioProductoStock" data-codigo-tipo={@categoria_seleccionada && @categoria_seleccionada.codigo} data-numero-preview={@categoria_seleccionada && @categoria_seleccionada.numero_preview} style="margin-bottom: 24px;">
+        <div id="form-producto-stock" phx-hook=".FormularioProductoStock" data-codigo-tipo={@categoria_seleccionada && @categoria_seleccionada.codigo} style="margin-bottom: 24px;">
           <div style="border-radius: 16px; overflow: hidden; border: 1px solid #f2f2f2; position: relative; box-shadow: 0 3px 10px rgba(0,0,0,0.06); margin-bottom: 16px;">
-            <div id="caja-foto-stock" style="aspect-ratio: 16/9; background: #f0f0f0; position: relative; overflow: hidden; transition: aspect-ratio 0.2s;">
-              <img id="preview-img-fondo-stock" src="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(20px) brightness(0.8); transform: scale(1.15); display: none;"/>
-              <img id="preview-img-stock" src="" style="position: relative; width: 100%; height: 100%; object-fit: contain; display: none;"/>
+            <div style="aspect-ratio: 16/9; background: #f0f0f0; position: relative; overflow: hidden;">
+              <img id="preview-img-stock" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;"/>
               <div id="preview-placeholder-stock" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="document.getElementById('file-input-stock').click()">
                 <svg width="20%" height="20%" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;">
                   <%= if @categoria_seleccionada do %>
@@ -541,20 +539,11 @@ defmodule DaleAppWeb.StockPanoramicoLive do
             <input id="input-precio-stock" type="number" placeholder="$" oninput="actualizarPreviewStock()" style="width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; outline: none; background: white;"/>
 
             <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 16px 0 6px;">Descripción (opcional)</p>
-            <textarea id="input-descripcion-stock" placeholder="Detalles del producto" oninput="limitarPalabrasStock(this); this.style.height='auto'; this.style.height=(this.scrollHeight)+'px';" style="width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; resize: none; height: 70px; min-height: 70px; outline: none; background: white; overflow: hidden;"></textarea>
-            <p id="contador-palabras-stock" style="font-size: 11px; color: #aaa; margin: 4px 0 0; text-align: right; font-family: Poppins, sans-serif;">0/500 palabras</p>
+            <textarea id="input-descripcion-stock" placeholder="Detalles del producto" style="width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; resize: none; height: 70px; outline: none; background: white;"></textarea>
           </div>
 
           <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
-              <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0;">Talles</p>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 11px; color: #888; font-family: Poppins, sans-serif;">¿Más de un talle?</span>
-                <button type="button" id="switch-multi-talle-stock" onclick="toggleMultiTalleStock()" style="width: 38px; height: 22px; border-radius: 20px; border: none; cursor: pointer; padding: 2px; display: flex; align-items: center; background: #ccc; justify-content: flex-start; transition: background 0.2s;">
-                  <div style="width: 18px; height: 18px; border-radius: 50%; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.3); transition: transform 0.2s;"></div>
-                </button>
-              </div>
-            </div>
+            <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 10px;">Talles</p>
 
             <div style="display: flex; gap: 8px; margin-bottom: 14px;">
               <button type="button" id="btn-modo-letra-stock" onclick="cambiarModoTalleStock('letra')" style="flex: 1; padding: 9px; border-radius: 12px; border: 1.5px solid #186904; background: #186904; color: white; cursor: pointer; font-size: 13px; font-weight: 700; font-family: Poppins, sans-serif;">Letra</button>
@@ -562,13 +551,13 @@ defmodule DaleAppWeb.StockPanoramicoLive do
             </div>
 
             <div id="talles-letra-stock" style="display: flex; flex-wrap: wrap; gap: 8px;">
-              <%= for %{nombre: nombre, codigo: codigo} <- @talles_fijos_render do %>
-                <button type="button" data-talle={nombre} data-codigo-talle={codigo} onclick="toggleTalleStock(this)" style="padding: 8px 16px; border-radius: 20px; border: 1.5px solid #cfe4cf; background: white; color: #186904; cursor: pointer; font-size: 13px; font-weight: 600; font-family: Poppins, sans-serif;">
+              <%= for %{nombre: nombre} <- @talles_fijos_render do %>
+                <button type="button" data-talle={nombre} onclick="toggleTalleStock(this)" style="padding: 8px 16px; border-radius: 20px; border: 1.5px solid #cfe4cf; background: white; color: #186904; cursor: pointer; font-size: 13px; font-weight: 600; font-family: Poppins, sans-serif;">
                   <%= nombre %>
                 </button>
               <% end %>
               <%= for t <- @talles_custom do %>
-                <button type="button" data-talle={t.nombre} data-codigo-talle={t.codigo_talle} onclick="toggleTalleStock(this)" style="padding: 8px 16px; border-radius: 20px; border: 1.5px solid #cfe4cf; background: white; color: #186904; cursor: pointer; font-size: 13px; font-weight: 600; font-family: Poppins, sans-serif;">
+                <button type="button" data-talle={t.nombre} onclick="toggleTalleStock(this)" style="padding: 8px 16px; border-radius: 20px; border: 1.5px solid #cfe4cf; background: white; color: #186904; cursor: pointer; font-size: 13px; font-weight: 600; font-family: Poppins, sans-serif;">
                   <%= t.nombre %>
                 </button>
               <% end %>
@@ -580,15 +569,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
           </div>
 
           <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
-              <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0;">Color Principal</p>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 11px; color: #888; font-family: Poppins, sans-serif;">¿Más de un color?</span>
-                <button type="button" id="switch-multi-color-stock" onclick="toggleMultiColorStock()" style="width: 38px; height: 22px; border-radius: 20px; border: none; cursor: pointer; padding: 2px; display: flex; align-items: center; background: #ccc; justify-content: flex-start; transition: background 0.2s;">
-                  <div style="width: 18px; height: 18px; border-radius: 50%; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.3); transition: transform 0.2s;"></div>
-                </button>
-              </div>
-            </div>
+            <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 12px;">Color Principal</p>
             <div id="colores-stock" style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px 10px; justify-items: center;">
               <%
                 mapa_hex_colores = %{
@@ -599,55 +580,22 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   "Dorado" => "#c9a227", "Plateado" => "#b0b0b0"
                 }
               %>
-              <%= for {codigo_c, nombre} <- Enum.sort_by(DaleApp.Products.StockItem.colores(), fn {c, _n} -> c end) do %>
-                <button type="button" data-color={nombre} data-codigo-color={codigo_c} onclick="seleccionarColorStock(this)" title={nombre} style={"width: 36px; height: 36px; border-radius: 50%; padding: 0; cursor: pointer; position: relative; background: none; border: none;"}>
-                  <span class="anillo-color-stock" style="position: absolute; inset: -4px; border-radius: 50%; border: 2.5px solid transparent; transition: border-color 0.15s;"></span>
-                  <span style={"position: absolute; inset: 0; border-radius: 50%; background: #{Map.get(mapa_hex_colores, nombre, "#ccc")}; box-shadow: 0 2px 5px rgba(0,0,0,0.18); #{if nombre == "Blanco", do: "border: 1.5px solid #e2e2e2;", else: ""}"}></span>
-                  <svg class="check-color-stock" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={if nombre in ["Blanco", "Amarillo", "Beige", "Plateado"], do: "#333", else: "white"} stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; inset: 0; margin: auto; opacity: 0; transition: opacity 0.15s;">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                </button>
+              <%= for {_codigo, nombre} <- Enum.sort_by(DaleApp.Products.StockItem.colores(), fn {c, _n} -> c end) do %>
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                  <button type="button" data-color={nombre} onclick="seleccionarColorStock(this)" title={nombre} style={"width: 36px; height: 36px; border-radius: 50%; padding: 0; cursor: pointer; position: relative; background: none; border: none;"}>
+                    <span class="anillo-color-stock" style="position: absolute; inset: -4px; border-radius: 50%; border: 2.5px solid transparent; transition: border-color 0.15s;"></span>
+                    <span style={"position: absolute; inset: 0; border-radius: 50%; background: #{Map.get(mapa_hex_colores, nombre, "#ccc")}; box-shadow: 0 2px 5px rgba(0,0,0,0.18); #{if nombre == "Blanco", do: "border: 1.5px solid #e2e2e2;", else: ""}"}></span>
+                    <svg class="check-color-stock" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={if nombre in ["Blanco", "Amarillo", "Beige", "Plateado"], do: "#333", else: "white"} stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; inset: 0; margin: auto; opacity: 0; transition: opacity 0.15s;">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  </button>
+                  <span style="font-size: 9.5px; color: #999; font-family: Poppins, sans-serif; text-align: center; line-height: 1.1;"><%= nombre %></span>
+                </div>
               <% end %>
             </div>
-            <p id="color-elegido-texto-stock" style="font-size: 12px; color: #999; margin: 14px 0 0; font-family: Poppins, sans-serif;"></p>
           </div>
 
-          <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px;">
-            <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 14px;">Cantidad de Stock</p>
-            <div id="filas-cantidad-stock" style="display: flex; flex-direction: column; gap: 10px;">
-              <p style="font-size: 12px; color: #bbb; text-align: center; margin: 8px 0; font-family: Poppins, sans-serif;">Elegí talle y color para cargar cantidad</p>
-            </div>
-          </div>
-
-          <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px; text-align: center;">
-            <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 10px;">Código DALE9</p>
-            <svg viewBox="0 0 200 60" style="width: 100%; max-width: 220px; height: 60px;">
-              <%= for x <- [4,8,10,15,18,22,28,32,35,40,44,48,54,58,60,65,70,74,80,84,88,94,98,102,108,112,116,122,126,130,136,140,144,150,154,158,164,168,172,178,182,186,192,196] do %>
-                <rect x={x} y="4" width={if rem(x, 3) == 0, do: "3", else: "2"} height="52" fill="#186904"/>
-              <% end %>
-            </svg>
-            <p id="texto-dale9-stock" style="font-size: 13px; font-weight: 700; color: #333; letter-spacing: 2px; margin: 6px 0 0; font-family: monospace;">··· ·· ··· ··</p>
-          </div>
-
-          <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px; text-align: center;">
-            <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 10px;">Código EAN-13</p>
-            <svg viewBox="0 0 200 60" style="width: 100%; max-width: 220px; height: 60px;">
-              <%= for x <- [3,6,9,14,16,20,25,29,33,38,42,46,51,55,59,64,68,72,77,81,85,90,94,98,103,107,111,116,120,124,129,133,137,142,146,150,155,159,163,168,172,176,181,185,189,194] do %>
-                <rect x={x} y="4" width={if rem(x, 4) == 0, do: "3", else: "2"} height="52" fill="#186904"/>
-              <% end %>
-            </svg>
-            <p id="texto-ean13-stock" style="font-size: 13px; font-weight: 700; color: #333; letter-spacing: 2px; margin: 6px 0 0; font-family: monospace;">···· ·· ···· ··· ·· ·</p>
-          </div>
-
-          <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px; text-align: center;">
-            <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 10px;">Código QR</p>
-            <div id="qr-dale9-stock" style="display: flex; justify-content: center;">
-              {raw(EQRCode.encode("DALE9-preview") |> EQRCode.svg(width: 110))}
-            </div>
-            <p style="font-size: 11px; color: #aaa; margin: 8px 0 0; font-family: Poppins, sans-serif;">Vista previa</p>
-          </div>
-
-          <button id="boton-guardar-stock" onclick="guardarProductoStock()" style="width: 100%; margin-top: 20px; background: #186904; color: white; border: none; border-radius: 16px; padding: 15px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Poppins, sans-serif; box-shadow: 0 3px 10px rgba(24,105,4,0.25);">
+          <button id="boton-guardar-stock" onclick="guardarProductoStock()" style="display: none; width: 100%; background: #186904; color: white; border: none; border-radius: 16px; padding: 15px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Poppins, sans-serif; box-shadow: 0 3px 10px rgba(24,105,4,0.25);">
             Guardar producto
           </button>
 
@@ -655,7 +603,6 @@ defmodule DaleAppWeb.StockPanoramicoLive do
             export default {
               mounted() {
                 const codigoTipo = this.el.dataset.codigoTipo || "";
-                const numeroPreview = this.el.dataset.numeroPreview || "";
                 let imagenBlobStock = null;
                 let tallesSeleccionadosStock = [];
                 const csrfTokenStock = document.querySelector("meta[name='csrf-token']")?.getAttribute("content");
@@ -666,24 +613,11 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   imagenBlobStock = file;
                   const reader = new FileReader();
                   reader.onload = (e) => {
-                    const imgFondo = document.getElementById('preview-img-fondo-stock');
-                    const imgPreview = document.getElementById('preview-img-stock');
-                    imgFondo.src = e.target.result;
-                    imgFondo.style.display = 'block';
-                    imgPreview.src = e.target.result;
-                    imgPreview.style.display = 'block';
+                    document.getElementById('preview-img-stock').src = e.target.result;
+                    document.getElementById('preview-img-stock').style.display = 'block';
                     document.getElementById('preview-placeholder-stock').style.display = 'none';
                   };
                   reader.readAsDataURL(file);
-                };
-
-                window.limitarPalabrasStock = (textarea) => {
-                  const palabras = textarea.value.trim().split(/\s+/).filter(p => p.length > 0);
-                  if (palabras.length > 500) {
-                    textarea.value = palabras.slice(0, 500).join(' ');
-                  }
-                  const contador = document.getElementById('contador-palabras-stock');
-                  if (contador) contador.textContent = Math.min(palabras.length, 500) + '/500 palabras';
                 };
 
                 window.actualizarPreviewStock = () => {
@@ -693,222 +627,17 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   document.getElementById('prev-precio-stock').textContent = precio ? '$' + parseInt(precio).toLocaleString() : '';
                 };
 
-                let colorCodigoElegido = null;
-                let talleCodigoElegido = null;
-
-                window.actualizarPreviewCodigoStock = () => {
-                  const tipo = codigoTipo || '\u00b7\u00b7';
-                  const color = colorCodigoElegido || '\u00b7\u00b7';
-                  const numero = numeroPreview || '\u00b7\u00b7\u00b7';
-                  let talle = talleCodigoElegido;
-
-                  const divNum = document.getElementById('talles-numerico-stock');
-                  const modoNumerico = divNum && divNum.style.display !== 'none';
-                  if (modoNumerico) {
-                    const valorNum = document.getElementById('input-talle-numerico-stock').value.trim();
-                    talle = valorNum ? valorNum.padStart(2, '0').slice(-2) : '\u00b7\u00b7';
-                  } else if (!talle) {
-                    talle = '\u00b7\u00b7';
-                  }
-
-                  const textoEl = document.getElementById('texto-dale9-stock');
-                  if (textoEl) textoEl.textContent = tipo + ' ' + color + ' ' + numero + ' ' + talle;
-                  if (textoEl) textoEl.textContent = tipo + ' ' + color + ' ' + numero + ' ' + talle;
-
-                  const completo = [tipo, color, numero, talle].every(p => !p.includes('\u00b7'));
-                  const ean13El = document.getElementById('texto-ean13-stock');
-                  if (completo && ean13El) {
-                    const codigo9 = tipo + color + numero + talle;
-                    const base = '20' + codigo9 + '0';
-                    let suma = 0;
-                    for (let i = 0; i < 12; i++) {
-                      const peso = (i % 2 === 0) ? 1 : 3;
-                      suma += parseInt(base[i]) * peso;
-                    }
-                    const digitoControl = (10 - (suma % 10)) % 10;
-                    ean13El.textContent = base.slice(0, 12) + digitoControl;
-                  } else if (ean13El) {
-                    ean13El.textContent = '\u00b7\u00b7\u00b7\u00b7 \u00b7\u00b7 \u00b7\u00b7\u00b7\u00b7 \u00b7\u00b7\u00b7 \u00b7\u00b7 \u00b7';
-                  }
-                  actualizarFilasCantidadStock();
-                };
-
-                let multiTalleActivo = false;
-                let multiColorActivo = false;
-                let tallesElegidos = [];
-                let coloresElegidos = [];
-                let cantidadesStock = {};
-                let clavesExcluidasStock = new Set();
-
-                const mapaHexColores = {
-                  '11': '#1a1a1a', '21': '#ffffff', '31': '#9e9e9e', '41': '#e8dcc8',
-                  '51': '#d32f2f', '61': '#6d1b1b', '71': '#e91e8c', '81': '#f57c00',
-                  '91': '#fbc02d', '12': '#43a047', '22': '#1b5e20', '32': '#4fc3f7',
-                  '42': '#1565c0', '52': '#0d1b4c', '62': '#7b1fa2', '72': '#5d3a1a',
-                  '82': '#c9a227', '92': '#b0b0b0'
-                };
-
-                window.actualizarFilasCantidadStock = () => {
-                  const cont = document.getElementById('filas-cantidad-stock');
-                  if (!cont) return;
-
-                  const talles = tallesElegidos.length > 0 ? tallesElegidos : (talleCodigoElegido ? [talleCodigoElegido] : []);
-                  const colores = coloresElegidos.length > 0 ? coloresElegidos : (colorCodigoElegido ? [colorCodigoElegido] : []);
-
-                  if (talles.length === 0 || colores.length === 0) {
-                    cont.innerHTML = '<p style="font-size: 12px; color: #bbb; text-align: center; margin: 8px 0; font-family: Poppins, sans-serif;">Elegí talle y color para cargar cantidad</p>';
-                    return;
-                  }
-
-                  const clavesNuevas = new Set();
-                  let html = '';
-
-                  colores.forEach(colorCod => {
-                    talles.forEach(talleCod => {
-                      const clave = colorCod + '_' + talleCod;
-                      if (clavesExcluidasStock.has(clave)) return;
-                      clavesNuevas.add(clave);
-                      if (!(clave in cantidadesStock)) cantidadesStock[clave] = 0;
-
-                      const hex = mapaHexColores[colorCod] || '#ccc';
-                      const btnTalle = document.querySelector('#talles-letra-stock button[data-codigo-talle="' + talleCod + '"]');
-                      const nombreTalle = btnTalle ? btnTalle.getAttribute('data-talle') : talleCod;
-                      const btnColor = document.querySelector('#colores-stock button[data-codigo-color="' + colorCod + '"]');
-                      const nombreColor = btnColor ? btnColor.getAttribute('data-color') : colorCod;
-                      const cantidad = cantidadesStock[clave];
-
-                      html += '<div style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: #f9f9f9; border-radius: 12px;">' +
-                        '<span style="width: 22px; height: 22px; border-radius: 50%; background: ' + hex + '; flex-shrink: 0; ' + (colorCod === '21' ? 'border: 1.5px solid #e0e0e0;' : '') + '"></span>' +
-                        '<span style="font-size: 13px; font-weight: 700; color: #333; flex: 1;">' + nombreTalle + '</span>' +
-                        '<div style="display: flex; align-items: center; gap: 6px;">' +
-                        '<button type="button" onclick="cambiarCantidadStock(\'' + clave + '\', -1)" style="width: 26px; height: 26px; border-radius: 8px; border: 1.5px solid #cfe4cf; background: white; color: #186904; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">-</button>' +
-                        '<input type="number" id="cantidad-input-' + clave + '" value="' + cantidad + '" min="0" max="9999" oninput="setCantidadStock(\'' + clave + '\', this.value)" style="width: 48px; text-align: center; padding: 5px 2px; border: 1.5px solid #cfe4cf; border-radius: 8px; font-family: Poppins, sans-serif; font-size: 13px; outline: none;"/>' +
-                        '<button type="button" onclick="cambiarCantidadStock(\'' + clave + '\', 1)" style="width: 26px; height: 26px; border-radius: 8px; border: 1.5px solid #cfe4cf; background: white; color: #186904; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">+</button>' +
-                        '<button type="button" onclick="pedirEliminarFilaStock(\'' + clave + '\', \'' + nombreTalle + '\', \'' + nombreColor + '\')" style="width: 26px; height: 26px; border-radius: 8px; border: none; background: none; color: #c0392b; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2l-1 -14"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6v-2a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v2"/></svg></button>' +
-                        '</div></div>';
-                    });
-                  });
-
-                  Object.keys(cantidadesStock).forEach(clave => {
-                    if (!clavesNuevas.has(clave)) delete cantidadesStock[clave];
-                  });
-
-                  cont.innerHTML = html;
-                };
-
-                window.cambiarCantidadStock = (clave, delta) => {
-                  const actual = cantidadesStock[clave] || 0;
-                  const nuevo = Math.max(0, Math.min(9999, actual + delta));
-                  cantidadesStock[clave] = nuevo;
-                  const input = document.getElementById('cantidad-input-' + clave);
-                  if (input) input.value = nuevo;
-                };
-
-                window.setCantidadStock = (clave, valor) => {
-                  let n = parseInt(valor) || 0;
-                  n = Math.max(0, Math.min(9999, n));
-                  cantidadesStock[clave] = n;
-                  const input = document.getElementById('cantidad-input-' + clave);
-                  if (input) input.value = n;
-                };
-
-                let claveAEliminarStock = null;
-
-                window.pedirEliminarFilaStock = (clave, nombreTalle, nombreColor) => {
-                  claveAEliminarStock = clave;
-                  const modal = document.getElementById('modal-confirmar-borrar-fila-stock');
-                  const texto = document.getElementById('texto-confirmar-borrar-fila-stock');
-                  if (texto) texto.textContent = '\u00bfEst\u00e1s seguro de eliminar ' + nombreColor + ' talle ' + nombreTalle + '?';
-                  if (modal) modal.style.display = 'flex';
-                };
-
-                window.cerrarConfirmarBorrarFilaStock = () => {
-                  claveAEliminarStock = null;
-                  const modal = document.getElementById('modal-confirmar-borrar-fila-stock');
-                  if (modal) modal.style.display = 'none';
-                };
-
-                window.confirmarEliminarFilaStock = () => {
-                  if (!claveAEliminarStock) return;
-                  clavesExcluidasStock.add(claveAEliminarStock);
-                  delete cantidadesStock[claveAEliminarStock];
-
-                  cerrarConfirmarBorrarFilaStock();
-                  actualizarFilasCantidadStock();
-                };
-
-                window.toggleMultiTalleStock = () => {
-                  multiTalleActivo = !multiTalleActivo;
-                  const sw = document.getElementById('switch-multi-talle-stock');
-                  if (multiTalleActivo) {
-                    sw.style.background = '#186904'; sw.style.justifyContent = 'flex-end';
-                  } else {
-                    sw.style.background = '#ccc'; sw.style.justifyContent = 'flex-start';
-                    tallesElegidos = [];
-                    talleCodigoElegido = null;
-                    document.querySelectorAll('#talles-letra-stock button').forEach(b => {
-                      b.style.background = 'white'; b.style.color = '#186904'; b.style.borderColor = '#cfe4cf';
-                    });
-                  }
-                  actualizarPreviewCodigoStock();
-                };
-
-                window.toggleMultiColorStock = () => {
-                  multiColorActivo = !multiColorActivo;
-                  const sw = document.getElementById('switch-multi-color-stock');
-                  if (multiColorActivo) {
-                    sw.style.background = '#186904'; sw.style.justifyContent = 'flex-end';
-                  } else {
-                    sw.style.background = '#ccc'; sw.style.justifyContent = 'flex-start';
-                    coloresElegidos = [];
-                    colorCodigoElegido = null;
-                    document.querySelectorAll('#colores-stock button').forEach(b => {
-                      const anillo = b.querySelector('.anillo-color-stock');
-                      const check = b.querySelector('.check-color-stock');
-                      if (anillo) anillo.style.borderColor = 'transparent';
-                      if (check) check.style.opacity = '0';
-                    });
-                    const texto = document.getElementById('color-elegido-texto-stock');
-                    if (texto) texto.textContent = '';
-                  }
-                  actualizarPreviewCodigoStock();
-                };
-
                 window.seleccionarColorStock = (btn) => {
-                  const codigo = btn.getAttribute('data-codigo-color');
-                  if (multiColorActivo) {
-                    const yaElegido = coloresElegidos.includes(codigo);
-                    if (yaElegido) {
-                      coloresElegidos = coloresElegidos.filter(c => c !== codigo);
-                      const anillo = btn.querySelector('.anillo-color-stock');
-                      const check = btn.querySelector('.check-color-stock');
-                      if (anillo) anillo.style.borderColor = 'transparent';
-                      if (check) check.style.opacity = '0';
-                    } else {
-                      coloresElegidos.push(codigo);
-                      const anillo = btn.querySelector('.anillo-color-stock');
-                      const check = btn.querySelector('.check-color-stock');
-                      if (anillo) anillo.style.borderColor = '#186904';
-                      if (check) check.style.opacity = '1';
-                    }
-                    colorCodigoElegido = coloresElegidos.length === 1 ? coloresElegidos[0] : null;
-                  } else {
-                    document.querySelectorAll('#colores-stock button').forEach(b => {
-                      const anillo = b.querySelector('.anillo-color-stock');
-                      const check = b.querySelector('.check-color-stock');
-                      if (anillo) anillo.style.borderColor = 'transparent';
-                      if (check) check.style.opacity = '0';
-                    });
-                    const anillo = btn.querySelector('.anillo-color-stock');
-                    const check = btn.querySelector('.check-color-stock');
-                    if (anillo) anillo.style.borderColor = '#186904';
-                    if (check) check.style.opacity = '1';
-                    colorCodigoElegido = codigo;
-                    coloresElegidos = [codigo];
-                  }
-                  const texto = document.getElementById('color-elegido-texto-stock');
-                  if (texto) texto.textContent = coloresElegidos.length > 1 ? coloresElegidos.length + ' colores elegidos' : 'Color elegido: ' + btn.getAttribute('data-color');
-                  actualizarPreviewCodigoStock();
+                  document.querySelectorAll('#colores-stock button').forEach(b => {
+                    const anillo = b.querySelector('.anillo-color-stock');
+                    const check = b.querySelector('.check-color-stock');
+                    if (anillo) anillo.style.borderColor = 'transparent';
+                    if (check) check.style.opacity = '0';
+                  });
+                  const anilloElegido = btn.querySelector('.anillo-color-stock');
+                  const checkElegido = btn.querySelector('.check-color-stock');
+                  if (anilloElegido) anilloElegido.style.borderColor = '#186904';
+                  if (checkElegido) checkElegido.style.opacity = '1';
                 };
 
                 window.cambiarModoTalleStock = (modo) => {
@@ -916,6 +645,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   const btnNumerico = document.getElementById('btn-modo-numerico-stock');
                   const divLetra = document.getElementById('talles-letra-stock');
                   const divNumerico = document.getElementById('talles-numerico-stock');
+
                   if (modo === 'letra') {
                     divLetra.style.display = 'flex';
                     divNumerico.style.display = 'none';
@@ -927,31 +657,19 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                     btnNumerico.style.background = '#186904'; btnNumerico.style.color = 'white';
                     btnLetra.style.background = 'white'; btnLetra.style.color = '#186904';
                   }
-                  actualizarPreviewCodigoStock();
                 };
 
                 window.toggleTalleStock = (btn) => {
-                  const codigo = btn.getAttribute('data-codigo-talle');
-                  if (multiTalleActivo) {
-                    const yaElegido = tallesElegidos.includes(codigo);
-                    if (yaElegido) {
-                      tallesElegidos = tallesElegidos.filter(t => t !== codigo);
-                      btn.style.background = 'white'; btn.style.color = '#186904'; btn.style.borderColor = '#cfe4cf';
-                    } else {
-                      tallesElegidos.push(codigo);
-                      btn.style.background = '#186904'; btn.style.color = 'white'; btn.style.borderColor = '#186904';
-                    }
-                    talleCodigoElegido = tallesElegidos.length === 1 ? tallesElegidos[0] : null;
+                  const talle = btn.getAttribute('data-talle');
+                  if (tallesSeleccionadosStock.includes(talle)) {
+                    tallesSeleccionadosStock = tallesSeleccionadosStock.filter(t => t !== talle);
+                    btn.style.background = 'white'; btn.style.color = '#666'; btn.style.borderColor = '#ddd';
                   } else {
-                    document.querySelectorAll('#talles-letra-stock button').forEach(b => {
-                      b.style.background = 'white'; b.style.color = '#186904'; b.style.borderColor = '#cfe4cf';
-                    });
+                    tallesSeleccionadosStock.push(talle);
                     btn.style.background = '#186904'; btn.style.color = 'white'; btn.style.borderColor = '#186904';
-                    talleCodigoElegido = codigo;
-                    tallesElegidos = [codigo];
                   }
-                  actualizarPreviewCodigoStock();
                 };
+
                 window.guardarProductoStock = () => {
                   const nombre = document.getElementById('input-nombre-stock').value.trim();
                   const precio = parseInt(document.getElementById('input-precio-stock').value) || 0;
@@ -995,17 +713,6 @@ defmodule DaleAppWeb.StockPanoramicoLive do
               }
             }
           </script>
-
-          <div id="modal-confirmar-borrar-fila-stock" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.45); z-index: 9999; align-items: center; justify-content: center;">
-            <div style="background: #fff; border-radius: 28px; width: 300px; max-width: 85%; padding: 28px 24px; box-shadow: 0 12px 40px rgba(0,0,0,0.25); text-align: center;">
-              <p style="font-size: 13px; font-weight: 700; color: #186904; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 1px; font-family: Poppins, sans-serif;">Aviso</p>
-              <p id="texto-confirmar-borrar-fila-stock" style="font-size: 14px; color: #111; margin: 0 0 20px; font-family: Poppins, sans-serif;"></p>
-              <div style="display: flex; gap: 10px;">
-                <button type="button" onclick="cerrarConfirmarBorrarFilaStock()" style="flex: 1; padding: 10px; border: 1.5px solid #ddd; border-radius: 8px; background: white; cursor: pointer; font-size: 14px; font-family: Poppins, sans-serif;">Cancelar</button>
-                <button type="button" onclick="confirmarEliminarFilaStock()" style="flex: 1; padding: 10px; border: none; border-radius: 8px; background: #c0392b; color: white; cursor: pointer; font-size: 14px; font-weight: 600; font-family: Poppins, sans-serif;">Borrar</button>
-              </div>
-            </div>
-          </div>
         </div>
       <% end %>
 

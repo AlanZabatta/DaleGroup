@@ -42,3 +42,6 @@ npm-debug.log
 
 # Backups locales
 *.bak*
+.env*
+.env*
+!.env.example

@@ -302,18 +302,11 @@
     <!-- LOGO -->
     <div style="margin-bottom: 22px;">
       <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Logo de la tienda</p>
-      <% logo_fondo = (@brand.colores && @brand.colores["logo_fondo"]) || "#f5f5f5" %>
-      <label style={"display: block; position: relative; width: 100%; height: 180px; border-radius: 16px; overflow: hidden; cursor: pointer; background: #{logo_fondo}; border: 1.5px solid #e0e0e0;"}>
-        <%= if @brand.logo do %>
-          <img src={@brand.logo} style="width: 100%; height: 100%; object-fit: contain; padding: 20px; box-sizing: border-box; display: block;"/>
-        <% else %>
-          <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-          </div>
-        <% end %>
-        <div style={"position: absolute; bottom: 10px; right: 10px; width: 40px; height: 40px; background: #{pv_principal}; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0,0,0,0.25);"}>
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-        </div>
+      <%= if @brand.logo do %>
+        <img src={@brand.logo} style="height: 60px; object-fit: contain; border: 1.5px solid #e0e0e0; border-radius: 16px; margin-bottom: 10px; display: block;"/>
+      <% end %>
+      <label style="display: inline-block; background-color: #186904; color: white; padding: 12px 20px; border-radius: 16px; cursor: pointer; font-size: 13px; font-weight: 700; font-family: Poppins, sans-serif;">
+        📷 Cambiar logo
         <input type="file" accept="image/*" style="display:none;" data-brand-id={"#{@brand.id}"} data-tipo="logo" data-ax="2" data-ay="1" onchange="abrirCropperFromInput(this)" />
       </label>
     </div>
@@ -322,17 +315,11 @@
     <div style="margin-bottom: 22px;">
       <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Foto de publicación</p>
       <p style="font-size: 12px; color: #888; margin: 0 0 10px; font-family: Poppins, sans-serif;">Esta foto aparece en la página principal como card de tu marca.</p>
-      <label style="display: block; position: relative; width: 100%; aspect-ratio: 16/7; border-radius: 16px; overflow: hidden; cursor: pointer; background: #f5f5f5; border: 1.5px solid #e0e0e0;">
-        <%= if @brand.cover_image do %>
-          <img src={@brand.cover_image} style="width: 100%; height: 100%; object-fit: cover; display: block;"/>
-        <% else %>
-          <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-          </div>
-        <% end %>
-        <div style={"position: absolute; bottom: 10px; right: 10px; width: 40px; height: 40px; background: #{pv_principal}; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0,0,0,0.25);"}>
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-        </div>
+      <%= if @brand.cover_image do %>
+        <img src={@brand.cover_image} style="width: 100%; aspect-ratio: 16/7; object-fit: cover; border-radius: 16px; margin-bottom: 10px;"/>
+      <% end %>
+      <label style="display: inline-block; background-color: #44BB64; color: white; padding: 12px 20px; border-radius: 16px; cursor: pointer; font-size: 13px; font-weight: 700; font-family: Poppins, sans-serif;">
+        📷 Cargar foto de publicación
         <input type="file" accept="image/*" style="display:none;" data-brand-id={"#{@brand.id}"} data-tipo="cover" data-ax="16" data-ay="7" onchange="abrirCropperFromInput(this)" />
       </label>
     </div>
@@ -341,237 +328,15 @@
       Definir estética
     </button>
 
-    <div style="height: 1px; background: #eee; margin: 8px 0 24px;"></div>
-    <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Mi Cupón</p>
-
-<%
-  max_valor = Enum.max([1 | @curva_cupon])
-  ancho_svg = 300
-  alto_svg = 100
-  cantidad = length(@curva_cupon)
-
-  lista_puntos =
-    @curva_cupon
-    |> Enum.with_index()
-    |> Enum.map(fn {valor, i} ->
-      x = i / (cantidad - 1) * ancho_svg
-      y = alto_svg - (valor / max_valor * (alto_svg - 20)) - 10
-      {Float.round(x, 2), Float.round(y, 2)}
-    end)
-
-  arr_puntos = List.to_tuple(lista_puntos)
-  n_puntos = tuple_size(arr_puntos)
-
-  obtener_punto = fn i ->
-    idx = max(0, min(n_puntos - 1, i))
-    elem(arr_puntos, idx)
-  end
-
-  {x0, y0} = elem(arr_puntos, 0)
-  path_suave =
-    0..(n_puntos - 2)
-    |> Enum.reduce("M #{x0},#{y0}", fn i, acc ->
-      {x0i, y0i} = obtener_punto.(i - 1)
-      {x1i, y1i} = obtener_punto.(i)
-      {x2i, y2i} = obtener_punto.(i + 1)
-      {x3i, y3i} = obtener_punto.(i + 2)
-
-      c1x = Float.round(x1i + (x2i - x0i) / 6, 2)
-      c1y = Float.round(y1i + (y2i - y0i) / 6, 2)
-      c2x = Float.round(x2i - (x3i - x1i) / 6, 2)
-      c2y = Float.round(y2i - (y3i - y1i) / 6, 2)
-
-      acc <> " C #{c1x},#{c1y} #{c2x},#{c2y} #{x2i},#{y2i}"
-    end)
-
-  {_xf, _yf} = List.last(lista_puntos)
-  path_area = path_suave <> " L #{ancho_svg},#{alto_svg} L 0,#{alto_svg} Z"
-%>
-<%
-  hoy_fecha = Date.utc_today()
-  meses_abrev = ~w(ene feb mar abr may jun jul ago sep oct nov dic)
-  formatear_dia = fn dias_atras ->
-    d = Date.add(hoy_fecha, -dias_atras)
-    "#{d.day} #{Enum.at(meses_abrev, d.month - 1)}"
-  end
-
-  puntos_con_valor =
-    lista_puntos
-    |> Enum.zip(@curva_cupon)
-    |> Enum.filter(fn {_, valor} -> valor > 0 end)
-    |> Enum.map(fn {{x, y}, valor} -> {x, y, valor} end)
-%>
-    <div style="background: white; border-radius: 18px; padding: 16px 18px; margin-bottom: 16px; border: 1.5px solid #186904; box-shadow: 0 3px 14px rgba(24,105,4,0.08);">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-        <p style="font-size: 11px; font-weight: 600; color: #186904; margin: 0; text-transform: uppercase; letter-spacing: 1px; font-family: 'Noto Sans', sans-serif;">Canjes · últimos 30 días</p>
-        <p style="font-size: 22px; font-weight: 800; color: #186904; margin: 0; font-family: 'Noto Sans', sans-serif;"><%= @interes_cupon %></p>
-      </div>
-      <svg width="100%" height="110" viewBox={"0 0 #{ancho_svg} #{alto_svg}"} preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="gradienteCupon" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#186904" stop-opacity="0.35"/>
-            <stop offset="100%" stop-color="#186904" stop-opacity="0"/>
-          </linearGradient>
-          <filter id="brilloCupon" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="0" stdDeviation="1.8" flood-color="#186904" flood-opacity="0.35"/>
-          </filter>
-        </defs>
-        <line x1="0" y1={alto_svg * 0.33} x2={ancho_svg} y2={alto_svg * 0.33} stroke="#f2f2f2" stroke-width="1"/>
-        <line x1="0" y1={alto_svg * 0.66} x2={ancho_svg} y2={alto_svg * 0.66} stroke="#f2f2f2" stroke-width="1"/>
-        <path d={path_area} fill="url(#gradienteCupon)"/>
-        <path d={path_suave} fill="none" stroke="#186904" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilloCupon)"/>
-        <%= for {x, y, valor} <- puntos_con_valor do %>
-          <circle cx={x} cy={y} r="3.5" fill="white" stroke="#186904" stroke-width="2"/>
-          <title><%= valor %> canje<%= if valor != 1, do: "s" %></title>
-        <% end %>
-      </svg>
-      <div style="display: flex; justify-content: space-between; margin-top: 6px;">
-        <p style="font-size: 10px; color: #999; margin: 0; font-family: 'Noto Sans', sans-serif;"><%= formatear_dia.(29) %></p>
-        <p style="font-size: 10px; color: #999; margin: 0; font-family: 'Noto Sans', sans-serif;"><%= formatear_dia.(15) %></p>
-        <p style="font-size: 10px; color: #999; margin: 0; font-family: 'Noto Sans', sans-serif;">Hoy</p>
-      </div>
-    </div>
-
-    <a href="/mi-tienda/cupon" style="display: block; text-align: center; background-color: #186904; color: white; padding: 14px; border-radius: 16px; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
+    <a href="/mi-tienda/cupon" style="display: block; text-align: center; background-color: #2b2b2b; color: white; padding: 14px; border-radius: 16px; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
       Gestionar cupón
     </a>
-    <div style="height: 1px; background: #eee; margin: 8px 0 24px;"></div>
-    <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Mis Productos</p>
-
-    <style>
-      @keyframes blurCambioPrecio {
-        0% { filter: blur(0px); opacity: 1; }
-        45% { filter: blur(6px); opacity: 0.3; }
-        55% { filter: blur(6px); opacity: 0.3; }
-        100% { filter: blur(0px); opacity: 1; }
-      }
-      .precio-animado { animation: blurCambioPrecio 0.6s ease; }
-    </style>
-
-    <a href="/mi-tienda/productos" style="text-decoration: none; display: block; margin-bottom: 16px;">
-      <div style="display: flex; gap: 10px;">
-        <div style="flex: 1; display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; box-shadow: 0 3px 12px rgba(0,0,0,0.06); background: white;">
-          <div style="aspect-ratio: 3/4; background: white; display: flex; align-items: center; justify-content: center;">
-            <svg width="60%" height="60%" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M15 4l6 2v5h-3v8a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1v-8h-3v-5l6 -2a3 3 0 0 0 6 0"/>
-            </svg>
-          </div>
-          <div style="background: white; padding: 8px 10px;">
-            <p style="font-size: 12px; color: #888; margin: 0;">Remera</p>
-            <p id="precio-demo-1" class="precio-animado" style="font-size: 15px; font-weight: 700; color: #186904; margin: 0;">$99000</p>
-          </div>
-        </div>
-        <div style="flex: 1; display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; box-shadow: 0 3px 12px rgba(0,0,0,0.06); background: white;">
-          <div style="aspect-ratio: 3/4; background: white; display: flex; align-items: center; justify-content: center;">
-            <svg width="65%" height="65%" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 6h5.426a1 1 0 0 1 .863 .496l1.064 1.823a3 3 0 0 0 1.896 1.407l4.677 1.114a4 4 0 0 1 3.074 3.89v2.27a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-10a1 1 0 0 1 1 -1"/>
-              <path d="M14 13l1 -2"/>
-              <path d="M8 18v-1a4 4 0 0 0 -4 -4h-1"/>
-              <path d="M10 12l1.5 -3"/>
-            </svg>
-          </div>
-          <div style="background: white; padding: 8px 10px;">
-            <p style="font-size: 12px; color: #888; margin: 0;">Zapatilla</p>
-            <p id="precio-demo-2" class="precio-animado" style="font-size: 15px; font-weight: 700; color: #186904; margin: 0;">$40000</p>
-          </div>
-        </div>
-      </div>
-    </a>
-
-    <script>
-      (function() {
-        const precios1 = [99000, 40000, 76000, 58000];
-        const precios2 = [40000, 76000, 99000, 58000];
-        let idx = 0;
-        setInterval(() => {
-          idx = (idx + 1) % precios1.length;
-          const el1 = document.getElementById('precio-demo-1');
-          const el2 = document.getElementById('precio-demo-2');
-          if (el1 && el2) {
-            el1.classList.remove('precio-animado'); void el1.offsetWidth; el1.classList.add('precio-animado');
-            el2.classList.remove('precio-animado'); void el2.offsetWidth; el2.classList.add('precio-animado');
-            setTimeout(() => {
-              el1.textContent = '$' + precios1[idx].toLocaleString('es-AR');
-              el2.textContent = '$' + precios2[idx].toLocaleString('es-AR');
-            }, 270);
-          }
-        }, 2600);
-      })();
-    </script>
-
     <a href="/mi-tienda/productos" style="display: block; text-align: center; background-color: #186904; color: white; padding: 14px; border-radius: 16px; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
       Gestionar productos
     </a>
-    <div style="height: 1px; background: #eee; margin: 8px 0 24px;"></div>
-
-    <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Stock</p>
-    <a href="/mi-tienda/stock" style="display: block; text-align: center; background-color: #186904; color: white; padding: 14px; border-radius: 16px; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
-      Gestionar Stock
+    <a href="/mi-tienda/cajeros" style="display: block; text-align: center; background-color: #E91E8C; color: white; padding: 14px; border-radius: 16px; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
+      Gestionar cajeros (<%= length(@cajeros) %>)
     </a>
-    <div style="height: 1px; background: #eee; margin: 8px 0 24px;"></div>
-
-    <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Mis Empleados</p>
-
-    <a href="/mi-tienda/cajeros" style="display: block; text-align: center; background-color: #186904; color: white; padding: 14px; border-radius: 16px; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
-      Gestionar empleados (<%= length(@cajeros) %>)
-    </a>
-
-    <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 28px 0 16px; text-transform: uppercase; letter-spacing: 1px;">Mis Sedes</p>
-    <a href="/mi-tienda/sedes" style="display: block; text-align: center; background-color: #186904; color: white; padding: 14px; border-radius: 16px; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
-      Gestionar mis sedes
-    </a>
-
-    <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 28px 0 16px; text-transform: uppercase; letter-spacing: 1px;">Seguridad</p>
-    <%= if @brand.pin_hash do %>
-      <div style="width: 100%; text-align: center; background-color: #f0f0f0; color: #888; padding: 14px; border-radius: 16px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px; box-sizing: border-box;">
-        🔒 Mi PIN (ya configurado)
-      </div>
-      <p style="font-size: 11px; color: #999; margin: 8px 4px 0; font-family: Poppins, sans-serif; line-height: 1.4;">Si lo olvidaste, contactá a soporte para restablecerlo.</p>
-    <% else %>
-      <button type="button" onclick="document.getElementById('modal-crear-pin').style.display='flex'" style="width: 100%; text-align: center; background-color: #186904; color: white; padding: 14px; border-radius: 16px; border: none; cursor: pointer; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
-        Mi PIN
-      </button>
-      <p style="font-size: 11px; color: #999; margin: 8px 4px 0; font-family: Poppins, sans-serif; line-height: 1.4;">Te va a servir para autorizar cambios manuales, como corregir un día de asistencia.</p>
-    <% end %>
-
-    <div id="modal-crear-pin" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.45); z-index:9999; align-items:center; justify-content:center;">
-      <div style="background:#fff; border-radius:28px; width:300px; max-width:85%; padding:28px 24px; box-shadow:0 12px 40px rgba(0,0,0,0.25); text-align:center;">
-        <div id="pin-paso-inicial">
-          <p style="font-size:18px; font-weight:700; color:#186904; margin:0 0 6px; font-family:Poppins,sans-serif;">Crear tu PIN</p>
-          <p style="font-size:13px; color:#666; margin:0 0 18px; font-family:Poppins,sans-serif; line-height:1.5;">Se va a generar un PIN de 4 dígitos. Lo vas a poder ver solo esta vez — anotalo en un lugar seguro.</p>
-          <button onclick="crearPinAhora()" style="width:100%; background:#186904; color:#fff; border:none; border-radius:14px; padding:12px 0; font-size:14px; font-weight:700; font-family:Poppins,sans-serif; cursor:pointer;">Generar mi PIN</button>
-          <button onclick="document.getElementById('modal-crear-pin').style.display='none'" style="width:100%; margin-top:10px; background:none; color:#999; border:none; padding:8px 0; font-size:13px; font-family:Poppins,sans-serif; cursor:pointer;">Cancelar</button>
-        </div>
-        <div id="pin-paso-mostrado" style="display:none;">
-          <p style="font-size:18px; font-weight:700; color:#186904; margin:0 0 6px; font-family:Poppins,sans-serif;">Tu PIN es:</p>
-          <p id="pin-valor" style="font-size:36px; font-weight:800; color:#111; letter-spacing:8px; margin:14px 0; font-family:Poppins,sans-serif;"></p>
-          <p style="font-size:12px; color:#c0392b; margin:0 0 18px; font-family:Poppins,sans-serif; line-height:1.5; font-weight:600;">⚠ Anotalo ahora. No lo vas a poder volver a ver. Si lo perdés, vas a tener que contactar a soporte.</p>
-          <button onclick="document.getElementById('modal-crear-pin').style.display='none'; location.reload();" style="width:100%; background:#186904; color:#fff; border:none; border-radius:14px; padding:12px 0; font-size:14px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer;">Ya lo anoté</button>
-        </div>
-        <p id="pin-error" style="display:none; color:#c0392b; font-size:12px; margin-top:12px; font-family:Poppins,sans-serif;"></p>
-      </div>
-    </div>
-
-    <script>
-      const csrfTokenPin = document.querySelector("meta[name='csrf-token']")?.getAttribute("content");
-      async function crearPinAhora() {
-        const res = await fetch('/mi-tienda/pin/generar', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ _csrf_token: csrfTokenPin })
-        });
-        const data = await res.json();
-        if (data.ok) {
-          document.getElementById('pin-paso-inicial').style.display = 'none';
-          document.getElementById('pin-paso-mostrado').style.display = 'block';
-          document.getElementById('pin-valor').textContent = data.pin;
-        } else {
-          const err = document.getElementById('pin-error');
-          err.textContent = data.mensaje || 'Error al generar el PIN.';
-          err.style.display = 'block';
-        }
-      }
-    </script>
   <% else %>
     <p style="font-family: Poppins, sans-serif; color: #666;">No tenés una tienda asignada todavía.</p>
   <% end %>
@@ -774,31 +539,12 @@
     canvas.height = Math.round(cropData.height);
     const ctx = canvas.getContext('2d');
     ctx.drawImage(cropOriginalImage, Math.round(cropData.x), Math.round(cropData.y), Math.round(cropData.width), Math.round(cropData.height), 0, 0, Math.round(cropData.width), Math.round(cropData.height));
-
-    let logoBg = null;
-    if (cropTipo === 'logo') {
-      try {
-        const esquinas = [
-          ctx.getImageData(1, 1, 1, 1).data,
-          ctx.getImageData(canvas.width - 2, 1, 1, 1).data,
-          ctx.getImageData(1, canvas.height - 2, 1, 1).data,
-          ctx.getImageData(canvas.width - 2, canvas.height - 2, 1, 1).data
-        ];
-        let r = 0, g = 0, b = 0;
-        esquinas.forEach(px => { r += px[0]; g += px[1]; b += px[2]; });
-        r = Math.round(r / 4); g = Math.round(g / 4); b = Math.round(b / 4);
-        const hex = c => c.toString(16).padStart(2, '0');
-        logoBg = '#' + hex(r) + hex(g) + hex(b);
-      } catch (e) { logoBg = null; }
-    }
-
     canvas.toBlob(function(blob) {
       const endpoint = cropTipo === 'logo' ? 'logo' : 'cover';
       const fieldName = cropTipo === 'logo' ? 'logo' : 'cover';
       const formData = new FormData();
       formData.append(fieldName, blob, cropTipo + '.png');
       formData.append('_csrf_token', document.querySelector("meta[name='csrf-token']").getAttribute("content"));
-      if (logoBg) { formData.append('logo_bg', logoBg); }
       fetch('/marcas/' + cropBrandId + '/' + endpoint, { method: 'POST', body: formData })
         .then(r => r.json())
         .then(data => {
