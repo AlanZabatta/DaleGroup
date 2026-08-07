@@ -102,7 +102,8 @@ defmodule DaleAppWeb.StockPanoramicoLive do
   end
 
   def handle_event("elegir_categoria", %{"tipo" => tipo, "nombre" => nombre}, socket) do
-    {:noreply, assign(socket, categoria_seleccionada: %{codigo: tipo, nombre: nombre})}
+    numero_preview = DaleApp.Products.Dale9.proximo_numero(socket.assigns.brand.id, tipo)
+    {:noreply, assign(socket, categoria_seleccionada: %{codigo: tipo, nombre: nombre, numero_preview: numero_preview})}
   end
 
   def handle_event("volver_categorias", _params, socket) do
@@ -512,10 +513,11 @@ defmodule DaleAppWeb.StockPanoramicoLive do
       <% end %>
 
       <%= if @categoria_seleccionada && @mostrar_formulario_producto do %>
-        <div id="form-producto-stock" phx-hook=".FormularioProductoStock" data-codigo-tipo={@categoria_seleccionada && @categoria_seleccionada.codigo} style="margin-bottom: 24px;">
+        <div id="form-producto-stock" phx-hook=".FormularioProductoStock" data-codigo-tipo={@categoria_seleccionada && @categoria_seleccionada.codigo} data-numero-preview={@categoria_seleccionada && @categoria_seleccionada.numero_preview} style="margin-bottom: 24px;">
           <div style="border-radius: 16px; overflow: hidden; border: 1px solid #f2f2f2; position: relative; box-shadow: 0 3px 10px rgba(0,0,0,0.06); margin-bottom: 16px;">
-            <div style="aspect-ratio: 16/9; background: #f0f0f0; position: relative; overflow: hidden;">
-              <img id="preview-img-stock" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;"/>
+            <div id="caja-foto-stock" style="aspect-ratio: 16/9; background: #f0f0f0; position: relative; overflow: hidden; transition: aspect-ratio 0.2s;">
+              <img id="preview-img-fondo-stock" src="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(20px) brightness(0.8); transform: scale(1.15); display: none;"/>
+              <img id="preview-img-stock" src="" style="position: relative; width: 100%; height: 100%; object-fit: contain; display: none;"/>
               <div id="preview-placeholder-stock" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="document.getElementById('file-input-stock').click()">
                 <svg width="20%" height="20%" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;">
                   <%= if @categoria_seleccionada do %>
@@ -539,7 +541,8 @@ defmodule DaleAppWeb.StockPanoramicoLive do
             <input id="input-precio-stock" type="number" placeholder="$" oninput="actualizarPreviewStock()" style="width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; outline: none; background: white;"/>
 
             <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 16px 0 6px;">Descripción (opcional)</p>
-            <textarea id="input-descripcion-stock" placeholder="Detalles del producto" style="width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; resize: none; height: 70px; outline: none; background: white;"></textarea>
+            <textarea id="input-descripcion-stock" placeholder="Detalles del producto" oninput="limitarPalabrasStock(this); this.style.height='auto'; this.style.height=(this.scrollHeight)+'px';" style="width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; resize: none; height: 70px; min-height: 70px; outline: none; background: white; overflow: hidden;"></textarea>
+            <p id="contador-palabras-stock" style="font-size: 11px; color: #aaa; margin: 4px 0 0; text-align: right; font-family: Poppins, sans-serif;">0/500 palabras</p>
           </div>
 
           <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px;">
@@ -610,7 +613,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                 <rect x={x} y="4" width={if rem(x, 4) == 0, do: "3", else: "2"} height="52" fill="#186904"/>
               <% end %>
             </svg>
-            <p id="texto-ean13-stock" style="font-size: 13px; font-weight: 700; color: #333; letter-spacing: 2px; margin: 6px 0 0; font-family: monospace;">Se genera al guardar</p>
+            <p id="texto-ean13-stock" style="font-size: 13px; font-weight: 700; color: #333; letter-spacing: 2px; margin: 6px 0 0; font-family: monospace;">···· ·· ···· ··· ·· ·</p>
           </div>
 
           <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px; text-align: center;">
@@ -618,10 +621,10 @@ defmodule DaleAppWeb.StockPanoramicoLive do
             <div id="qr-dale9-stock" style="display: flex; justify-content: center;">
               {raw(EQRCode.encode("DALE9-preview") |> EQRCode.svg(width: 110))}
             </div>
-            <p style="font-size: 11px; color: #aaa; margin: 8px 0 0; font-family: Poppins, sans-serif;">Se genera al guardar</p>
+            <p style="font-size: 11px; color: #aaa; margin: 8px 0 0; font-family: Poppins, sans-serif;">Vista previa</p>
           </div>
 
-          <button id="boton-guardar-stock" onclick="guardarProductoStock()" style="display: none; width: 100%; background: #186904; color: white; border: none; border-radius: 16px; padding: 15px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Poppins, sans-serif; box-shadow: 0 3px 10px rgba(24,105,4,0.25);">
+          <button id="boton-guardar-stock" onclick="guardarProductoStock()" style="width: 100%; margin-top: 20px; background: #186904; color: white; border: none; border-radius: 16px; padding: 15px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Poppins, sans-serif; box-shadow: 0 3px 10px rgba(24,105,4,0.25);">
             Guardar producto
           </button>
 
@@ -629,6 +632,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
             export default {
               mounted() {
                 const codigoTipo = this.el.dataset.codigoTipo || "";
+                const numeroPreview = this.el.dataset.numeroPreview || "";
                 let imagenBlobStock = null;
                 let tallesSeleccionadosStock = [];
                 const csrfTokenStock = document.querySelector("meta[name='csrf-token']")?.getAttribute("content");
@@ -639,11 +643,24 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   imagenBlobStock = file;
                   const reader = new FileReader();
                   reader.onload = (e) => {
-                    document.getElementById('preview-img-stock').src = e.target.result;
-                    document.getElementById('preview-img-stock').style.display = 'block';
+                    const imgFondo = document.getElementById('preview-img-fondo-stock');
+                    const imgPreview = document.getElementById('preview-img-stock');
+                    imgFondo.src = e.target.result;
+                    imgFondo.style.display = 'block';
+                    imgPreview.src = e.target.result;
+                    imgPreview.style.display = 'block';
                     document.getElementById('preview-placeholder-stock').style.display = 'none';
                   };
                   reader.readAsDataURL(file);
+                };
+
+                window.limitarPalabrasStock = (textarea) => {
+                  const palabras = textarea.value.trim().split(/\s+/).filter(p => p.length > 0);
+                  if (palabras.length > 500) {
+                    textarea.value = palabras.slice(0, 500).join(' ');
+                  }
+                  const contador = document.getElementById('contador-palabras-stock');
+                  if (contador) contador.textContent = Math.min(palabras.length, 500) + '/500 palabras';
                 };
 
                 window.actualizarPreviewStock = () => {
@@ -659,7 +676,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                 window.actualizarPreviewCodigoStock = () => {
                   const tipo = codigoTipo || '\u00b7\u00b7';
                   const color = colorCodigoElegido || '\u00b7\u00b7';
-                  const numero = '\u00b7\u00b7\u00b7';
+                  const numero = numeroPreview || '\u00b7\u00b7\u00b7';
                   let talle = talleCodigoElegido;
 
                   const divNum = document.getElementById('talles-numerico-stock');
@@ -673,6 +690,23 @@ defmodule DaleAppWeb.StockPanoramicoLive do
 
                   const textoEl = document.getElementById('texto-dale9-stock');
                   if (textoEl) textoEl.textContent = tipo + ' ' + color + ' ' + numero + ' ' + talle;
+                  if (textoEl) textoEl.textContent = tipo + ' ' + color + ' ' + numero + ' ' + talle;
+
+                  const completo = [tipo, color, numero, talle].every(p => !p.includes('\u00b7'));
+                  const ean13El = document.getElementById('texto-ean13-stock');
+                  if (completo && ean13El) {
+                    const codigo9 = tipo + color + numero + talle;
+                    const base = '20' + codigo9 + '0';
+                    let suma = 0;
+                    for (let i = 0; i < 12; i++) {
+                      const peso = (i % 2 === 0) ? 1 : 3;
+                      suma += parseInt(base[i]) * peso;
+                    }
+                    const digitoControl = (10 - (suma % 10)) % 10;
+                    ean13El.textContent = base.slice(0, 12) + digitoControl;
+                  } else if (ean13El) {
+                    ean13El.textContent = '\u00b7\u00b7\u00b7\u00b7 \u00b7\u00b7 \u00b7\u00b7\u00b7\u00b7 \u00b7\u00b7\u00b7 \u00b7\u00b7 \u00b7';
+                  }
                 };
 
                 window.seleccionarColorStock = (btn) => {
@@ -722,6 +756,8 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   actualizarPreviewCodigoStock();
 
                 };
+
+                actualizarPreviewCodigoStock();
 
                 window.guardarProductoStock = () => {
                   const nombre = document.getElementById('input-nombre-stock').value.trim();
