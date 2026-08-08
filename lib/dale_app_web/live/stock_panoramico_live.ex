@@ -1064,6 +1064,20 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                 <% end %>
               </div>
             </div>
+
+            <div id="imprimir-fisico-container" style="display: none;"></div>
+
+            <style>
+              @media print {
+                body * { visibility: hidden; }
+                #imprimir-fisico-container, #imprimir-fisico-container * { visibility: visible; }
+                #imprimir-fisico-container { position: absolute; top: 0; left: 0; width: 100%; display: block !important; }
+                .hoja-imprimir-pagina:not(:last-child) { page-break-after: always; }
+                #navbar, #bottom-bar { display: none !important; }
+              }
+            </style>
+
+            <button type="button" onclick="window.print()" style="width: 100%; margin-top: 20px; background: #186904; color: white; border: none; border-radius: 16px; padding: 15px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Poppins, sans-serif; box-shadow: 0 3px 10px rgba(24,105,4,0.25);">Imprimir</button>
           </div>
 
           <script :type={Phoenix.LiveView.ColocatedHook} name=".FormularioProductoStock">
@@ -1310,8 +1324,10 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   }
 
                   const contenedor = document.getElementById('hojas-preview-imprimir-container');
+                  const contenedorFisico = document.getElementById('imprimir-fisico-container');
                   if (!contenedor) return;
                   contenedor.innerHTML = '';
+                  if (contenedorFisico) contenedorFisico.innerHTML = '';
 
                   for (let h = 0; h < hojasNecesarias; h++) {
                     const wrap = document.createElement('div');
@@ -1348,6 +1364,23 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                     }
 
                     hojaDiv.innerHTML = '<div style="display: grid; grid-template-columns: repeat(' + cols + ', ' + anchoCeldaPx + 'px); grid-template-rows: repeat(' + rows + ', ' + altoCeldaPx + 'px); gap: 2px;">' + html + '</div>';
+
+                    if (contenedorFisico) {
+                      const hojaFisica = document.createElement('div');
+                      hojaFisica.className = 'hoja-imprimir-pagina';
+                      hojaFisica.style.cssText = 'width: 210mm; height: 297mm; padding: 10mm; box-sizing: border-box; display: grid; grid-template-columns: repeat(' + cols + ', ' + anchoMm + 'mm); grid-template-rows: repeat(' + rows + ', ' + altoMm + 'mm); gap: 2mm; align-content: start;';
+
+                      let htmlFisico = '';
+                      for (let i = 0; i < capacidad; i++) {
+                        if (i < cuadrosHoja.length) {
+                          htmlFisico += '<div style="display: flex; align-items: center; justify-content: center; background: ' + cuadrosHoja[i].hex + '; color: white; font-weight: 700; font-family: Poppins, sans-serif; font-size: 3mm;">' + cuadrosHoja[i].letra + '</div>';
+                        } else {
+                          htmlFisico += '<div style="background: #186904; opacity: 0.75;"></div>';
+                        }
+                      }
+                      hojaFisica.innerHTML = htmlFisico;
+                      contenedorFisico.appendChild(hojaFisica);
+                    }
                   }
                 };
 
