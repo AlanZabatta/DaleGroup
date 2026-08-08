@@ -967,11 +967,21 @@ defmodule DaleAppWeb.StockPanoramicoLive do
               if @articulo_editando && @categoria_seleccionada do
                 combos_editando
                 |> Enum.map(fn clave ->
+                  [codigo_color_q, codigo_talle_q] = String.split(clave, "_")
                   codigo9 = codigo_completo_combo(clave, @categoria_seleccionada.codigo, @articulo_editando)
                   svg = codigo9 && (EQRCode.encode(codigo9) |> EQRCode.svg(width: 100))
-                  {clave, svg}
+
+                  etiqueta =
+                    String.downcase(StockItem.nombre_color(codigo_color_q)) <>
+                      " " <> String.downcase(StockItem.nombre_talle(codigo_talle_q))
+
+                  if svg do
+                    {clave, %{svg: svg, etiqueta: etiqueta}}
+                  else
+                    nil
+                  end
                 end)
-                |> Enum.filter(fn {_clave, svg} -> svg end)
+                |> Enum.reject(&is_nil/1)
                 |> Map.new()
               else
                 %{}
@@ -1083,10 +1093,13 @@ defmodule DaleAppWeb.StockPanoramicoLive do
 
             <style>
               @media print {
+                @page { margin: 0; }
                 * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                html, body { background: white !important; margin: 0 !important; padding: 0 !important; }
                 body * { visibility: hidden; }
                 #imprimir-fisico-container, #imprimir-fisico-container * { visibility: visible; }
-                #imprimir-fisico-container { position: absolute; top: 0; left: 0; width: 100%; display: block !important; }
+                #imprimir-fisico-container { position: fixed; top: 0; left: 0; width: 100%; margin: 0; padding: 0; display: block !important; }
+                .hoja-imprimir-pagina { margin: 0; }
                 .hoja-imprimir-pagina:not(:last-child) { page-break-after: always; }
                 .hoja-imprimir-pagina svg { width: 100%; height: 100%; display: block; }
                 #navbar, #bottom-bar { display: none !important; }
@@ -1393,9 +1406,12 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                       let htmlFisico = '';
                       for (let i = 0; i < capacidad; i++) {
                         if (i < cuadrosHoja.length) {
-                          const svgQr = qrsPorCombo[cuadrosHoja[i].clave];
-                          if (svgQr) {
-                            htmlFisico += '<div style="display: flex; align-items: center; justify-content: center; background: white; overflow: hidden;">' + svgQr + '</div>';
+                          const datosQr = qrsPorCombo[cuadrosHoja[i].clave];
+                          if (datosQr) {
+                            htmlFisico += '<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; background: white; overflow: hidden; height: 100%; width: 100%;">' +
+                              '<div style="flex: 1; width: 100%; min-height: 0; display: flex; align-items: center; justify-content: center;">' + datosQr.svg + '</div>' +
+                              '<div style="font-size: 2.2mm; font-family: Poppins, sans-serif; font-weight: 600; color: #111; text-align: center; line-height: 1; white-space: nowrap;">' + datosQr.etiqueta + '</div>' +
+                              '</div>';
                           } else {
                             htmlFisico += '<div style="display: flex; align-items: center; justify-content: center; background: ' + cuadrosHoja[i].hex + '; color: white; font-weight: 700; font-family: Poppins, sans-serif; font-size: 3mm;">' + cuadrosHoja[i].letra + '</div>';
                           }
