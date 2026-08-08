@@ -796,6 +796,8 @@ defmodule DaleAppWeb.StockPanoramicoLive do
             </div>
           </div>
 
+          <div id="selector-combos-codigo-stock" style="display: none; flex-wrap: wrap; gap: 8px; margin-top: 16px; justify-content: center;"></div>
+
           <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px; text-align: center;">
             <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 10px;">Código DALE9</p>
             <svg viewBox="0 0 200 60" style="width: 100%; max-width: 220px; height: 60px;">
@@ -874,24 +876,35 @@ defmodule DaleAppWeb.StockPanoramicoLive do
 
                 let colorCodigoElegido = null;
                 let talleCodigoElegido = null;
+                let claveCodigoPreview = null;
 
                 window.actualizarPreviewCodigoStock = () => {
-                  const tipo = codigoTipo || '\u00b7\u00b7';
-                  const color = colorCodigoElegido || '\u00b7\u00b7';
-                  const numero = numeroPreview || '\u00b7\u00b7\u00b7';
-                  let talle = talleCodigoElegido;
+                  actualizarSelectorCombosCodigo();
 
-                  const divNum = document.getElementById('talles-numerico-stock');
-                  const modoNumerico = divNum && divNum.style.display !== 'none';
-                  if (modoNumerico) {
-                    const valorNum = document.getElementById('input-talle-numerico-stock').value.trim();
-                    talle = valorNum ? valorNum.padStart(2, '0').slice(-2) : '\u00b7\u00b7';
-                  } else if (!talle) {
-                    talle = '\u00b7\u00b7';
+                  const tipo = codigoTipo || '\u00b7\u00b7';
+                  let color, talle;
+
+                  if (claveCodigoPreview) {
+                    const partes = claveCodigoPreview.split('_');
+                    color = partes[0];
+                    talle = partes[1];
+                  } else {
+                    color = colorCodigoElegido || '\u00b7\u00b7';
+                    talle = talleCodigoElegido;
+
+                    const divNum = document.getElementById('talles-numerico-stock');
+                    const modoNumerico = divNum && divNum.style.display !== 'none';
+                    if (modoNumerico) {
+                      const valorNum = document.getElementById('input-talle-numerico-stock').value.trim();
+                      talle = valorNum ? valorNum.padStart(2, '0').slice(-2) : '\u00b7\u00b7';
+                    } else if (!talle) {
+                      talle = '\u00b7\u00b7';
+                    }
                   }
 
+                  const numero = numeroPreview || '\u00b7\u00b7\u00b7';
+
                   const textoEl = document.getElementById('texto-dale9-stock');
-                  if (textoEl) textoEl.textContent = tipo + ' ' + color + ' ' + numero + ' ' + talle;
                   if (textoEl) textoEl.textContent = tipo + ' ' + color + ' ' + numero + ' ' + talle;
 
                   const completo = [tipo, color, numero, talle].every(p => !p.includes('\u00b7'));
@@ -925,6 +938,56 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   '91': '#fbc02d', '12': '#43a047', '22': '#1b5e20', '32': '#4fc3f7',
                   '42': '#1565c0', '52': '#0d1b4c', '62': '#7b1fa2', '72': '#5d3a1a',
                   '82': '#c9a227', '92': '#b0b0b0'
+                };
+
+                window.actualizarSelectorCombosCodigo = () => {
+                  const cont = document.getElementById('selector-combos-codigo-stock');
+                  if (!cont) return;
+
+                  const talles = tallesElegidos.length > 0 ? tallesElegidos : (talleCodigoElegido ? [talleCodigoElegido] : []);
+                  const colores = coloresElegidos.length > 0 ? coloresElegidos : (colorCodigoElegido ? [colorCodigoElegido] : []);
+
+                  const combos = [];
+                  colores.forEach(colorCod => {
+                    talles.forEach(talleCod => {
+                      const clave = colorCod + '_' + talleCod;
+                      if (clavesExcluidasStock.has(clave)) return;
+                      combos.push(clave);
+                    });
+                  });
+
+                  if (combos.length <= 1) {
+                    cont.style.display = 'none';
+                    cont.innerHTML = '';
+                    claveCodigoPreview = combos.length === 1 ? combos[0] : null;
+                    return;
+                  }
+
+                  if (!claveCodigoPreview || !combos.includes(claveCodigoPreview)) {
+                    claveCodigoPreview = combos[0];
+                  }
+
+                  cont.style.display = 'flex';
+                  let html = '';
+                  combos.forEach(clave => {
+                    const partes = clave.split('_');
+                    const colorCod = partes[0];
+                    const talleCod = partes[1];
+                    const hex = mapaHexColores[colorCod] || '#ccc';
+                    const btnTalle = document.querySelector('#talles-letra-stock button[data-codigo-talle="' + talleCod + '"]');
+                    const nombreTalle = btnTalle ? btnTalle.getAttribute('data-talle') : talleCod;
+                    const activo = clave === claveCodigoPreview;
+                    html += '<button type="button" onclick="seleccionarComboCodigoStock(\'' + clave + '\')" style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 16px; border: 1.5px solid ' + (activo ? '#186904' : '#cfe4cf') + '; background: ' + (activo ? '#186904' : 'white') + '; color: ' + (activo ? 'white' : '#186904') + '; cursor: pointer; font-size: 12px; font-weight: 600; font-family: Poppins, sans-serif;">' +
+                      '<span style="width: 14px; height: 14px; border-radius: 50%; background: ' + hex + '; ' + (colorCod === '21' ? 'border: 1px solid #ccc;' : '') + '"></span>' +
+                      nombreTalle +
+                      '</button>';
+                  });
+                  cont.innerHTML = html;
+                };
+
+                window.seleccionarComboCodigoStock = (clave) => {
+                  claveCodigoPreview = clave;
+                  actualizarPreviewCodigoStock();
                 };
 
                 window.actualizarFilasCantidadStock = () => {
