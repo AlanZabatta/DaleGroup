@@ -176,7 +176,10 @@ defmodule DaleAppWeb.StockPanoramicoLive do
   defp capacidad_hoja_mm(ancho_mm, alto_mm) do
     area_ancho = 210 - 10 * 2
     area_alto = 297 - 10 * 2
-    div(area_ancho, ancho_mm) * div(area_alto, alto_mm)
+    gap = 2
+    cols = div(area_ancho + gap, ancho_mm + gap)
+    rows = div(area_alto + gap, alto_mm + gap)
+    cols * rows
   end
 
   defp codigo_completo_combo(nil, _codigo_tipo, _articulo), do: nil
@@ -1096,17 +1099,15 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                 @page { margin: 0; }
                 * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
                 html, body { background: white !important; margin: 0 !important; padding: 0 !important; }
-                body * { visibility: hidden; }
-                #imprimir-fisico-container, #imprimir-fisico-container * { visibility: visible; }
-                #imprimir-fisico-container { position: fixed; top: 0; left: 0; width: 100%; margin: 0; padding: 0; display: block !important; }
+                #app-wrapper { display: none !important; }
+                #imprimir-fisico-clon { display: block !important; margin: 0; padding: 0; }
                 .hoja-imprimir-pagina { margin: 0; }
                 .hoja-imprimir-pagina:not(:last-child) { page-break-after: always; }
                 .hoja-imprimir-pagina svg { width: 100%; height: 100%; display: block; }
-                #navbar, #bottom-bar { display: none !important; }
               }
             </style>
 
-            <button type="button" onclick="window.print()" style="width: 100%; margin-top: 20px; background: #186904; color: white; border: none; border-radius: 16px; padding: 15px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Poppins, sans-serif; box-shadow: 0 3px 10px rgba(24,105,4,0.25);">Imprimir</button>
+            <button type="button" onclick="imprimirHojaFisica()" style="width: 100%; margin-top: 20px; background: #186904; color: white; border: none; border-radius: 16px; padding: 15px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Poppins, sans-serif; box-shadow: 0 3px 10px rgba(24,105,4,0.25);">Imprimir</button>
           </div>
 
           <script :type={Phoenix.LiveView.ColocatedHook} name=".FormularioProductoStock">
@@ -1284,6 +1285,26 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                 let cantidadesQR = {};
                 let ultimoArticuloImprimir = null;
 
+                window.imprimirHojaFisica = () => {
+                  const original = document.getElementById('imprimir-fisico-container');
+                  if (!original) { window.print(); return; }
+
+                  const existente = document.getElementById('imprimir-fisico-clon');
+                  if (existente) existente.remove();
+
+                  const clon = original.cloneNode(true);
+                  clon.id = 'imprimir-fisico-clon';
+                  clon.style.display = 'none';
+                  document.body.appendChild(clon);
+
+                  window.print();
+
+                  setTimeout(() => {
+                    const clonViejo = document.getElementById('imprimir-fisico-clon');
+                    if (clonViejo) clonViejo.remove();
+                  }, 2000);
+                };
+
                 window.elegirTamanoImprimir = (btn) => {
                   document.querySelectorAll('.tarjeta-tamano-imprimir').forEach(b => {
                     b.style.borderColor = '#cfe4cf';
@@ -1322,8 +1343,9 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   const { anchoMm, altoMm } = tamanoSeleccionadoImprimir;
                   const areaAnchoMm = ANCHO_HOJA_MM_IMPRIMIR - (MARGEN_MM_IMPRIMIR * 2);
                   const areaAltoMm = ALTO_HOJA_MM_IMPRIMIR - (MARGEN_MM_IMPRIMIR * 2);
-                  const cols = Math.floor(areaAnchoMm / anchoMm);
-                  const rows = Math.floor(areaAltoMm / altoMm);
+                  const GAP_MM_IMPRIMIR = 2;
+                  const cols = Math.floor((areaAnchoMm + GAP_MM_IMPRIMIR) / (anchoMm + GAP_MM_IMPRIMIR));
+                  const rows = Math.floor((areaAltoMm + GAP_MM_IMPRIMIR) / (altoMm + GAP_MM_IMPRIMIR));
                   const capacidad = cols * rows;
 
                   const cuadros = [];
