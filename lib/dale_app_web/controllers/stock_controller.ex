@@ -238,4 +238,52 @@ defmodule DaleAppWeb.StockController do
         json(conn, %{ok: true, ids: ids_finales})
     end
   end
+
+  def subir_imagen(conn, %{"id" => id, "imagen" => imagen}) do
+    user_id = get_session(conn, :user_id)
+    producto = Repo.get(Product, id)
+
+    cond do
+      is_nil(producto) ->
+        json(conn, %{ok: false, error: "Producto no encontrado"})
+
+      true ->
+        brand = Repo.get(Brand, producto.brand_id)
+
+        if brand && brand.user_id == user_id do
+          imagenes_actuales = producto.images || []
+
+          if length(imagenes_actuales) >= 3 do
+            json(conn, %{ok: false, error: "Máximo 3 imágenes por producto"})
+          else
+            case DaleApp.Storage.upload_image(imagen.path, imagen.filename) do
+              {:ok, %{body: body}} when is_map(body) ->
+                guardar_imagen_stock(conn, producto, body["secure_url"], imagenes_actuales)
+
+              {:ok, %{body: body}} when is_binary(body) ->
+                case Jason.decode(body) do
+                  {:ok, decoded} -> guardar_imagen_stock(conn, producto, decoded["secure_url"], imagenes_actuales)
+                  _ -> json(conn, %{ok: false, error: "No se pudo procesar la respuesta de la imagen"})
+                end
+
+              _ ->
+                json(conn, %{ok: false, error: "No se pudo subir la imagen, probá de nuevo"})
+            end
+          end
+        else
+          json(conn, %{ok: false})
+        end
+    end
+  end
+
+  defp guardar_imagen_stock(conn, _producto, nil, _imagenes_actuales) do
+    json(conn, %{ok: false, error: "No se recibió la URL de la imagen"})
+  end
+
+  defp guardar_imagen_stock(conn, producto, url, imagenes_actuales) do
+    nuevas_imagenes = imagenes_actuales ++ [url]
+    imagen_principal = List.first(nuevas_imagenes)
+    DaleApp.Products.update_product(producto, %{images: nuevas_imagenes, image: imagen_principal, active: true})
+    json(conn, %{ok: true, url: url, images: nuevas_imagenes})
+  end
 end

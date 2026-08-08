@@ -1167,11 +1167,13 @@ defmodule DaleAppWeb.StockPanoramicoLive do
 
                   if (data.ok) {
                     if (imagenBlobStock && data.ids) {
+                      const extension = imagenBlobStock.type && imagenBlobStock.type.includes('png') ? 'png'
+                        : (imagenBlobStock.type && imagenBlobStock.type.includes('webp') ? 'webp' : 'jpg');
                       for (const id of data.ids) {
                         const imgForm = new FormData();
                         imgForm.append('_csrf_token', csrfTokenStock);
-                        imgForm.append('imagen', imagenBlobStock, 'producto.jpg');
-                        await fetch('/productos/' + id + '/imagen', { method: 'POST', body: imgForm });
+                        imgForm.append('imagen', imagenBlobStock, 'producto.' + extension);
+                        await fetch('/mi-tienda/stock/productos/' + id + '/imagen', { method: 'POST', body: imgForm });
                       }
                     }
                     window.location.href = '/mi-tienda/stock?categoria=' + codigoTipo;

@@ -61,6 +61,7 @@ live "/registro", RegistroLive
     live "/mi-tienda/stock", StockPanoramicoLive
     post "/mi-tienda/stock/crear-articulo", StockController, :crear_articulo
     post "/mi-tienda/stock/actualizar-articulo", StockController, :actualizar_articulo
+    post "/mi-tienda/stock/productos/:id/imagen", StockController, :subir_imagen
     post "/mi-tienda/categorias/:id/imagen", BrandController, :upload_imagen_categoria
     live "/mi-tienda/productos/:id/stock", StockLive
     post "/mi-tienda/pin/generar", BrandController, :generar_pin
