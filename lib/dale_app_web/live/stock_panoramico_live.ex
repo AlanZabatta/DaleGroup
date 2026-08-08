@@ -141,6 +141,20 @@ defmodule DaleAppWeb.StockPanoramicoLive do
       |> Enum.filter(fn {codigo_color, _id} -> codigo_color end)
       |> Map.new()
 
+    numeros_por_color =
+      productos
+      |> Enum.map(fn p ->
+        codigo_color =
+          case Map.get(stock_items_por_producto, p.id, []) do
+            [item | _] -> item.codigo_color
+            [] -> nil
+          end
+
+        {codigo_color, p.codigo_numero}
+      end)
+      |> Enum.filter(fn {codigo_color, _numero} -> codigo_color end)
+      |> Map.new()
+
     primero = List.first(productos)
 
     if primero do
@@ -150,12 +164,36 @@ defmodule DaleAppWeb.StockPanoramicoLive do
         descripcion: primero.description || "",
         imagen: primero.image,
         variantes: variantes,
-        productos_por_color: productos_por_color
+        productos_por_color: productos_por_color,
+        numeros_por_color: numeros_por_color
       }
     else
       nil
     end
   end
+
+  defp codigo_completo_combo(nil, _codigo_tipo, _articulo), do: nil
+  defp codigo_completo_combo(_clave, nil, _articulo), do: nil
+
+  defp codigo_completo_combo(clave, codigo_tipo, articulo) do
+    [codigo_color, codigo_talle] = String.split(clave, "_")
+
+    case Map.get(articulo.numeros_por_color, codigo_color) do
+      nil -> nil
+      codigo_numero -> StockItem.armar_codigo(codigo_tipo, codigo_color, codigo_numero, codigo_talle)
+    end
+  end
+
+  defp formatear_dale9_espaciado(codigo9) when is_binary(codigo9) and byte_size(codigo9) == 9 do
+    <<tipo::binary-size(2), color::binary-size(2), numero::binary-size(3), talle::binary-size(2)>> = codigo9
+    "#{tipo} #{color} #{numero} #{talle}"
+  end
+
+  defp formatear_dale9_espaciado(_codigo9), do: "··· ·· ··· ··"
+
+  defp texto_colores_elegidos([]), do: ""
+  defp texto_colores_elegidos([codigo]), do: "Color elegido: " <> StockItem.nombre_color(codigo)
+  defp texto_colores_elegidos(codigos), do: "#{length(codigos)} colores elegidos"
 
   defp formatear_precio(precio) when is_integer(precio) do
     precio
@@ -875,7 +913,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                 </button>
               <% end %>
             </div>
-            <p id="color-elegido-texto-stock" style="font-size: 12px; color: #999; margin: 14px 0 0; font-family: Poppins, sans-serif;"></p>
+            <p id="color-elegido-texto-stock" style="font-size: 12px; color: #999; margin: 14px 0 0; font-family: Poppins, sans-serif;"><%= texto_colores_elegidos(colores_seleccionados_editando) %></p>
           </div>
 
           <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px;">
@@ -906,18 +944,40 @@ defmodule DaleAppWeb.StockPanoramicoLive do
             </div>
           </div>
 
+          <%
+            combos_editando =
+              if @articulo_editando, do: @articulo_editando.variantes |> Map.keys() |> Enum.sort(), else: []
+            combo_activo_editando = List.first(combos_editando)
+            codigo9_activo_editando =
+              if @articulo_editando && combo_activo_editando && @categoria_seleccionada do
+                codigo_completo_combo(combo_activo_editando, @categoria_seleccionada.codigo, @articulo_editando)
+              else
+                nil
+              end
+            ean13_activo_editando = codigo9_activo_editando && StockItem.a_ean13(codigo9_activo_editando)
+          %>
+
           <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px; text-align: center;">
             <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 10px;">Código DALE9</p>
-            <div id="selector-combos-codigo-stock-wrap" style="display: none; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px dashed #d9ead9;">
+            <div id="selector-combos-codigo-stock-wrap" style={"display: #{if length(combos_editando) > 1, do: "block", else: "none"}; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px dashed #d9ead9;"}>
               <p style="font-size: 10.5px; color: #999; margin: 0 0 8px; font-family: Poppins, sans-serif;">Mostrando el código de:</p>
-              <div id="selector-combos-codigo-stock" style="display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;"></div>
+              <div id="selector-combos-codigo-stock" style="display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;">
+                <%= for clave <- combos_editando do %>
+                  <% [cc_fila, ct_fila] = String.split(clave, "_") %>
+                  <% combo_activo = clave == combo_activo_editando %>
+                  <button type="button" onclick={"seleccionarComboCodigoStock('#{clave}')"} style={"display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 16px; border: 1.5px solid #{if combo_activo, do: "#186904", else: "#cfe4cf"}; background: #{if combo_activo, do: "#186904", else: "white"}; color: #{if combo_activo, do: "white", else: "#186904"}; cursor: pointer; font-size: 12px; font-weight: 600; font-family: Poppins, sans-serif;"}>
+                    <span style={"width: 14px; height: 14px; border-radius: 50%; background: #{Map.get(mapa_hex_colores, StockItem.nombre_color(cc_fila), "#ccc")}; #{if cc_fila == "21", do: "border: 1px solid #ccc;", else: ""}"}></span>
+                    <%= StockItem.nombre_talle(ct_fila) %>
+                  </button>
+                <% end %>
+              </div>
             </div>
             <svg viewBox="0 0 200 60" style="width: 100%; max-width: 220px; height: 60px;">
               <%= for x <- [4,8,10,15,18,22,28,32,35,40,44,48,54,58,60,65,70,74,80,84,88,94,98,102,108,112,116,122,126,130,136,140,144,150,154,158,164,168,172,178,182,186,192,196] do %>
                 <rect x={x} y="4" width={if rem(x, 3) == 0, do: "3", else: "2"} height="52" fill="#186904"/>
               <% end %>
             </svg>
-            <p id="texto-dale9-stock" style="font-size: 13px; font-weight: 700; color: #333; letter-spacing: 2px; margin: 6px 0 0; font-family: monospace;">··· ·· ··· ··</p>
+            <p id="texto-dale9-stock" style="font-size: 13px; font-weight: 700; color: #333; letter-spacing: 2px; margin: 6px 0 0; font-family: monospace;"><%= formatear_dale9_espaciado(codigo9_activo_editando) %></p>
           </div>
 
           <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px; text-align: center;">
@@ -927,16 +987,16 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                 <rect x={x} y="4" width={if rem(x, 4) == 0, do: "3", else: "2"} height="52" fill="#186904"/>
               <% end %>
             </svg>
-            <p id="texto-ean13-stock" style="font-size: 13px; font-weight: 700; color: #333; letter-spacing: 2px; margin: 6px 0 0; font-family: monospace;">···· ·· ···· ··· ·· ·</p>
+            <p id="texto-ean13-stock" style="font-size: 13px; font-weight: 700; color: #333; letter-spacing: 2px; margin: 6px 0 0; font-family: monospace;"><%= ean13_activo_editando || "···· ·· ···· ··· ·· ·" %></p>
           </div>
 
           <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px; text-align: center;">
             <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 10px;">Código QR</p>
             <div id="qr-dale9-stock" style="display: flex; justify-content: center;">
-              {raw(EQRCode.encode("DALE9-preview") |> EQRCode.svg(width: 110))}
+              {raw(EQRCode.encode(codigo9_activo_editando || "DALE9-preview") |> EQRCode.svg(width: 110))}
             </div>
-            <p id="texto-vista-previa-qr-stock" style="font-size: 11px; color: #aaa; margin: 8px 0 0; font-family: Poppins, sans-serif;">Vista previa</p>
-            <button type="button" id="boton-imprimir-qr-stock" onclick="abrirImpresionQRStock()" style="display: none; margin: 8px auto 0; background: #186904; color: white; border: none; border-radius: 12px; padding: 8px 20px; font-size: 12.5px; font-weight: 700; font-family: Poppins, sans-serif; cursor: pointer;">Imprimir</button>
+            <p id="texto-vista-previa-qr-stock" style={"display: #{if @articulo_editando, do: "none", else: "block"}; font-size: 11px; color: #aaa; margin: 8px 0 0; font-family: Poppins, sans-serif;"}>Vista previa</p>
+            <button type="button" id="boton-imprimir-qr-stock" onclick="abrirImpresionQRStock()" style={"display: #{if @articulo_editando, do: "inline-block", else: "none"}; margin: 8px auto 0; background: #186904; color: white; border: none; border-radius: 12px; padding: 8px 20px; font-size: 12.5px; font-weight: 700; font-family: Poppins, sans-serif; cursor: pointer;"}>Imprimir</button>
           </div>
 
           <button id="boton-guardar-stock" onclick="guardarProductoStock()" style="width: 100%; margin-top: 20px; background: #186904; color: white; border: none; border-radius: 16px; padding: 15px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Poppins, sans-serif; box-shadow: 0 3px 10px rgba(24,105,4,0.25);">
