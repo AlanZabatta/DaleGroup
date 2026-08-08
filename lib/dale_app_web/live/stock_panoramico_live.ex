@@ -1002,7 +1002,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                 };
 
                 window.abrirImpresionQRStock = () => {
-                  window.open('about:blank', '_blank');
+                  window.location.href = '/mi-tienda/stock/imprimir';
                 };
 
                 window.actualizarFilasCantidadStock = () => {

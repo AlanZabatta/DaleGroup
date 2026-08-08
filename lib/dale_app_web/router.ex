@@ -59,6 +59,7 @@ live "/registro", RegistroLive
     live "/mi-tienda/cajeros", CajerosLive
     live "/mi-tienda/sedes", SedesLive
     live "/mi-tienda/stock", StockPanoramicoLive
+    live "/mi-tienda/stock/imprimir", ImprimirStockLive
     post "/mi-tienda/stock/crear-articulo", StockController, :crear_articulo
     post "/mi-tienda/stock/actualizar-articulo", StockController, :actualizar_articulo
     post "/mi-tienda/stock/productos/:id/imagen", StockController, :subir_imagen
