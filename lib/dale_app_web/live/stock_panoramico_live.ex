@@ -1492,15 +1492,13 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   const botonAbrirImprimirReal = document.getElementById('boton-abrir-pantalla-imprimir-real-stock');
                   if (botonAbrirImprimirReal) botonAbrirImprimirReal.click();
 
-                  const reforzarPreviewImprimir = (intentos) => {
+                  const reforzarPreviewImprimir = () => {
                     const tarjetaChicoRefuerzo = document.querySelector('.tarjeta-tamano-imprimir[data-tamano="chico"]');
-                    const contenedorRefuerzo = document.getElementById('hojas-preview-imprimir-container');
                     if (tarjetaChicoRefuerzo) elegirTamanoImprimir(tarjetaChicoRefuerzo);
-                    if (contenedorRefuerzo && contenedorRefuerzo.children.length === 0 && intentos > 0) {
-                      setTimeout(() => reforzarPreviewImprimir(intentos - 1), 150);
-                    }
                   };
-                  setTimeout(() => reforzarPreviewImprimir(6), 100);
+                  setTimeout(reforzarPreviewImprimir, 80);
+                  setTimeout(reforzarPreviewImprimir, 250);
+                  setTimeout(reforzarPreviewImprimir, 600);
                 };
 
                 window.cerrarPantallaImprimirStock = () => {
