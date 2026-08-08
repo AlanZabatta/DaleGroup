@@ -1052,16 +1052,16 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   <span style="font-size: 10px; color: #999;">25×30mm</span>
                 </button>
 
-                <button type="button" data-tamano="mediano" data-ancho-mm="40" data-alto-mm="45" onclick="elegirTamanoImprimir(this)" class="tarjeta-tamano-imprimir" style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 8px; border-radius: 16px; border: 1.5px solid #cfe4cf; background: white; cursor: pointer; font-family: Poppins, sans-serif;">
+                <button type="button" data-tamano="mediano" data-ancho-mm="30" data-alto-mm="38" onclick="elegirTamanoImprimir(this)" class="tarjeta-tamano-imprimir" style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 8px; border-radius: 16px; border: 1.5px solid #cfe4cf; background: white; cursor: pointer; font-family: Poppins, sans-serif;">
                   <span style="width: 22px; height: 22px; border-radius: 5px; background: #186904;"></span>
                   <span style="font-size: 13px; font-weight: 700; color: #186904;">Mediano</span>
-                  <span style="font-size: 10px; color: #999;">40×45mm</span>
+                  <span style="font-size: 10px; color: #999;">30×38mm</span>
                 </button>
 
-                <button type="button" data-tamano="grande" data-ancho-mm="60" data-alto-mm="70" onclick="elegirTamanoImprimir(this)" class="tarjeta-tamano-imprimir" style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 8px; border-radius: 16px; border: 1.5px solid #cfe4cf; background: white; cursor: pointer; font-family: Poppins, sans-serif;">
+                <button type="button" data-tamano="grande" data-ancho-mm="50" data-alto-mm="50" onclick="elegirTamanoImprimir(this)" class="tarjeta-tamano-imprimir" style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 8px; border-radius: 16px; border: 1.5px solid #cfe4cf; background: white; cursor: pointer; font-family: Poppins, sans-serif;">
                   <span style="width: 30px; height: 30px; border-radius: 6px; background: #186904;"></span>
                   <span style="font-size: 13px; font-weight: 700; color: #186904;">Grande</span>
-                  <span style="font-size: 10px; color: #999;">60×70mm</span>
+                  <span style="font-size: 10px; color: #999;">50×50mm</span>
                 </button>
               </div>
 
