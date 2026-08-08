@@ -583,6 +583,8 @@ defmodule DaleAppWeb.StockPanoramicoLive do
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
           </button>
           <button type="button" id="boton-cerrar-formulario-real-stock" phx-click="cerrar_formulario_producto" style="display: none;"></button>
+          <button type="button" id="boton-abrir-pantalla-imprimir-real-stock" phx-click="abrir_pantalla_imprimir" style="display: none;"></button>
+          <button type="button" id="boton-cerrar-pantalla-imprimir-real-stock" phx-click="cerrar_pantalla_imprimir" style="display: none;"></button>
         <% @categoria_seleccionada -> %>
           <button type="button" phx-click="volver_categorias" style="display: inline-flex; background: none; border: none; color: #186904; font-size: 22px; font-weight: 700; cursor: pointer; line-height: 1; padding: 0; margin-bottom: 16px;">&#x2715;</button>
         <% true -> %>
