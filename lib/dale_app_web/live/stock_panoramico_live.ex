@@ -100,6 +100,16 @@ defmodule DaleAppWeb.StockPanoramicoLive do
     codigo = socket.assigns.categoria_seleccionada && socket.assigns.categoria_seleccionada.codigo
     {:noreply, push_patch(socket, to: url_stock(codigo))}
   end
+  def handle_event("abrir_pantalla_imprimir", _params, socket) do
+    codigo = socket.assigns.categoria_seleccionada && socket.assigns.categoria_seleccionada.codigo
+    nombre = socket.assigns.articulo_editando && socket.assigns.articulo_editando.nombre
+    {:noreply, push_patch(socket, to: url_stock(codigo, "editar", nombre, "imprimir"))}
+  end
+  def handle_event("cerrar_pantalla_imprimir", _params, socket) do
+    codigo = socket.assigns.categoria_seleccionada && socket.assigns.categoria_seleccionada.codigo
+    nombre = socket.assigns.articulo_editando && socket.assigns.articulo_editando.nombre
+    {:noreply, push_patch(socket, to: url_stock(codigo, "editar", nombre))}
+  end
 
   def handle_event("editar_articulo", %{"nombre" => nombre}, socket) do
     codigo = socket.assigns.categoria_seleccionada.codigo
@@ -218,9 +228,9 @@ defmodule DaleAppWeb.StockPanoramicoLive do
 
   defp formatear_precio(_precio), do: ""
 
-  defp url_stock(categoria, forma \\ nil, articulo \\ nil) do
+  defp url_stock(categoria, forma \\ nil, articulo \\ nil, pantalla \\ nil) do
     params =
-      [{"categoria", categoria}, {"form", forma}, {"articulo", articulo}]
+      [{"categoria", categoria}, {"form", forma}, {"articulo", articulo}, {"pantalla", pantalla}]
       |> Enum.reject(fn {_k, v} -> is_nil(v) end)
 
     case params do
