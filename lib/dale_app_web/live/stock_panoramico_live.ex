@@ -691,6 +691,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
 
       <%= if @categoria_seleccionada && @mostrar_formulario_producto do %>
         <div id="form-producto-stock" phx-hook=".FormularioProductoStock" data-codigo-tipo={@categoria_seleccionada && @categoria_seleccionada.codigo} data-numero-preview={@categoria_seleccionada && @categoria_seleccionada.numero_preview} data-articulo={if @articulo_editando, do: Jason.encode!(@articulo_editando), else: ""} style="margin-bottom: 24px;">
+          <div id="contenido-formulario-producto-stock">
           <div style="border-radius: 16px; overflow: hidden; border: 1px solid #f2f2f2; position: relative; box-shadow: 0 3px 10px rgba(0,0,0,0.06); margin-bottom: 16px;">
             <div id="caja-foto-stock" style="aspect-ratio: 16/9; background: #f0f0f0; position: relative; overflow: hidden; transition: aspect-ratio 0.2s;">
               <img id="preview-img-fondo-stock" src="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(20px) brightness(0.8); transform: scale(1.15); display: none;"/>
@@ -832,6 +833,50 @@ defmodule DaleAppWeb.StockPanoramicoLive do
           <button id="boton-guardar-stock" onclick="guardarProductoStock()" style="width: 100%; margin-top: 20px; background: #186904; color: white; border: none; border-radius: 16px; padding: 15px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Poppins, sans-serif; box-shadow: 0 3px 10px rgba(24,105,4,0.25);">
             Guardar producto
           </button>
+          </div>
+
+          <div id="pantalla-imprimir-stock" style="display: none;">
+            <button type="button" onclick="cerrarPantallaImprimirStock()" style="display: inline-flex; background: none; border: none; color: #186904; cursor: pointer; padding: 0; margin-bottom: 16px;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            </button>
+
+            <p style="font-size: 22px; font-weight: 800; color: #186904; margin: 0 0 4px;">Imprimir códigos</p>
+            <p style="font-size: 13px; color: #999; margin: 0 0 24px;">Elegí qué productos imprimir y en qué tamaño</p>
+
+            <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-bottom: 20px;">
+              <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 14px;">Tamaño</p>
+
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
+                <button type="button" data-tamano="chico" data-ancho-mm="25" data-alto-mm="30" onclick="elegirTamanoImprimir(this)" class="tarjeta-tamano-imprimir" style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 8px; border-radius: 16px; border: 1.5px solid #cfe4cf; background: white; cursor: pointer; font-family: Poppins, sans-serif;">
+                  <span style="width: 14px; height: 14px; border-radius: 4px; background: #186904;"></span>
+                  <span style="font-size: 13px; font-weight: 700; color: #186904;">Chico</span>
+                  <span style="font-size: 10px; color: #999;">25×30mm</span>
+                </button>
+
+                <button type="button" data-tamano="mediano" data-ancho-mm="40" data-alto-mm="45" onclick="elegirTamanoImprimir(this)" class="tarjeta-tamano-imprimir" style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 8px; border-radius: 16px; border: 1.5px solid #cfe4cf; background: white; cursor: pointer; font-family: Poppins, sans-serif;">
+                  <span style="width: 22px; height: 22px; border-radius: 5px; background: #186904;"></span>
+                  <span style="font-size: 13px; font-weight: 700; color: #186904;">Mediano</span>
+                  <span style="font-size: 10px; color: #999;">40×45mm</span>
+                </button>
+
+                <button type="button" data-tamano="grande" data-ancho-mm="60" data-alto-mm="70" onclick="elegirTamanoImprimir(this)" class="tarjeta-tamano-imprimir" style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 8px; border-radius: 16px; border: 1.5px solid #cfe4cf; background: white; cursor: pointer; font-family: Poppins, sans-serif;">
+                  <span style="width: 30px; height: 30px; border-radius: 6px; background: #186904;"></span>
+                  <span style="font-size: 13px; font-weight: 700; color: #186904;">Grande</span>
+                  <span style="font-size: 10px; color: #999;">60×70mm</span>
+                </button>
+              </div>
+
+              <p id="texto-cantidad-hoja-imprimir" style="font-size: 11.5px; color: #666; text-align: center; margin: 0 0 10px;">Elegí un tamaño para ver la vista previa</p>
+
+              <div style="display: flex; justify-content: center;">
+                <div id="hoja-preview-imprimir" style="display: flex; align-items: center; justify-content: center; overflow: hidden; width: 100%; max-width: 260px; aspect-ratio: 210 / 297; background: white; border: 1.5px solid #ddd; border-radius: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);"></div>
+              </div>
+            </div>
+
+            <div style="border: 1.5px dashed #d9ead9; border-radius: 18px; padding: 40px 20px; text-align: center;">
+              <p style="font-size: 13px; color: #bbb; margin: 0;">Acá va a ir el selector de productos y cantidades.</p>
+            </div>
+          </div>
 
           <script :type={Phoenix.LiveView.ColocatedHook} name=".FormularioProductoStock">
             export default {
@@ -1001,8 +1046,56 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   actualizarPreviewCodigoStock();
                 };
 
+                const ANCHO_HOJA_MM_IMPRIMIR = 210;
+                const ALTO_HOJA_MM_IMPRIMIR = 297;
+                const MARGEN_MM_IMPRIMIR = 10;
+
+                window.elegirTamanoImprimir = (btn) => {
+                  document.querySelectorAll('.tarjeta-tamano-imprimir').forEach(b => {
+                    b.style.borderColor = '#cfe4cf';
+                    b.style.background = 'white';
+                  });
+                  btn.style.borderColor = '#186904';
+                  btn.style.background = '#e6f4e6';
+
+                  const anchoMm = parseFloat(btn.dataset.anchoMm);
+                  const altoMm = parseFloat(btn.dataset.altoMm);
+
+                  const areaAnchoMm = ANCHO_HOJA_MM_IMPRIMIR - (MARGEN_MM_IMPRIMIR * 2);
+                  const areaAltoMm = ALTO_HOJA_MM_IMPRIMIR - (MARGEN_MM_IMPRIMIR * 2);
+
+                  const cols = Math.floor(areaAnchoMm / anchoMm);
+                  const rows = Math.floor(areaAltoMm / altoMm);
+                  const total = cols * rows;
+
+                  const texto = document.getElementById('texto-cantidad-hoja-imprimir');
+                  if (texto) texto.textContent = 'Entran ' + total + ' etiquetas por hoja (' + cols + ' columnas × ' + rows + ' filas)';
+
+                  const hoja = document.getElementById('hoja-preview-imprimir');
+                  if (!hoja) return;
+
+                  const escala = hoja.clientWidth / ANCHO_HOJA_MM_IMPRIMIR;
+                  const anchoCeldaPx = anchoMm * escala;
+                  const altoCeldaPx = altoMm * escala;
+
+                  let cuadrados = '';
+                  for (let i = 0; i < total; i++) {
+                    cuadrados += '<div style="background: #186904; opacity: 0.75; border-radius: 2px;"></div>';
+                  }
+
+                  hoja.innerHTML = '<div style="display: grid; grid-template-columns: repeat(' + cols + ', ' + anchoCeldaPx + 'px); grid-template-rows: repeat(' + rows + ', ' + altoCeldaPx + 'px); gap: 2px;">' + cuadrados + '</div>';
+                };
+
                 window.abrirImpresionQRStock = () => {
-                  window.location.href = '/mi-tienda/stock/imprimir';
+                  document.getElementById('contenido-formulario-producto-stock').style.display = 'none';
+                  document.getElementById('pantalla-imprimir-stock').style.display = 'block';
+                  const tarjetaChico = document.querySelector('.tarjeta-tamano-imprimir[data-tamano="chico"]');
+                  if (tarjetaChico) elegirTamanoImprimir(tarjetaChico);
+                };
+
+                window.cerrarPantallaImprimirStock = () => {
+                  document.getElementById('pantalla-imprimir-stock').style.display = 'none';
+                  document.getElementById('contenido-formulario-producto-stock').style.display = 'block';
                 };
 
                 window.actualizarFilasCantidadStock = () => {
