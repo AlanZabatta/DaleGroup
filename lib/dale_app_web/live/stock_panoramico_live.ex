@@ -157,6 +157,19 @@ defmodule DaleAppWeb.StockPanoramicoLive do
     end
   end
 
+  defp formatear_precio(precio) when is_integer(precio) do
+    precio
+    |> Integer.to_string()
+    |> String.reverse()
+    |> String.graphemes()
+    |> Enum.chunk_every(3)
+    |> Enum.join(",")
+    |> String.reverse()
+    |> String.replace(",", ".")
+  end
+
+  defp formatear_precio(_precio), do: ""
+
   defp url_stock(categoria, forma \\ nil, articulo \\ nil) do
     params =
       [{"categoria", categoria}, {"form", forma}, {"articulo", articulo}]
@@ -742,8 +755,8 @@ defmodule DaleAppWeb.StockPanoramicoLive do
               <input type="file" id="file-input-stock" accept="image/*" style="display: none;" onchange="previsualizarImagenStock(this)"/>
             </div>
             <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); padding: 10px 14px; border-top: 1.5px solid #d9ead9;">
-              <p id="prev-nombre-stock" style="font-size: 13px; font-weight: 700; margin: 0; color: #111; min-height: 16px;"></p>
-              <p id="prev-precio-stock" style="font-size: 14px; font-weight: 800; color: #186904; margin: 2px 0 0; min-height: 17px;"></p>
+              <p id="prev-nombre-stock" style="font-size: 13px; font-weight: 700; margin: 0; color: #111; min-height: 16px;"><%= @articulo_editando && @articulo_editando.nombre %></p>
+              <p id="prev-precio-stock" style="font-size: 14px; font-weight: 800; color: #186904; margin: 2px 0 0; min-height: 17px;"><%= if @articulo_editando && @articulo_editando.precio, do: "$" <> formatear_precio(@articulo_editando.precio) %></p>
             </div>
           </div>
 
@@ -813,11 +826,23 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   "Dorado" => "#c9a227", "Plateado" => "#b0b0b0"
                 }
               %>
+              <%
+                colores_seleccionados_editando =
+                  if @articulo_editando do
+                    @articulo_editando.variantes
+                    |> Map.keys()
+                    |> Enum.map(fn clave -> clave |> String.split("_") |> List.first() end)
+                    |> Enum.uniq()
+                  else
+                    []
+                  end
+              %>
               <%= for {codigo_c, nombre} <- Enum.sort_by(DaleApp.Products.StockItem.colores(), fn {c, _n} -> c end) do %>
+                <% color_activo = codigo_c in colores_seleccionados_editando %>
                 <button type="button" data-color={nombre} data-codigo-color={codigo_c} onclick="seleccionarColorStock(this)" title={nombre} style={"width: 36px; height: 36px; border-radius: 50%; padding: 0; cursor: pointer; position: relative; background: none; border: none;"}>
-                  <span class="anillo-color-stock" style="position: absolute; inset: -4px; border-radius: 50%; border: 2.5px solid transparent; transition: border-color 0.15s;"></span>
+                  <span class="anillo-color-stock" style={"position: absolute; inset: -4px; border-radius: 50%; border: 2.5px solid #{if color_activo, do: "#186904", else: "transparent"}; transition: border-color 0.15s;"}></span>
                   <span style={"position: absolute; inset: 0; border-radius: 50%; background: #{Map.get(mapa_hex_colores, nombre, "#ccc")}; box-shadow: 0 2px 5px rgba(0,0,0,0.18); #{if nombre == "Blanco", do: "border: 1.5px solid #e2e2e2;", else: ""}"}></span>
-                  <svg class="check-color-stock" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={if nombre in ["Blanco", "Amarillo", "Beige", "Plateado"], do: "#333", else: "white"} stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; inset: 0; margin: auto; opacity: 0; transition: opacity 0.15s;">
+                  <svg class="check-color-stock" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={if nombre in ["Blanco", "Amarillo", "Beige", "Plateado"], do: "#333", else: "white"} stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style={"position: absolute; inset: 0; margin: auto; opacity: #{if color_activo, do: "1", else: "0"}; transition: opacity 0.15s;"}>
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
                 </button>
