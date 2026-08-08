@@ -1432,14 +1432,14 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                           const datosQr = qrsPorCombo[cuadrosHoja[i].clave];
                           if (datosQr) {
                             htmlFisico += '<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; background: white; overflow: hidden; height: 100%; width: 100%; box-sizing: border-box; border: 0.3mm solid #186904; border-radius: 1mm; padding: 1mm;">' +
-                              '<div style="flex: 1; width: 100%; min-height: 0; display: flex; align-items: center; justify-content: center;">' + datosQr.svg + '</div>' +
-                              '<div style="font-size: 2.2mm; font-family: Poppins, sans-serif; font-weight: 700; color: #111; text-align: center; line-height: 1; white-space: nowrap; text-transform: uppercase;">' + datosQr.etiqueta + '</div>' +
+                              '<div style="flex: 1; width: 100%; min-height: 0; display: flex; align-items: center; justify-content: flex-end;">' + datosQr.svg + '</div>' +
+                              '<div style="margin-top: 0.6mm; margin-bottom: 0.6mm; font-size: 2.2mm; font-family: Poppins, sans-serif; font-weight: 700; color: #111; text-align: center; line-height: 1; white-space: nowrap; text-transform: uppercase;">' + datosQr.etiqueta + '</div>' +
                               '</div>';
                           } else {
                             htmlFisico += '<div style="display: flex; align-items: center; justify-content: center; background: ' + cuadrosHoja[i].hex + '; color: white; font-weight: 700; font-family: Poppins, sans-serif; font-size: 3mm;">' + cuadrosHoja[i].letra + '</div>';
                           }
                         } else {
-                          htmlFisico += '<div style="background: #186904; opacity: 0.75;"></div>';
+                          htmlFisico += '<div></div>';
                         }
                       }
                       hojaFisica.innerHTML = htmlFisico;
