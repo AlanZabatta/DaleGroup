@@ -1424,7 +1424,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
 
                       const hojaFisica = document.createElement('div');
                       hojaFisica.className = 'hoja-imprimir-pagina';
-                      hojaFisica.style.cssText = 'width: 210mm; height: 297mm; padding: 10mm; box-sizing: border-box; display: grid; grid-template-columns: repeat(' + cols + ', ' + anchoMm + 'mm); grid-template-rows: repeat(' + rows + ', ' + altoMm + 'mm); gap: 2mm; align-content: start;';
+                      hojaFisica.style.cssText = 'width: 210mm; height: 297mm; padding: 10mm; box-sizing: border-box; display: grid; grid-template-columns: repeat(' + cols + ', ' + anchoMm + 'mm); grid-template-rows: repeat(' + rows + ', ' + altoMm + 'mm); gap: 2mm; justify-content: center; align-content: center;';
 
                       let htmlFisico = '';
                       for (let i = 0; i < capacidad; i++) {
