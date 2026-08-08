@@ -1282,6 +1282,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                 const MARGEN_MM_IMPRIMIR = 10;
                 let tamanoSeleccionadoImprimir = { anchoMm: 25, altoMm: 30 };
                 let cantidadesQR = {};
+                let ultimoArticuloImprimir = null;
 
                 window.elegirTamanoImprimir = (btn) => {
                   document.querySelectorAll('.tarjeta-tamano-imprimir').forEach(b => {
@@ -1428,6 +1429,12 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                 let scrollYAntesDeImprimirStock = 0;
 
                 window.abrirImpresionQRStock = () => {
+                  const articuloActualImprimir = this.el.dataset.articulo || '';
+                  if (articuloActualImprimir !== ultimoArticuloImprimir) {
+                    cantidadesQR = {};
+                    document.querySelectorAll('[id^="cantidad-qr-input-"]').forEach(input => { input.value = 0; });
+                    ultimoArticuloImprimir = articuloActualImprimir;
+                  }
                   scrollYAntesDeImprimirStock = window.scrollY;
                   document.getElementById('contenido-formulario-producto-stock').style.display = 'none';
                   document.getElementById('pantalla-imprimir-stock').style.display = 'block';
