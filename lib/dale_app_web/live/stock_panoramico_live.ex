@@ -1431,7 +1431,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                         if (i < cuadrosHoja.length) {
                           const datosQr = qrsPorCombo[cuadrosHoja[i].clave];
                           if (datosQr) {
-                            htmlFisico += '<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; background: white; overflow: hidden; height: 100%; width: 100%;">' +
+                            htmlFisico += '<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; background: white; overflow: hidden; height: 100%; width: 100%; box-sizing: border-box; border: 0.3mm solid #186904; border-radius: 1mm;">' +
                               '<div style="flex: 1; width: 100%; min-height: 0; display: flex; align-items: center; justify-content: center;">' + datosQr.svg + '</div>' +
                               '<div style="font-size: 2.2mm; font-family: Poppins, sans-serif; font-weight: 600; color: #111; text-align: center; line-height: 1; white-space: nowrap;">' + datosQr.etiqueta + '</div>' +
                               '</div>';
