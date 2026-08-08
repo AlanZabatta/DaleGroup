@@ -1496,7 +1496,9 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                     const tarjetaChicoRefuerzo = document.querySelector('.tarjeta-tamano-imprimir[data-tamano="chico"]');
                     if (tarjetaChicoRefuerzo) elegirTamanoImprimir(tarjetaChicoRefuerzo);
                   };
-                  setTimeout(reforzarPreviewImprimir, 600);
+                  requestAnimationFrame(() => {
+                    requestAnimationFrame(reforzarPreviewImprimir);
+                  });
                 };
 
                 window.cerrarPantallaImprimirStock = () => {
