@@ -825,7 +825,8 @@ defmodule DaleAppWeb.StockPanoramicoLive do
             <div id="qr-dale9-stock" style="display: flex; justify-content: center;">
               {raw(EQRCode.encode("DALE9-preview") |> EQRCode.svg(width: 110))}
             </div>
-            <p style="font-size: 11px; color: #aaa; margin: 8px 0 0; font-family: Poppins, sans-serif;">Vista previa</p>
+            <p id="texto-vista-previa-qr-stock" style="font-size: 11px; color: #aaa; margin: 8px 0 0; font-family: Poppins, sans-serif;">Vista previa</p>
+            <button type="button" id="boton-imprimir-qr-stock" onclick="abrirImpresionQRStock()" style="display: none; margin: 8px auto 0; background: #186904; color: white; border: none; border-radius: 12px; padding: 8px 20px; font-size: 12.5px; font-weight: 700; font-family: Poppins, sans-serif; cursor: pointer;">Imprimir</button>
           </div>
 
           <button id="boton-guardar-stock" onclick="guardarProductoStock()" style="width: 100%; margin-top: 20px; background: #186904; color: white; border: none; border-radius: 16px; padding: 15px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Poppins, sans-serif; box-shadow: 0 3px 10px rgba(24,105,4,0.25);">
@@ -998,6 +999,10 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                 window.seleccionarComboCodigoStock = (clave) => {
                   claveCodigoPreview = clave;
                   actualizarPreviewCodigoStock();
+                };
+
+                window.abrirImpresionQRStock = () => {
+                  window.open('about:blank', '_blank');
                 };
 
                 window.actualizarFilasCantidadStock = () => {
@@ -1300,6 +1305,11 @@ defmodule DaleAppWeb.StockPanoramicoLive do
 
                       const btnGuardar = document.getElementById('boton-guardar-stock');
                       if (btnGuardar) btnGuardar.textContent = 'Guardar cambios';
+
+                      const textoVistaPrevia = document.getElementById('texto-vista-previa-qr-stock');
+                      const botonImprimir = document.getElementById('boton-imprimir-qr-stock');
+                      if (textoVistaPrevia) textoVistaPrevia.style.display = 'none';
+                      if (botonImprimir) botonImprimir.style.display = 'inline-block';
                     }
                   } catch (e) { /* noop */ }
                 }
