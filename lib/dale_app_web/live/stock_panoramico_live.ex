@@ -730,9 +730,9 @@ defmodule DaleAppWeb.StockPanoramicoLive do
           <div id="contenido-formulario-producto-stock">
           <div style="border-radius: 16px; overflow: hidden; border: 1px solid #f2f2f2; position: relative; box-shadow: 0 3px 10px rgba(0,0,0,0.06); margin-bottom: 16px;">
             <div id="caja-foto-stock" style="aspect-ratio: 16/9; background: #f0f0f0; position: relative; overflow: hidden; transition: aspect-ratio 0.2s;">
-              <img id="preview-img-fondo-stock" src="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(20px) brightness(0.8); transform: scale(1.15); display: none;"/>
-              <img id="preview-img-stock" src="" style="position: relative; width: 100%; height: 100%; object-fit: contain; display: none;"/>
-              <div id="preview-placeholder-stock" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="document.getElementById('file-input-stock').click()">
+              <img id="preview-img-fondo-stock" src={@articulo_editando && @articulo_editando.imagen} style={"position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(20px) brightness(0.8); transform: scale(1.15); display: #{if @articulo_editando && @articulo_editando.imagen, do: "block", else: "none"};"}/>
+              <img id="preview-img-stock" src={@articulo_editando && @articulo_editando.imagen} style={"position: relative; width: 100%; height: 100%; object-fit: contain; display: #{if @articulo_editando && @articulo_editando.imagen, do: "block", else: "none"};"}/>
+              <div id="preview-placeholder-stock" style={"width: 100%; height: 100%; display: #{if @articulo_editando && @articulo_editando.imagen, do: "none", else: "flex"}; align-items: center; justify-content: center; cursor: pointer;"} onclick="document.getElementById('file-input-stock').click()">
                 <svg width="20%" height="20%" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;">
                   <%= if @categoria_seleccionada do %>
                     {raw(icono_svg_por_codigo(@categoria_seleccionada.codigo, @categorias))}
@@ -749,13 +749,13 @@ defmodule DaleAppWeb.StockPanoramicoLive do
 
           <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10);">
             <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 6px;">Nombre del producto</p>
-            <input id="input-nombre-stock" type="text" placeholder="Ej: Buzo oversize" oninput="actualizarPreviewStock()" style="width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; outline: none; background: white;"/>
+            <input id="input-nombre-stock" type="text" placeholder="Ej: Buzo oversize" value={@articulo_editando && @articulo_editando.nombre} oninput="actualizarPreviewStock()" style="width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; outline: none; background: white;"/>
 
             <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 16px 0 6px;">Precio del producto</p>
-            <input id="input-precio-stock" type="number" placeholder="$" oninput="actualizarPreviewStock()" style="width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; outline: none; background: white;"/>
+            <input id="input-precio-stock" type="number" placeholder="$" value={@articulo_editando && @articulo_editando.precio} oninput="actualizarPreviewStock()" style="width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; outline: none; background: white;"/>
 
             <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 16px 0 6px;">Descripción (opcional)</p>
-            <textarea id="input-descripcion-stock" placeholder="Detalles del producto" oninput="limitarPalabrasStock(this); this.style.height='auto'; this.style.height=(this.scrollHeight)+'px';" style="width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; resize: none; height: 70px; min-height: 70px; outline: none; background: white; overflow: hidden;"></textarea>
+            <textarea id="input-descripcion-stock" placeholder="Detalles del producto" oninput="limitarPalabrasStock(this); this.style.height='auto'; this.style.height=(this.scrollHeight)+'px';" style="width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; resize: none; height: 70px; min-height: 70px; outline: none; background: white; overflow: hidden;"><%= @articulo_editando && @articulo_editando.descripcion %></textarea>
             <p id="contador-palabras-stock" style="font-size: 11px; color: #aaa; margin: 4px 0 0; text-align: right; font-family: Poppins, sans-serif;">0/500 palabras</p>
           </div>
 
