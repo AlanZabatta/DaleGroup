@@ -483,9 +483,10 @@ defmodule DaleAppWeb.StockPanoramicoLive do
     <div style="padding: 24px 18px 40px; font-family: Poppins, sans-serif; max-width: 600px; margin: 0 auto; background-color: white; min-height: 100vh; position: relative;">
       <%= cond do %>
         <% @categoria_seleccionada && @mostrar_formulario_producto -> %>
-          <button type="button" phx-click="cerrar_formulario_producto" style="width: 34px; height: 34px; border-radius: 50%; background: white; border: 1.5px solid #e0e0e0; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; padding: 0;">
+          <button type="button" onclick="manejarClickVolverFormularioStock()" style="width: 34px; height: 34px; border-radius: 50%; background: white; border: 1.5px solid #e0e0e0; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; padding: 0;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
           </button>
+          <button type="button" id="boton-cerrar-formulario-real-stock" phx-click="cerrar_formulario_producto" style="display: none;"></button>
         <% @categoria_seleccionada -> %>
           <button type="button" phx-click="volver_categorias" style="display: inline-flex; background: none; border: none; color: #186904; font-size: 22px; font-weight: 700; cursor: pointer; line-height: 1; padding: 0; margin-bottom: 16px;">&#x2715;</button>
         <% true -> %>
@@ -493,7 +494,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
       <% end %>
 
       <%= if @categoria_seleccionada do %>
-        <p style="font-size: 26px; font-weight: 800; margin: 0 0 20px;">
+        <p id="breadcrumb-stock-categoria" style="font-size: 26px; font-weight: 800; margin: 0 0 20px;">
           <span style="color: #aaa; cursor: pointer;" phx-click="volver_categorias">Mi Stock</span>
           <span style="color: #aaa;">/</span>
           <span style="color: #186904;"><%= @categoria_seleccionada.nombre %></span>
@@ -836,10 +837,6 @@ defmodule DaleAppWeb.StockPanoramicoLive do
           </div>
 
           <div id="pantalla-imprimir-stock" style="display: none;">
-            <button type="button" onclick="cerrarPantallaImprimirStock()" style="display: inline-flex; background: none; border: none; color: #186904; cursor: pointer; padding: 0; margin-bottom: 16px;">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-            </button>
-
             <p style="font-size: 22px; font-weight: 800; color: #186904; margin: 0 0 4px;">Imprimir códigos</p>
             <p style="font-size: 13px; color: #999; margin: 0 0 24px;">Elegí qué productos imprimir y en qué tamaño</p>
 
@@ -1089,6 +1086,8 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                 window.abrirImpresionQRStock = () => {
                   document.getElementById('contenido-formulario-producto-stock').style.display = 'none';
                   document.getElementById('pantalla-imprimir-stock').style.display = 'block';
+                  const breadcrumb = document.getElementById('breadcrumb-stock-categoria');
+                  if (breadcrumb) breadcrumb.style.display = 'none';
                   const tarjetaChico = document.querySelector('.tarjeta-tamano-imprimir[data-tamano="chico"]');
                   if (tarjetaChico) elegirTamanoImprimir(tarjetaChico);
                 };
@@ -1096,6 +1095,18 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                 window.cerrarPantallaImprimirStock = () => {
                   document.getElementById('pantalla-imprimir-stock').style.display = 'none';
                   document.getElementById('contenido-formulario-producto-stock').style.display = 'block';
+                  const breadcrumb = document.getElementById('breadcrumb-stock-categoria');
+                  if (breadcrumb) breadcrumb.style.display = 'block';
+                };
+
+                window.manejarClickVolverFormularioStock = () => {
+                  const pantallaImprimir = document.getElementById('pantalla-imprimir-stock');
+                  if (pantallaImprimir && pantallaImprimir.style.display !== 'none') {
+                    cerrarPantallaImprimirStock();
+                  } else {
+                    const botonReal = document.getElementById('boton-cerrar-formulario-real-stock');
+                    if (botonReal) botonReal.click();
+                  }
                 };
 
                 window.actualizarFilasCantidadStock = () => {
