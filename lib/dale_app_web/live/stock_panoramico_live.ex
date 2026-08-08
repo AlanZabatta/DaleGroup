@@ -19,7 +19,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
     %{codigo: "05", nombre: "XL"}
   ]
 
-  def mount(params, session, socket) do
+  def mount(_params, session, socket) do
     user_id = session["user_id"]
     brand = if user_id, do: Repo.get_by(Brand, user_id: user_id), else: nil
     if brand, do: asegurar_categorias_fijas(brand.id)
@@ -29,26 +29,13 @@ defmodule DaleAppWeb.StockPanoramicoLive do
     panel = if brand, do: calcular_panel(brand, productos_todos), else: nil
     talles_totales = if brand, do: calcular_talles_totales(brand.id, talles_custom), else: []
 
-    categoria_seleccionada =
-      case {brand, Map.get(params, "categoria")} do
-        {nil, _} -> nil
-        {_brand, nil} -> nil
-        {brand, tipo} ->
-          case nombre_categoria(brand.id, tipo) do
-            nil -> nil
-            nombre ->
-              numero_preview = DaleApp.Products.Dale9.proximo_numero(brand.id, tipo)
-              %{codigo: tipo, nombre: nombre, numero_preview: numero_preview}
-          end
-      end
-
     {:ok,
      assign(socket,
        brand: brand,
        productos_todos: productos_todos,
        productos: productos_todos,
        termino: "",
-       categoria_seleccionada: categoria_seleccionada,
+       categoria_seleccionada: nil,
        categorias: categorias,
        talles_custom: talles_custom,
        mostrar_modal_categoria: false,
@@ -67,21 +54,62 @@ defmodule DaleAppWeb.StockPanoramicoLive do
      )}
   end
 
+  def handle_params(params, _uri, socket) do
+    brand = socket.assigns.brand
+
+    categoria_seleccionada =
+      case {brand, Map.get(params, "categoria")} do
+        {nil, _} -> nil
+        {_brand, nil} -> nil
+        {brand, tipo} ->
+          case nombre_categoria(brand.id, tipo) do
+            nil -> nil
+            nombre ->
+              numero_preview = DaleApp.Products.Dale9.proximo_numero(brand.id, tipo)
+              %{codigo: tipo, nombre: nombre, numero_preview: numero_preview}
+          end
+      end
+
+    forma = Map.get(params, "form")
+    mostrar_formulario_producto = forma in ["crear", "editar"]
+
+    articulo_editando =
+      case {forma, Map.get(params, "articulo"), categoria_seleccionada} do
+        {"editar", nombre, %{codigo: codigo}} when is_binary(nombre) ->
+          construir_articulo_editando(socket, codigo, nombre)
+
+        _ ->
+          nil
+      end
+
+    {:noreply,
+     assign(socket,
+       categoria_seleccionada: categoria_seleccionada,
+       mostrar_formulario_producto: mostrar_formulario_producto,
+       articulo_editando: articulo_editando
+     )}
+  end
+
   def handle_event("abrir_formulario_producto", _params, socket) do
-    {:noreply, assign(socket, mostrar_formulario_producto: true, articulo_editando: nil)}
+    codigo = socket.assigns.categoria_seleccionada && socket.assigns.categoria_seleccionada.codigo
+    {:noreply, push_patch(socket, to: url_stock(codigo, "crear"))}
   end
 
   def handle_event("cerrar_formulario_producto", _params, socket) do
-    {:noreply, assign(socket, mostrar_formulario_producto: false, articulo_editando: nil)}
+    codigo = socket.assigns.categoria_seleccionada && socket.assigns.categoria_seleccionada.codigo
+    {:noreply, push_patch(socket, to: url_stock(codigo))}
   end
 
   def handle_event("editar_articulo", %{"nombre" => nombre}, socket) do
-    categoria = socket.assigns.categoria_seleccionada
+    codigo = socket.assigns.categoria_seleccionada.codigo
+    {:noreply, push_patch(socket, to: url_stock(codigo, "editar", nombre))}
+  end
 
+  defp construir_articulo_editando(socket, codigo_tipo, nombre) do
     productos =
       socket.assigns.productos_todos
       |> Enum.map(fn {producto, _total, _codigos} -> producto end)
-      |> Enum.filter(fn p -> p.name == nombre && p.codigo_tipo == categoria.codigo end)
+      |> Enum.filter(fn p -> p.name == nombre && p.codigo_tipo == codigo_tipo end)
 
     ids = Enum.map(productos, & &1.id)
 
@@ -115,21 +143,29 @@ defmodule DaleAppWeb.StockPanoramicoLive do
 
     primero = List.first(productos)
 
-    articulo_editando =
-      if primero do
-        %{
-          nombre: primero.name,
-          precio: primero.price,
-          descripcion: primero.description || "",
-          imagen: primero.image,
-          variantes: variantes,
-          productos_por_color: productos_por_color
-        }
-      else
-        nil
-      end
+    if primero do
+      %{
+        nombre: primero.name,
+        precio: primero.price,
+        descripcion: primero.description || "",
+        imagen: primero.image,
+        variantes: variantes,
+        productos_por_color: productos_por_color
+      }
+    else
+      nil
+    end
+  end
 
-    {:noreply, assign(socket, articulo_editando: articulo_editando, mostrar_formulario_producto: true)}
+  defp url_stock(categoria, forma \\ nil, articulo \\ nil) do
+    params =
+      [{"categoria", categoria}, {"form", forma}, {"articulo", articulo}]
+      |> Enum.reject(fn {_k, v} -> is_nil(v) end)
+
+    case params do
+      [] -> "/mi-tienda/stock"
+      _ -> "/mi-tienda/stock?" <> URI.encode_query(params)
+    end
   end
 
   def handle_event("producto_creado_ok", _params, socket) do
@@ -172,13 +208,12 @@ defmodule DaleAppWeb.StockPanoramicoLive do
     end
   end
 
-  def handle_event("elegir_categoria", %{"tipo" => tipo, "nombre" => nombre}, socket) do
-    numero_preview = DaleApp.Products.Dale9.proximo_numero(socket.assigns.brand.id, tipo)
-    {:noreply, assign(socket, categoria_seleccionada: %{codigo: tipo, nombre: nombre, numero_preview: numero_preview})}
+  def handle_event("elegir_categoria", %{"tipo" => tipo, "nombre" => _nombre}, socket) do
+    {:noreply, push_patch(socket, to: url_stock(tipo))}
   end
 
   def handle_event("volver_categorias", _params, socket) do
-    {:noreply, assign(socket, categoria_seleccionada: nil)}
+    {:noreply, push_patch(socket, to: "/mi-tienda/stock")}
   end
 
   def handle_event("abrir_modal_categoria", _params, socket) do
@@ -1083,13 +1118,17 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   hoja.innerHTML = '<div style="display: grid; grid-template-columns: repeat(' + cols + ', ' + anchoCeldaPx + 'px); grid-template-rows: repeat(' + rows + ', ' + altoCeldaPx + 'px); gap: 2px;">' + cuadrados + '</div>';
                 };
 
+                let scrollYAntesDeImprimirStock = 0;
+
                 window.abrirImpresionQRStock = () => {
+                  scrollYAntesDeImprimirStock = window.scrollY;
                   document.getElementById('contenido-formulario-producto-stock').style.display = 'none';
                   document.getElementById('pantalla-imprimir-stock').style.display = 'block';
                   const breadcrumb = document.getElementById('breadcrumb-stock-categoria');
                   if (breadcrumb) breadcrumb.style.display = 'none';
                   const tarjetaChico = document.querySelector('.tarjeta-tamano-imprimir[data-tamano="chico"]');
                   if (tarjetaChico) elegirTamanoImprimir(tarjetaChico);
+                  window.scrollTo(0, 0);
                 };
 
                 window.cerrarPantallaImprimirStock = () => {
@@ -1097,6 +1136,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   document.getElementById('contenido-formulario-producto-stock').style.display = 'block';
                   const breadcrumb = document.getElementById('breadcrumb-stock-categoria');
                   if (breadcrumb) breadcrumb.style.display = 'block';
+                  window.scrollTo(0, scrollYAntesDeImprimirStock);
                 };
 
                 window.manejarClickVolverFormularioStock = () => {
