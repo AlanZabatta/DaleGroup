@@ -1062,7 +1062,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
               <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 14px;">Tamaño</p>
 
               <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
-                <button type="button" data-tamano="chico" data-ancho-mm="25" data-alto-mm="30" onclick="elegirTamanoImprimir(this)" class="tarjeta-tamano-imprimir" style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 8px; border-radius: 16px; border: 1.5px solid #cfe4cf; background: white; cursor: pointer; font-family: Poppins, sans-serif;">
+                <button type="button" data-tamano="chico" data-ancho-mm="25" data-alto-mm="30" onclick="elegirTamanoImprimir(this)" class="tarjeta-tamano-imprimir" style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 8px; border-radius: 16px; border: 1.5px solid #186904; background: #e6f4e6; cursor: pointer; font-family: Poppins, sans-serif;">
                   <span style="width: 14px; height: 14px; border-radius: 4px; background: #186904;"></span>
                   <span style="font-size: 13px; font-weight: 700; color: #186904;">Chico</span>
                   <span style="font-size: 10px; color: #999;">25×30mm</span>
