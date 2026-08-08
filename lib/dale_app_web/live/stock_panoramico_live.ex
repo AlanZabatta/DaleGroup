@@ -50,7 +50,8 @@ defmodule DaleAppWeb.StockPanoramicoLive do
        talles_totales: talles_totales,
        talles_fijos_render: @talles_fijos,
        panel_tab: "control",
-       mostrar_formulario_producto: false
+       mostrar_formulario_producto: false,
+       ruta_actual: "/mi-tienda/stock"
      )}
   end
 
