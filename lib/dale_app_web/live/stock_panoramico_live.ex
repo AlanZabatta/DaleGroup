@@ -1081,7 +1081,15 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                 </button>
               </div>
 
-              <div id="hojas-preview-imprimir-container" style="display: flex; flex-direction: column; align-items: center; gap: 20px;"></div>
+              <div id="hojas-preview-imprimir-container" style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
+                <div style="width: 100%; max-width: 260px;">
+                  <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; width: 100%; aspect-ratio: 210 / 297; border: 1.5px solid #ddd; border-radius: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); padding: 3.5%; box-sizing: border-box; background: white;">
+                    <%= for _i <- 1..capacidad_hoja_mm(25, 30) do %>
+                      <div style="background: #186904; opacity: 0.75; border-radius: 2px;"></div>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10);">
@@ -1483,10 +1491,16 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   window.scrollTo(0, 0);
                   const botonAbrirImprimirReal = document.getElementById('boton-abrir-pantalla-imprimir-real-stock');
                   if (botonAbrirImprimirReal) botonAbrirImprimirReal.click();
-                  setTimeout(() => {
+
+                  const reforzarPreviewImprimir = (intentos) => {
                     const tarjetaChicoRefuerzo = document.querySelector('.tarjeta-tamano-imprimir[data-tamano="chico"]');
+                    const contenedorRefuerzo = document.getElementById('hojas-preview-imprimir-container');
                     if (tarjetaChicoRefuerzo) elegirTamanoImprimir(tarjetaChicoRefuerzo);
-                  }, 100);
+                    if (contenedorRefuerzo && contenedorRefuerzo.children.length === 0 && intentos > 0) {
+                      setTimeout(() => reforzarPreviewImprimir(intentos - 1), 150);
+                    }
+                  };
+                  setTimeout(() => reforzarPreviewImprimir(6), 100);
                 };
 
                 window.cerrarPantallaImprimirStock = () => {
