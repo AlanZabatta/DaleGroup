@@ -19,7 +19,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
     %{codigo: "05", nombre: "XL"}
   ]
 
-  def mount(_params, session, socket) do
+  def mount(params, session, socket) do
     user_id = session["user_id"]
     brand = if user_id, do: Repo.get_by(Brand, user_id: user_id), else: nil
     if brand, do: asegurar_categorias_fijas(brand.id)
@@ -29,13 +29,26 @@ defmodule DaleAppWeb.StockPanoramicoLive do
     panel = if brand, do: calcular_panel(brand, productos_todos), else: nil
     talles_totales = if brand, do: calcular_talles_totales(brand.id, talles_custom), else: []
 
+    categoria_seleccionada =
+      case {brand, Map.get(params, "categoria")} do
+        {nil, _} -> nil
+        {_brand, nil} -> nil
+        {brand, tipo} ->
+          case nombre_categoria(brand.id, tipo) do
+            nil -> nil
+            nombre ->
+              numero_preview = DaleApp.Products.Dale9.proximo_numero(brand.id, tipo)
+              %{codigo: tipo, nombre: nombre, numero_preview: numero_preview}
+          end
+      end
+
     {:ok,
      assign(socket,
        brand: brand,
        productos_todos: productos_todos,
        productos: productos_todos,
        termino: "",
-       categoria_seleccionada: nil,
+       categoria_seleccionada: categoria_seleccionada,
        categorias: categorias,
        talles_custom: talles_custom,
        mostrar_modal_categoria: false,
@@ -45,6 +58,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
        error_categoria: nil,
        error_talle: nil,
        editando_categoria_id: nil,
+       articulo_editando: nil,
        panel: panel,
        talles_totales: talles_totales,
        talles_fijos_render: @talles_fijos,
@@ -54,11 +68,68 @@ defmodule DaleAppWeb.StockPanoramicoLive do
   end
 
   def handle_event("abrir_formulario_producto", _params, socket) do
-    {:noreply, assign(socket, mostrar_formulario_producto: true)}
+    {:noreply, assign(socket, mostrar_formulario_producto: true, articulo_editando: nil)}
   end
 
   def handle_event("cerrar_formulario_producto", _params, socket) do
-    {:noreply, assign(socket, mostrar_formulario_producto: false)}
+    {:noreply, assign(socket, mostrar_formulario_producto: false, articulo_editando: nil)}
+  end
+
+  def handle_event("editar_articulo", %{"nombre" => nombre}, socket) do
+    categoria = socket.assigns.categoria_seleccionada
+
+    productos =
+      socket.assigns.productos_todos
+      |> Enum.map(fn {producto, _total, _codigos} -> producto end)
+      |> Enum.filter(fn p -> p.name == nombre && p.codigo_tipo == categoria.codigo end)
+
+    ids = Enum.map(productos, & &1.id)
+
+    stock_items =
+      if ids == [] do
+        []
+      else
+        from(s in StockItem, where: s.product_id in ^ids) |> Repo.all()
+      end
+
+    stock_items_por_producto = Enum.group_by(stock_items, & &1.product_id)
+
+    variantes =
+      stock_items
+      |> Enum.map(fn s -> {s.codigo_color <> "_" <> s.codigo_talle, s.cantidad} end)
+      |> Map.new()
+
+    productos_por_color =
+      productos
+      |> Enum.map(fn p ->
+        codigo_color =
+          case Map.get(stock_items_por_producto, p.id, []) do
+            [item | _] -> item.codigo_color
+            [] -> nil
+          end
+
+        {codigo_color, p.id}
+      end)
+      |> Enum.filter(fn {codigo_color, _id} -> codigo_color end)
+      |> Map.new()
+
+    primero = List.first(productos)
+
+    articulo_editando =
+      if primero do
+        %{
+          nombre: primero.name,
+          precio: primero.price,
+          descripcion: primero.description || "",
+          imagen: primero.image,
+          variantes: variantes,
+          productos_por_color: productos_por_color
+        }
+      else
+        nil
+      end
+
+    {:noreply, assign(socket, articulo_editando: articulo_editando, mostrar_formulario_producto: true)}
   end
 
   def handle_event("producto_creado_ok", _params, socket) do
@@ -246,6 +317,17 @@ defmodule DaleAppWeb.StockPanoramicoLive do
   defp listar_talles_custom(brand_id) do
     from(t in TalleCustom, where: t.brand_id == ^brand_id, order_by: [asc: t.codigo_talle])
     |> Repo.all()
+  end
+
+  defp nombre_categoria(brand_id, codigo) do
+    case Enum.find(@categorias_fijas, fn %{codigo: c} -> c == codigo end) do
+      %{nombre: nombre} -> nombre
+      nil ->
+        case Repo.get_by(CategoriaCustom, brand_id: brand_id, codigo_tipo: codigo) do
+          nil -> nil
+          cat -> cat.nombre
+        end
+    end
   end
 
   defp asegurar_categorias_fijas(brand_id) do
@@ -570,7 +652,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
 
       <%= if @categoria_seleccionada && !@mostrar_formulario_producto do %>
         <%= for {nombre_articulo, filas} <- filas_de_categoria(@productos_todos, @categoria_seleccionada.codigo) do %>
-          <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px;">
+          <div phx-click="editar_articulo" phx-value-nombre={nombre_articulo} style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; cursor: pointer;">
             <%= for fila <- filas do %>
               <div style="display: flex; align-items: center; gap: 12px; padding: 10px; border: 1px solid #eee; border-radius: 14px; background: white;">
                 <div style="width: 52px; height: 52px; border-radius: 10px; overflow: hidden; background: #f5f5f5; flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative;">
@@ -608,7 +690,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
       <% end %>
 
       <%= if @categoria_seleccionada && @mostrar_formulario_producto do %>
-        <div id="form-producto-stock" phx-hook=".FormularioProductoStock" data-codigo-tipo={@categoria_seleccionada && @categoria_seleccionada.codigo} data-numero-preview={@categoria_seleccionada && @categoria_seleccionada.numero_preview} style="margin-bottom: 24px;">
+        <div id="form-producto-stock" phx-hook=".FormularioProductoStock" data-codigo-tipo={@categoria_seleccionada && @categoria_seleccionada.codigo} data-numero-preview={@categoria_seleccionada && @categoria_seleccionada.numero_preview} data-articulo={if @articulo_editando, do: Jason.encode!(@articulo_editando), else: ""} style="margin-bottom: 24px;">
           <div style="border-radius: 16px; overflow: hidden; border: 1px solid #f2f2f2; position: relative; box-shadow: 0 3px 10px rgba(0,0,0,0.06); margin-bottom: 16px;">
             <div id="caja-foto-stock" style="aspect-ratio: 16/9; background: #f0f0f0; position: relative; overflow: hidden; transition: aspect-ratio 0.2s;">
               <img id="preview-img-fondo-stock" src="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(20px) brightness(0.8); transform: scale(1.15); display: none;"/>
@@ -753,6 +835,8 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                 const numeroPreview = this.el.dataset.numeroPreview || "";
                 let imagenBlobStock = null;
                 let tallesSeleccionadosStock = [];
+                let editandoArticuloActivo = false;
+                let productosPorColorEditando = {};
                 const csrfTokenStock = document.querySelector("meta[name='csrf-token']")?.getAttribute("content");
 
                 window.previsualizarImagenStock = (input) => {
@@ -1073,7 +1157,12 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   const btn = document.getElementById('boton-guardar-stock');
                   btn.textContent = "Guardando..."; btn.disabled = true;
 
-                  const res = await fetch('/mi-tienda/stock/crear-articulo', { method: 'POST', body: formData });
+                  const url = editandoArticuloActivo ? '/mi-tienda/stock/actualizar-articulo' : '/mi-tienda/stock/crear-articulo';
+                  if (editandoArticuloActivo) {
+                    formData.append('productos_por_color', JSON.stringify(productosPorColorEditando));
+                  }
+
+                  const res = await fetch(url, { method: 'POST', body: formData });
                   const data = await res.json();
 
                   if (data.ok) {
@@ -1085,12 +1174,60 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                         await fetch('/productos/' + id + '/imagen', { method: 'POST', body: imgForm });
                       }
                     }
-                    window.location.href = '/mi-tienda/stock';
+                    window.location.href = '/mi-tienda/stock?categoria=' + codigoTipo;
                   } else {
-                    btn.textContent = "Guardar producto"; btn.disabled = false;
+                    btn.textContent = editandoArticuloActivo ? "Guardar cambios" : "Guardar producto"; btn.disabled = false;
                     alert('Error al guardar.');
                   }
                 };
+
+                const datosArticuloRaw = this.el.dataset.articulo;
+                if (datosArticuloRaw && datosArticuloRaw !== "") {
+                  try {
+                    const datos = JSON.parse(datosArticuloRaw);
+                    if (datos && datos.variantes) {
+                      editandoArticuloActivo = true;
+                      productosPorColorEditando = datos.productos_por_color || {};
+
+                      document.getElementById('input-nombre-stock').value = datos.nombre || '';
+                      document.getElementById('input-precio-stock').value = datos.precio || '';
+                      document.getElementById('input-descripcion-stock').value = datos.descripcion || '';
+                      actualizarPreviewStock();
+                      limitarPalabrasStock(document.getElementById('input-descripcion-stock'));
+
+                      if (datos.imagen) {
+                        const imgFondo = document.getElementById('preview-img-fondo-stock');
+                        const imgPreview = document.getElementById('preview-img-stock');
+                        imgFondo.src = datos.imagen; imgFondo.style.display = 'block';
+                        imgPreview.src = datos.imagen; imgPreview.style.display = 'block';
+                        document.getElementById('preview-placeholder-stock').style.display = 'none';
+                      }
+
+                      const clavesColorTalle = Object.keys(datos.variantes);
+                      const coloresUnicos = [...new Set(clavesColorTalle.map(c => c.split('_')[0]))];
+                      const tallesUnicos = [...new Set(clavesColorTalle.map(c => c.split('_')[1]))];
+
+                      if (tallesUnicos.length > 1) window.toggleMultiTalleStock();
+                      tallesUnicos.forEach(codigo => {
+                        const btn = document.querySelector('#talles-letra-stock button[data-codigo-talle="' + codigo + '"]');
+                        if (btn) btn.click();
+                      });
+
+                      if (coloresUnicos.length > 1) window.toggleMultiColorStock();
+                      coloresUnicos.forEach(codigo => {
+                        const btn = document.querySelector('#colores-stock button[data-codigo-color="' + codigo + '"]');
+                        if (btn) btn.click();
+                      });
+
+                      clavesColorTalle.forEach(clave => {
+                        window.setCantidadStock(clave, datos.variantes[clave]);
+                      });
+
+                      const btnGuardar = document.getElementById('boton-guardar-stock');
+                      if (btnGuardar) btnGuardar.textContent = 'Guardar cambios';
+                    }
+                  } catch (e) { /* noop */ }
+                }
               }
             }
           </script>

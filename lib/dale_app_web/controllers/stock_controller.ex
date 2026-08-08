@@ -1,5 +1,6 @@
 defmodule DaleAppWeb.StockController do
   use DaleAppWeb, :controller
+  import Ecto.Query, only: [from: 2]
   alias DaleApp.Repo
   alias DaleApp.Brands.Brand
   alias DaleApp.Products.{Product, StockItem, Dale9}
@@ -86,6 +87,155 @@ defmodule DaleAppWeb.StockController do
           {:ok, ids} -> json(conn, %{ok: true, ids: Enum.reverse(ids)})
           {:error, _ids} -> json(conn, %{ok: false, error: "Error al crear un color"})
         end
+    end
+  end
+
+  def actualizar_articulo(conn, params) do
+    user_id = get_session(conn, :user_id)
+    brand = Repo.get_by(Brand, user_id: user_id)
+
+    nombre = Map.get(params, "nombre", "Sin nombre")
+    precio_original = params |> Map.get("precio_original", "0") |> String.to_integer()
+    precio_final = params |> Map.get("precio_final", "0") |> String.to_integer()
+    descripcion = Map.get(params, "descripcion", "")
+    codigo_tipo = Map.get(params, "codigo_tipo")
+    variantes_json = Map.get(params, "variantes", "{}")
+    productos_por_color_json = Map.get(params, "productos_por_color", "{}")
+
+    variantes =
+      case Jason.decode(variantes_json) do
+        {:ok, mapa} -> mapa
+        _ -> %{}
+      end
+
+    productos_por_color_ids =
+      case Jason.decode(productos_por_color_json) do
+        {:ok, mapa} -> mapa
+        _ -> %{}
+      end
+
+    cond do
+      is_nil(brand) ->
+        json(conn, %{ok: false, error: "Marca no encontrada"})
+
+      is_nil(codigo_tipo) or codigo_tipo == "" ->
+        json(conn, %{ok: false, error: "Falta el tipo de prenda"})
+
+      true ->
+        grupos_por_color =
+          variantes
+          |> Enum.map(fn {clave, cantidad} ->
+            [codigo_color, codigo_talle] = String.split(clave, "_")
+            {codigo_color, codigo_talle, cantidad}
+          end)
+          |> Enum.group_by(fn {codigo_color, _talle, _cant} -> codigo_color end)
+
+        colores_en_variantes = Map.keys(grupos_por_color)
+        colores_existentes = Map.keys(productos_por_color_ids)
+        colores_a_borrar = colores_existentes -- colores_en_variantes
+
+        Enum.each(colores_a_borrar, fn codigo_color ->
+          producto_id = Map.get(productos_por_color_ids, codigo_color)
+          producto = Repo.get(Product, producto_id)
+
+          if producto && producto.brand_id == brand.id do
+            from(s in StockItem, where: s.product_id == ^producto.id) |> Repo.delete_all()
+
+            if producto.codigo_tipo && producto.codigo_numero do
+              Dale9.liberar_numero(brand.id, producto.codigo_tipo, producto.codigo_numero)
+            end
+
+            Repo.delete(producto)
+          end
+        end)
+
+        ids_finales =
+          Enum.map(grupos_por_color, fn {codigo_color, filas} ->
+            producto_id_existente = Map.get(productos_por_color_ids, codigo_color)
+            producto_existente = producto_id_existente && Repo.get(Product, producto_id_existente)
+
+            producto =
+              if producto_existente && producto_existente.brand_id == brand.id do
+                {:ok, actualizado} =
+                  DaleApp.Products.update_product(producto_existente, %{
+                    name: nombre,
+                    original_price: precio_original,
+                    price: precio_final,
+                    description: descripcion
+                  })
+
+                items_actuales =
+                  from(s in StockItem, where: s.product_id == ^actualizado.id)
+                  |> Repo.all()
+                  |> Map.new(fn item -> {item.codigo_talle, item} end)
+
+                talles_nuevos = Enum.map(filas, fn {_c, t, _cant} -> t end)
+
+                Enum.each(filas, fn {codigo_color, codigo_talle, cantidad} ->
+                  case Map.get(items_actuales, codigo_talle) do
+                    nil ->
+                      codigo = StockItem.armar_codigo(codigo_tipo, codigo_color, actualizado.codigo_numero, codigo_talle)
+
+                      %StockItem{}
+                      |> StockItem.changeset(%{
+                        codigo: codigo,
+                        cantidad: cantidad,
+                        codigo_color: codigo_color,
+                        codigo_talle: codigo_talle,
+                        product_id: actualizado.id
+                      })
+                      |> Repo.insert()
+
+                    item ->
+                      item |> StockItem.changeset(%{cantidad: cantidad}) |> Repo.update()
+                  end
+                end)
+
+                items_actuales
+                |> Map.reject(fn {codigo_talle, _item} -> codigo_talle in talles_nuevos end)
+                |> Enum.each(fn {_codigo_talle, item} -> Repo.delete(item) end)
+
+                actualizado
+              else
+                codigo_numero = Dale9.proximo_numero(brand.id, codigo_tipo)
+                count = length(DaleApp.Products.list_brand_products(brand.id))
+                talles_nombres = filas |> Enum.map(fn {_c, t, _cant} -> StockItem.nombre_talle(t) end) |> Enum.uniq()
+
+                {:ok, nuevo} =
+                  DaleApp.Products.create_product(%{
+                    brand_id: brand.id,
+                    name: nombre,
+                    original_price: precio_original,
+                    price: precio_final,
+                    description: descripcion,
+                    talles: talles_nombres,
+                    position_in_brand: count + 1,
+                    active: false,
+                    codigo_tipo: codigo_tipo,
+                    codigo_numero: codigo_numero
+                  })
+
+                Enum.each(filas, fn {codigo_color, codigo_talle, cantidad} ->
+                  codigo = StockItem.armar_codigo(codigo_tipo, codigo_color, codigo_numero, codigo_talle)
+
+                  %StockItem{}
+                  |> StockItem.changeset(%{
+                    codigo: codigo,
+                    cantidad: cantidad,
+                    codigo_color: codigo_color,
+                    codigo_talle: codigo_talle,
+                    product_id: nuevo.id
+                  })
+                  |> Repo.insert()
+                end)
+
+                nuevo
+              end
+
+            producto.id
+          end)
+
+        json(conn, %{ok: true, ids: ids_finales})
     end
   end
 end
