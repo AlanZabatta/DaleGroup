@@ -173,6 +173,12 @@ defmodule DaleAppWeb.StockPanoramicoLive do
     end
   end
 
+  defp capacidad_hoja_mm(ancho_mm, alto_mm) do
+    area_ancho = 210 - 10 * 2
+    area_alto = 297 - 10 * 2
+    div(area_ancho, ancho_mm) * div(area_alto, alto_mm)
+  end
+
   defp codigo_completo_combo(nil, _codigo_tipo, _articulo), do: nil
   defp codigo_completo_combo(_clave, nil, _articulo), do: nil
 
@@ -1039,8 +1045,28 @@ defmodule DaleAppWeb.StockPanoramicoLive do
               </div>
             </div>
 
-            <div style="border: 1.5px dashed #d9ead9; border-radius: 18px; padding: 40px 20px; text-align: center;">
-              <p style="font-size: 13px; color: #bbb; margin: 0;">Acá va a ir el selector de productos y cantidades.</p>
+            <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10);">
+              <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 4px;">Cantidad de QRs</p>
+              <p id="texto-espacios-restantes-imprimir" style="font-size: 11.5px; color: #666; margin: 0 0 14px;">Te quedan <%= capacidad_hoja_mm(25, 30) %> de <%= capacidad_hoja_mm(25, 30) %> espacios</p>
+              <div id="filas-cantidad-qr-imprimir" style="display: flex; flex-direction: column; gap: 10px;">
+                <%= if @articulo_editando do %>
+                  <%= for clave <- Enum.sort(Map.keys(@articulo_editando.variantes)) do %>
+                    <% [cc_qr, ct_qr] = String.split(clave, "_") %>
+                    <% nombre_talle_qr = StockItem.nombre_talle(ct_qr) %>
+                    <% nombre_color_qr = StockItem.nombre_color(cc_qr) %>
+                    <% hex_qr = Map.get(mapa_hex_colores, nombre_color_qr, "#186904") %>
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: #f9f9f9; border-radius: 12px;">
+                      <span data-fila-talle-qr={clave} data-letra-talle={nombre_talle_qr} style={"width: 22px; height: 22px; border-radius: 50%; background: #{hex_qr}; flex-shrink: 0; #{if cc_qr == "21", do: "border: 1.5px solid #e0e0e0;", else: ""}"}></span>
+                      <span style="font-size: 13px; font-weight: 700; color: #333; flex: 1;"><%= nombre_color_qr %> · <%= nombre_talle_qr %></span>
+                      <div style="display: flex; align-items: center; gap: 6px;">
+                        <button type="button" onclick={"cambiarCantidadQR('#{clave}', -1)"} style="width: 26px; height: 26px; border-radius: 8px; border: 1.5px solid #cfe4cf; background: white; color: #186904; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">-</button>
+                        <input type="number" id={"cantidad-qr-input-#{clave}"} value="0" min="0" max="9999" oninput={"setCantidadQR('#{clave}', this.value)"} style="width: 52px; text-align: center; padding: 5px 2px; border: 1.5px solid #cfe4cf; border-radius: 8px; font-family: Poppins, sans-serif; font-size: 13px; outline: none;"/>
+                        <button type="button" onclick={"cambiarCantidadQR('#{clave}', 1)"} style="width: 26px; height: 26px; border-radius: 8px; border: 1.5px solid #cfe4cf; background: white; color: #186904; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">+</button>
+                      </div>
+                    </div>
+                  <% end %>
+                <% end %>
+              </div>
             </div>
           </div>
 
@@ -1300,7 +1326,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                     if (i < cuadros.length) {
                       html += '<div style="display: flex; align-items: center; justify-content: center; background: ' + cuadros[i].hex + '; border-radius: 2px; color: white; font-weight: 700; font-family: Poppins, sans-serif; font-size: ' + tamanoLetra + 'px;">' + cuadros[i].letra + '</div>';
                     } else {
-                      html += '<div style="border: 1px dashed #ddd; border-radius: 2px;"></div>';
+                      html += '<div style="background: #186904; opacity: 0.75; border-radius: 2px;"></div>';
                     }
                   }
 
