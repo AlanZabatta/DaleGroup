@@ -51,6 +51,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
        talles_fijos_render: @talles_fijos,
        panel_tab: "control",
        mostrar_formulario_producto: false,
+       mostrar_pantalla_imprimir: false,
        ruta_actual: "/mi-tienda/stock"
      )}
   end
@@ -83,11 +84,14 @@ defmodule DaleAppWeb.StockPanoramicoLive do
           nil
       end
 
+    mostrar_pantalla_imprimir = Map.get(params, "pantalla") == "imprimir"
+
     {:noreply,
      assign(socket,
        categoria_seleccionada: categoria_seleccionada,
        mostrar_formulario_producto: mostrar_formulario_producto,
-       articulo_editando: articulo_editando
+       articulo_editando: articulo_editando,
+       mostrar_pantalla_imprimir: mostrar_pantalla_imprimir
      )}
   end
 
@@ -602,7 +606,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
       <% end %>
 
       <%= if @categoria_seleccionada do %>
-        <p id="breadcrumb-stock-categoria" style="font-size: 26px; font-weight: 800; margin: 0 0 20px;">
+        <p id="breadcrumb-stock-categoria" style={"font-size: 26px; font-weight: 800; margin: 0 0 20px; display: #{if @mostrar_pantalla_imprimir, do: "none", else: "block"};"}>
           <span style="color: #aaa; cursor: pointer;" phx-click="volver_categorias">Mi Stock</span>
           <span style="color: #aaa;">/</span>
           <span style="color: #186904;"><%= @categoria_seleccionada.nombre %></span>
@@ -799,8 +803,8 @@ defmodule DaleAppWeb.StockPanoramicoLive do
       <% end %>
 
       <%= if @categoria_seleccionada && @mostrar_formulario_producto do %>
-        <div id="form-producto-stock" phx-hook=".FormularioProductoStock" data-codigo-tipo={@categoria_seleccionada && @categoria_seleccionada.codigo} data-numero-preview={@categoria_seleccionada && @categoria_seleccionada.numero_preview} data-articulo={if @articulo_editando, do: Jason.encode!(@articulo_editando), else: ""} style="margin-bottom: 24px;">
-          <div id="contenido-formulario-producto-stock">
+        <div id="form-producto-stock" phx-hook=".FormularioProductoStock" data-codigo-tipo={@categoria_seleccionada && @categoria_seleccionada.codigo} data-numero-preview={@categoria_seleccionada && @categoria_seleccionada.numero_preview} data-articulo={if @articulo_editando, do: Jason.encode!(@articulo_editando), else: ""} data-mostrar-imprimir={to_string(@mostrar_pantalla_imprimir)} style="margin-bottom: 24px;">
+          <div id="contenido-formulario-producto-stock" style={"display: #{if @mostrar_pantalla_imprimir, do: "none", else: "block"};"}>
           <div style="border-radius: 16px; overflow: hidden; border: 1px solid #f2f2f2; position: relative; box-shadow: 0 3px 10px rgba(0,0,0,0.06); margin-bottom: 16px;">
             <div id="caja-foto-stock" style="aspect-ratio: 16/9; background: #f0f0f0; position: relative; overflow: hidden; transition: aspect-ratio 0.2s;">
               <img id="preview-img-fondo-stock" src={@articulo_editando && @articulo_editando.imagen} style={"position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(20px) brightness(0.8); transform: scale(1.15); display: #{if @articulo_editando && @articulo_editando.imagen, do: "block", else: "none"};"}/>
@@ -1050,7 +1054,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
           </button>
           </div>
 
-          <div id="pantalla-imprimir-stock" style="display: none;">
+          <div id="pantalla-imprimir-stock" style={"display: #{if @mostrar_pantalla_imprimir, do: "block", else: "none"};"}>
             <p style="font-size: 22px; font-weight: 800; color: #186904; margin: 0 0 4px;">Imprimir códigos</p>
             <p style="font-size: 13px; color: #999; margin: 0 0 24px;">Elegí qué productos imprimir y en qué tamaño</p>
 
