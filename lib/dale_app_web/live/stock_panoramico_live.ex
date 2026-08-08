@@ -1215,6 +1215,8 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                 const ANCHO_HOJA_MM_IMPRIMIR = 210;
                 const ALTO_HOJA_MM_IMPRIMIR = 297;
                 const MARGEN_MM_IMPRIMIR = 10;
+                let tamanoSeleccionadoImprimir = { anchoMm: 25, altoMm: 30 };
+                let cantidadesQR = {};
 
                 window.elegirTamanoImprimir = (btn) => {
                   document.querySelectorAll('.tarjeta-tamano-imprimir').forEach(b => {
@@ -1224,18 +1226,66 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   btn.style.borderColor = '#186904';
                   btn.style.background = '#e6f4e6';
 
-                  const anchoMm = parseFloat(btn.dataset.anchoMm);
-                  const altoMm = parseFloat(btn.dataset.altoMm);
+                  tamanoSeleccionadoImprimir = {
+                    anchoMm: parseFloat(btn.dataset.anchoMm),
+                    altoMm: parseFloat(btn.dataset.altoMm)
+                  };
 
+                  actualizarPreviewImprimir();
+                };
+
+                window.cambiarCantidadQR = (clave, delta) => {
+                  const actual = cantidadesQR[clave] || 0;
+                  const nuevo = Math.max(0, Math.min(9999, actual + delta));
+                  cantidadesQR[clave] = nuevo;
+                  const input = document.getElementById('cantidad-qr-input-' + clave);
+                  if (input) input.value = nuevo;
+                  actualizarPreviewImprimir();
+                };
+
+                window.setCantidadQR = (clave, valor) => {
+                  let n = parseInt(valor) || 0;
+                  n = Math.max(0, Math.min(9999, n));
+                  cantidadesQR[clave] = n;
+                  const input = document.getElementById('cantidad-qr-input-' + clave);
+                  if (input) input.value = n;
+                  actualizarPreviewImprimir();
+                };
+
+                window.actualizarPreviewImprimir = () => {
+                  const { anchoMm, altoMm } = tamanoSeleccionadoImprimir;
                   const areaAnchoMm = ANCHO_HOJA_MM_IMPRIMIR - (MARGEN_MM_IMPRIMIR * 2);
                   const areaAltoMm = ALTO_HOJA_MM_IMPRIMIR - (MARGEN_MM_IMPRIMIR * 2);
-
                   const cols = Math.floor(areaAnchoMm / anchoMm);
                   const rows = Math.floor(areaAltoMm / altoMm);
-                  const total = cols * rows;
+                  const capacidad = cols * rows;
 
-                  const texto = document.getElementById('texto-cantidad-hoja-imprimir');
-                  if (texto) texto.textContent = 'Entran ' + total + ' etiquetas por hoja (' + cols + ' columnas × ' + rows + ' filas)';
+                  const cuadros = [];
+                  Object.keys(cantidadesQR).sort().forEach(clave => {
+                    const cantidad = cantidadesQR[clave] || 0;
+                    if (cantidad <= 0) return;
+                    const partes = clave.split('_');
+                    const colorCod = partes[0];
+                    const circulo = document.querySelector('[data-fila-talle-qr="' + clave + '"]');
+                    const letra = circulo ? circulo.getAttribute('data-letra-talle') : '';
+                    const hex = mapaHexColores[colorCod] || '#186904';
+                    for (let i = 0; i < cantidad; i++) {
+                      cuadros.push({ hex, letra });
+                    }
+                  });
+
+                  const total = cuadros.length;
+                  const texto = document.getElementById('texto-espacios-restantes-imprimir');
+                  if (texto) {
+                    if (total <= capacidad) {
+                      texto.textContent = 'Te quedan ' + (capacidad - total) + ' de ' + capacidad + ' espacios';
+                      texto.style.color = '#666';
+                    } else {
+                      const hojas = Math.ceil(total / capacidad);
+                      texto.textContent = 'Vas a necesitar ' + hojas + ' hojas (' + total + ' etiquetas, ' + capacidad + ' por hoja)';
+                      texto.style.color = '#c0392b';
+                    }
+                  }
 
                   const hoja = document.getElementById('hoja-preview-imprimir');
                   if (!hoja) return;
@@ -1243,13 +1293,18 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   const escala = hoja.clientWidth / ANCHO_HOJA_MM_IMPRIMIR;
                   const anchoCeldaPx = anchoMm * escala;
                   const altoCeldaPx = altoMm * escala;
+                  const tamanoLetra = Math.max(8, Math.min(anchoCeldaPx, altoCeldaPx) * 0.4);
 
-                  let cuadrados = '';
-                  for (let i = 0; i < total; i++) {
-                    cuadrados += '<div style="background: #186904; opacity: 0.75; border-radius: 2px;"></div>';
+                  let html = '';
+                  for (let i = 0; i < capacidad; i++) {
+                    if (i < cuadros.length) {
+                      html += '<div style="display: flex; align-items: center; justify-content: center; background: ' + cuadros[i].hex + '; border-radius: 2px; color: white; font-weight: 700; font-family: Poppins, sans-serif; font-size: ' + tamanoLetra + 'px;">' + cuadros[i].letra + '</div>';
+                    } else {
+                      html += '<div style="border: 1px dashed #ddd; border-radius: 2px;"></div>';
+                    }
                   }
 
-                  hoja.innerHTML = '<div style="display: grid; grid-template-columns: repeat(' + cols + ', ' + anchoCeldaPx + 'px); grid-template-rows: repeat(' + rows + ', ' + altoCeldaPx + 'px); gap: 2px;">' + cuadrados + '</div>';
+                  hoja.innerHTML = '<div style="display: grid; grid-template-columns: repeat(' + cols + ', ' + anchoCeldaPx + 'px); grid-template-rows: repeat(' + rows + ', ' + altoCeldaPx + 'px); gap: 2px;">' + html + '</div>';
                 };
 
                 let scrollYAntesDeImprimirStock = 0;
