@@ -962,6 +962,20 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                 nil
               end
             ean13_activo_editando = codigo9_activo_editando && StockItem.a_ean13(codigo9_activo_editando)
+
+            qrs_por_combo =
+              if @articulo_editando && @categoria_seleccionada do
+                combos_editando
+                |> Enum.map(fn clave ->
+                  codigo9 = codigo_completo_combo(clave, @categoria_seleccionada.codigo, @articulo_editando)
+                  svg = codigo9 && (EQRCode.encode(codigo9) |> EQRCode.svg(width: 100))
+                  {clave, svg}
+                end)
+                |> Enum.filter(fn {_clave, svg} -> svg end)
+                |> Map.new()
+              else
+                %{}
+              end
           %>
 
           <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px; text-align: center;">
@@ -1065,14 +1079,16 @@ defmodule DaleAppWeb.StockPanoramicoLive do
               </div>
             </div>
 
-            <div id="imprimir-fisico-container" style="display: none;"></div>
+            <div id="imprimir-fisico-container" data-qrs={Jason.encode!(qrs_por_combo)} style="display: none;"></div>
 
             <style>
               @media print {
+                * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
                 body * { visibility: hidden; }
                 #imprimir-fisico-container, #imprimir-fisico-container * { visibility: visible; }
                 #imprimir-fisico-container { position: absolute; top: 0; left: 0; width: 100%; display: block !important; }
                 .hoja-imprimir-pagina:not(:last-child) { page-break-after: always; }
+                .hoja-imprimir-pagina svg { width: 100%; height: 100%; display: block; }
                 #navbar, #bottom-bar { display: none !important; }
               }
             </style>
@@ -1306,7 +1322,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                     const letra = circulo ? circulo.getAttribute('data-letra-talle') : '';
                     const hex = mapaHexColores[colorCod] || '#186904';
                     for (let i = 0; i < cantidad; i++) {
-                      cuadros.push({ hex, letra });
+                      cuadros.push({ hex, letra, clave });
                     }
                   });
 
@@ -1366,6 +1382,10 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                     hojaDiv.innerHTML = '<div style="display: grid; grid-template-columns: repeat(' + cols + ', ' + anchoCeldaPx + 'px); grid-template-rows: repeat(' + rows + ', ' + altoCeldaPx + 'px); gap: 2px;">' + html + '</div>';
 
                     if (contenedorFisico) {
+                      const qrsPorComboRaw = contenedorFisico.dataset.qrs;
+                      let qrsPorCombo = {};
+                      try { qrsPorCombo = qrsPorComboRaw ? JSON.parse(qrsPorComboRaw) : {}; } catch (e) { qrsPorCombo = {}; }
+
                       const hojaFisica = document.createElement('div');
                       hojaFisica.className = 'hoja-imprimir-pagina';
                       hojaFisica.style.cssText = 'width: 210mm; height: 297mm; padding: 10mm; box-sizing: border-box; display: grid; grid-template-columns: repeat(' + cols + ', ' + anchoMm + 'mm); grid-template-rows: repeat(' + rows + ', ' + altoMm + 'mm); gap: 2mm; align-content: start;';
@@ -1373,7 +1393,12 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                       let htmlFisico = '';
                       for (let i = 0; i < capacidad; i++) {
                         if (i < cuadrosHoja.length) {
-                          htmlFisico += '<div style="display: flex; align-items: center; justify-content: center; background: ' + cuadrosHoja[i].hex + '; color: white; font-weight: 700; font-family: Poppins, sans-serif; font-size: 3mm;">' + cuadrosHoja[i].letra + '</div>';
+                          const svgQr = qrsPorCombo[cuadrosHoja[i].clave];
+                          if (svgQr) {
+                            htmlFisico += '<div style="display: flex; align-items: center; justify-content: center; background: white; overflow: hidden;">' + svgQr + '</div>';
+                          } else {
+                            htmlFisico += '<div style="display: flex; align-items: center; justify-content: center; background: ' + cuadrosHoja[i].hex + '; color: white; font-weight: 700; font-family: Poppins, sans-serif; font-size: 3mm;">' + cuadrosHoja[i].letra + '</div>';
+                          }
                         } else {
                           htmlFisico += '<div style="background: #186904; opacity: 0.75;"></div>';
                         }
