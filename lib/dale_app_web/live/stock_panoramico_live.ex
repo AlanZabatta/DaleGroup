@@ -773,11 +773,23 @@ defmodule DaleAppWeb.StockPanoramicoLive do
           </div>
 
           <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px;">
+            <%
+              talles_seleccionados_editando =
+                if @articulo_editando do
+                  @articulo_editando.variantes
+                  |> Map.keys()
+                  |> Enum.map(fn clave -> clave |> String.split("_") |> List.last() end)
+                  |> Enum.uniq()
+                else
+                  []
+                end
+              multi_talle_activo_editando = length(talles_seleccionados_editando) > 1
+            %>
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
               <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0;">Talles</p>
               <div style="display: flex; align-items: center; gap: 8px;">
                 <span style="font-size: 11px; color: #888; font-family: Poppins, sans-serif;">¿Más de un talle?</span>
-                <button type="button" id="switch-multi-talle-stock" onclick="toggleMultiTalleStock()" style="width: 38px; height: 22px; border-radius: 20px; border: none; cursor: pointer; padding: 2px; display: flex; align-items: center; background: #ccc; justify-content: flex-start; transition: background 0.2s;">
+                <button type="button" id="switch-multi-talle-stock" onclick="toggleMultiTalleStock()" style={"width: 38px; height: 22px; border-radius: 20px; border: none; cursor: pointer; padding: 2px; display: flex; align-items: center; background: #{if multi_talle_activo_editando, do: "#186904", else: "#ccc"}; justify-content: #{if multi_talle_activo_editando, do: "flex-end", else: "flex-start"}; transition: background 0.2s;"}>
                   <div style="width: 18px; height: 18px; border-radius: 50%; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.3); transition: transform 0.2s;"></div>
                 </button>
               </div>
@@ -790,12 +802,14 @@ defmodule DaleAppWeb.StockPanoramicoLive do
 
             <div id="talles-letra-stock" style="display: flex; flex-wrap: wrap; gap: 8px;">
               <%= for %{nombre: nombre, codigo: codigo} <- @talles_fijos_render do %>
-                <button type="button" data-talle={nombre} data-codigo-talle={codigo} onclick="toggleTalleStock(this)" style="padding: 8px 16px; border-radius: 20px; border: 1.5px solid #cfe4cf; background: white; color: #186904; cursor: pointer; font-size: 13px; font-weight: 600; font-family: Poppins, sans-serif;">
+                <% talle_activo = codigo in talles_seleccionados_editando %>
+                <button type="button" data-talle={nombre} data-codigo-talle={codigo} onclick="toggleTalleStock(this)" style={"padding: 8px 16px; border-radius: 20px; border: 1.5px solid #{if talle_activo, do: "#186904", else: "#cfe4cf"}; background: #{if talle_activo, do: "#186904", else: "white"}; color: #{if talle_activo, do: "white", else: "#186904"}; cursor: pointer; font-size: 13px; font-weight: 600; font-family: Poppins, sans-serif;"}>
                   <%= nombre %>
                 </button>
               <% end %>
               <%= for t <- @talles_custom do %>
-                <button type="button" data-talle={t.nombre} data-codigo-talle={t.codigo_talle} onclick="toggleTalleStock(this)" style="padding: 8px 16px; border-radius: 20px; border: 1.5px solid #cfe4cf; background: white; color: #186904; cursor: pointer; font-size: 13px; font-weight: 600; font-family: Poppins, sans-serif;">
+                <% talle_activo = t.codigo_talle in talles_seleccionados_editando %>
+                <button type="button" data-talle={t.nombre} data-codigo-talle={t.codigo_talle} onclick="toggleTalleStock(this)" style={"padding: 8px 16px; border-radius: 20px; border: 1.5px solid #{if talle_activo, do: "#186904", else: "#cfe4cf"}; background: #{if talle_activo, do: "#186904", else: "white"}; color: #{if talle_activo, do: "white", else: "#186904"}; cursor: pointer; font-size: 13px; font-weight: 600; font-family: Poppins, sans-serif;"}>
                   <%= t.nombre %>
                 </button>
               <% end %>
@@ -810,8 +824,21 @@ defmodule DaleAppWeb.StockPanoramicoLive do
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
               <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0;">Color Principal</p>
               <div style="display: flex; align-items: center; gap: 8px;">
+                <%
+                  multi_color_activo_editando =
+                    if @articulo_editando do
+                      @articulo_editando.variantes
+                      |> Map.keys()
+                      |> Enum.map(fn clave -> clave |> String.split("_") |> List.first() end)
+                      |> Enum.uniq()
+                      |> length()
+                      |> Kernel.>(1)
+                    else
+                      false
+                    end
+                %>
                 <span style="font-size: 11px; color: #888; font-family: Poppins, sans-serif;">¿Más de un color?</span>
-                <button type="button" id="switch-multi-color-stock" onclick="toggleMultiColorStock()" style="width: 38px; height: 22px; border-radius: 20px; border: none; cursor: pointer; padding: 2px; display: flex; align-items: center; background: #ccc; justify-content: flex-start; transition: background 0.2s;">
+                <button type="button" id="switch-multi-color-stock" onclick="toggleMultiColorStock()" style={"width: 38px; height: 22px; border-radius: 20px; border: none; cursor: pointer; padding: 2px; display: flex; align-items: center; background: #{if multi_color_activo_editando, do: "#186904", else: "#ccc"}; justify-content: #{if multi_color_activo_editando, do: "flex-end", else: "flex-start"}; transition: background 0.2s;"}>
                   <div style="width: 18px; height: 18px; border-radius: 50%; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.3); transition: transform 0.2s;"></div>
                 </button>
               </div>
@@ -854,7 +881,28 @@ defmodule DaleAppWeb.StockPanoramicoLive do
           <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px;">
             <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 14px;">Cantidad de Stock</p>
             <div id="filas-cantidad-stock" style="display: flex; flex-direction: column; gap: 10px;">
-              <p style="font-size: 12px; color: #bbb; text-align: center; margin: 8px 0; font-family: Poppins, sans-serif;">Elegí talle y color para cargar cantidad</p>
+              <%= if @articulo_editando && @articulo_editando.variantes != %{} do %>
+                <%= for {clave, cantidad} <- Enum.sort(@articulo_editando.variantes) do %>
+                  <% [codigo_color_fila, codigo_talle_fila] = String.split(clave, "_") %>
+                  <% nombre_talle_fila = DaleApp.Products.StockItem.nombre_talle(codigo_talle_fila) %>
+                  <% nombre_color_fila = DaleApp.Products.StockItem.nombre_color(codigo_color_fila) %>
+                  <% hex_fila = Map.get(mapa_hex_colores, nombre_color_fila, "#ccc") %>
+                  <div style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: #f9f9f9; border-radius: 12px;">
+                    <span style={"width: 22px; height: 22px; border-radius: 50%; background: #{hex_fila}; flex-shrink: 0; #{if codigo_color_fila == "21", do: "border: 1.5px solid #e0e0e0;", else: ""}"}></span>
+                    <span style="font-size: 13px; font-weight: 700; color: #333; flex: 1;"><%= nombre_talle_fila %></span>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <button type="button" onclick={"cambiarCantidadStock('#{clave}', -1)"} style="width: 26px; height: 26px; border-radius: 8px; border: 1.5px solid #cfe4cf; background: white; color: #186904; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">-</button>
+                      <input type="number" id={"cantidad-input-#{clave}"} value={cantidad} min="0" max="9999" oninput={"setCantidadStock('#{clave}', this.value)"} style="width: 48px; text-align: center; padding: 5px 2px; border: 1.5px solid #cfe4cf; border-radius: 8px; font-family: Poppins, sans-serif; font-size: 13px; outline: none;"/>
+                      <button type="button" onclick={"cambiarCantidadStock('#{clave}', 1)"} style="width: 26px; height: 26px; border-radius: 8px; border: 1.5px solid #cfe4cf; background: white; color: #186904; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">+</button>
+                      <button type="button" onclick={"pedirEliminarFilaStock('#{clave}', '#{nombre_talle_fila}', '#{nombre_color_fila}')"} style="width: 26px; height: 26px; border-radius: 8px; border: none; background: none; color: #c0392b; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2l-1 -14"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6v-2a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v2"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                <% end %>
+              <% else %>
+                <p style="font-size: 12px; color: #bbb; text-align: center; margin: 8px 0; font-family: Poppins, sans-serif;">Elegí talle y color para cargar cantidad</p>
+              <% end %>
             </div>
           </div>
 
