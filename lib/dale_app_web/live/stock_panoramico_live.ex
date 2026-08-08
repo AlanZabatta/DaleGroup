@@ -1038,11 +1038,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                 </button>
               </div>
 
-              <p id="texto-cantidad-hoja-imprimir" style="font-size: 11.5px; color: #666; text-align: center; margin: 0 0 10px;">Elegí un tamaño para ver la vista previa</p>
-
-              <div style="display: flex; justify-content: center;">
-                <div id="hoja-preview-imprimir" style="display: flex; align-items: center; justify-content: center; overflow: hidden; width: 100%; max-width: 260px; aspect-ratio: 210 / 297; background: white; border: 1.5px solid #ddd; border-radius: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);"></div>
-              </div>
+              <div id="hojas-preview-imprimir-container" style="display: flex; flex-direction: column; align-items: center; gap: 20px;"></div>
             </div>
 
             <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10);">
@@ -1301,36 +1297,58 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   });
 
                   const total = cuadros.length;
+                  const hojasNecesarias = Math.max(1, Math.ceil(total / capacidad));
                   const texto = document.getElementById('texto-espacios-restantes-imprimir');
                   if (texto) {
                     if (total <= capacidad) {
                       texto.textContent = 'Te quedan ' + (capacidad - total) + ' de ' + capacidad + ' espacios';
                       texto.style.color = '#666';
                     } else {
-                      const hojas = Math.ceil(total / capacidad);
-                      texto.textContent = 'Vas a necesitar ' + hojas + ' hojas (' + total + ' etiquetas, ' + capacidad + ' por hoja)';
+                      texto.textContent = 'Vas a necesitar ' + hojasNecesarias + ' hojas (' + total + ' etiquetas, ' + capacidad + ' por hoja)';
                       texto.style.color = '#c0392b';
                     }
                   }
 
-                  const hoja = document.getElementById('hoja-preview-imprimir');
-                  if (!hoja) return;
+                  const contenedor = document.getElementById('hojas-preview-imprimir-container');
+                  if (!contenedor) return;
+                  contenedor.innerHTML = '';
 
-                  const escala = hoja.clientWidth / ANCHO_HOJA_MM_IMPRIMIR;
-                  const anchoCeldaPx = anchoMm * escala;
-                  const altoCeldaPx = altoMm * escala;
-                  const tamanoLetra = Math.max(8, Math.min(anchoCeldaPx, altoCeldaPx) * 0.4);
+                  for (let h = 0; h < hojasNecesarias; h++) {
+                    const wrap = document.createElement('div');
+                    wrap.style.width = '100%';
+                    wrap.style.maxWidth = '260px';
 
-                  let html = '';
-                  for (let i = 0; i < capacidad; i++) {
-                    if (i < cuadros.length) {
-                      html += '<div style="display: flex; align-items: center; justify-content: center; background: ' + cuadros[i].hex + '; border-radius: 2px; color: white; font-weight: 700; font-family: Poppins, sans-serif; font-size: ' + tamanoLetra + 'px;">' + cuadros[i].letra + '</div>';
-                    } else {
-                      html += '<div style="background: #186904; opacity: 0.75; border-radius: 2px;"></div>';
+                    if (hojasNecesarias > 1) {
+                      const etiqueta = document.createElement('p');
+                      etiqueta.textContent = 'Hoja ' + (h + 1) + ' de ' + hojasNecesarias;
+                      etiqueta.style.cssText = 'font-size: 11px; font-weight: 700; color: #186904; text-align: center; margin: 0 0 6px;';
+                      wrap.appendChild(etiqueta);
                     }
-                  }
 
-                  hoja.innerHTML = '<div style="display: grid; grid-template-columns: repeat(' + cols + ', ' + anchoCeldaPx + 'px); grid-template-rows: repeat(' + rows + ', ' + altoCeldaPx + 'px); gap: 2px;">' + html + '</div>';
+                    const hojaDiv = document.createElement('div');
+                    hojaDiv.style.cssText = 'display: flex; align-items: center; justify-content: center; overflow: hidden; width: 100%; aspect-ratio: 210 / 297; background: white; border: 1.5px solid #ddd; border-radius: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);';
+                    wrap.appendChild(hojaDiv);
+                    contenedor.appendChild(wrap);
+
+                    const escala = hojaDiv.clientWidth / ANCHO_HOJA_MM_IMPRIMIR;
+                    const anchoCeldaPx = anchoMm * escala;
+                    const altoCeldaPx = altoMm * escala;
+                    const tamanoLetra = Math.max(8, Math.min(anchoCeldaPx, altoCeldaPx) * 0.4);
+
+                    const desde = h * capacidad;
+                    const cuadrosHoja = cuadros.slice(desde, desde + capacidad);
+
+                    let html = '';
+                    for (let i = 0; i < capacidad; i++) {
+                      if (i < cuadrosHoja.length) {
+                        html += '<div style="display: flex; align-items: center; justify-content: center; background: ' + cuadrosHoja[i].hex + '; border-radius: 2px; color: white; font-weight: 700; font-family: Poppins, sans-serif; font-size: ' + tamanoLetra + 'px;">' + cuadrosHoja[i].letra + '</div>';
+                      } else {
+                        html += '<div style="background: #186904; opacity: 0.75; border-radius: 2px;"></div>';
+                      }
+                    }
+
+                    hojaDiv.innerHTML = '<div style="display: grid; grid-template-columns: repeat(' + cols + ', ' + anchoCeldaPx + 'px); grid-template-rows: repeat(' + rows + ', ' + altoCeldaPx + 'px); gap: 2px;">' + html + '</div>';
+                  }
                 };
 
                 let scrollYAntesDeImprimirStock = 0;
@@ -1344,6 +1362,8 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   const tarjetaChico = document.querySelector('.tarjeta-tamano-imprimir[data-tamano="chico"]');
                   if (tarjetaChico) elegirTamanoImprimir(tarjetaChico);
                   window.scrollTo(0, 0);
+                  const botonAbrirImprimirReal = document.getElementById('boton-abrir-pantalla-imprimir-real-stock');
+                  if (botonAbrirImprimirReal) botonAbrirImprimirReal.click();
                 };
 
                 window.cerrarPantallaImprimirStock = () => {
@@ -1352,6 +1372,8 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   const breadcrumb = document.getElementById('breadcrumb-stock-categoria');
                   if (breadcrumb) breadcrumb.style.display = 'block';
                   window.scrollTo(0, scrollYAntesDeImprimirStock);
+                  const botonCerrarImprimirReal = document.getElementById('boton-cerrar-pantalla-imprimir-real-stock');
+                  if (botonCerrarImprimirReal) botonCerrarImprimirReal.click();
                 };
 
                 window.manejarClickVolverFormularioStock = () => {
@@ -1671,6 +1693,11 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                       if (botonImprimir) botonImprimir.style.display = 'inline-block';
                     }
                   } catch (e) { /* noop */ }
+                }
+
+                if (this.el.dataset.mostrarImprimir === 'true') {
+                  const tarjetaChico = document.querySelector('.tarjeta-tamano-imprimir[data-tamano="chico"]');
+                  if (tarjetaChico) elegirTamanoImprimir(tarjetaChico);
                 }
               }
             }
