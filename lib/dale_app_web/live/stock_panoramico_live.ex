@@ -796,10 +796,12 @@ defmodule DaleAppWeb.StockPanoramicoLive do
             </div>
           </div>
 
-          <div id="selector-combos-codigo-stock" style="display: none; flex-wrap: wrap; gap: 8px; margin-top: 16px; justify-content: center;"></div>
-
           <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px; text-align: center;">
             <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 10px;">Código DALE9</p>
+            <div id="selector-combos-codigo-stock-wrap" style="display: none; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px dashed #d9ead9;">
+              <p style="font-size: 10.5px; color: #999; margin: 0 0 8px; font-family: Poppins, sans-serif;">Mostrando el código de:</p>
+              <div id="selector-combos-codigo-stock" style="display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;"></div>
+            </div>
             <svg viewBox="0 0 200 60" style="width: 100%; max-width: 220px; height: 60px;">
               <%= for x <- [4,8,10,15,18,22,28,32,35,40,44,48,54,58,60,65,70,74,80,84,88,94,98,102,108,112,116,122,126,130,136,140,144,150,154,158,164,168,172,178,182,186,192,196] do %>
                 <rect x={x} y="4" width={if rem(x, 3) == 0, do: "3", else: "2"} height="52" fill="#186904"/>
@@ -904,8 +906,9 @@ defmodule DaleAppWeb.StockPanoramicoLive do
 
                   const numero = numeroPreview || '\u00b7\u00b7\u00b7';
 
+                  const resaltado = claveCodigoPreview ? 'color:#E91E8C; font-weight:800;' : '';
                   const textoEl = document.getElementById('texto-dale9-stock');
-                  if (textoEl) textoEl.textContent = tipo + ' ' + color + ' ' + numero + ' ' + talle;
+                  if (textoEl) textoEl.innerHTML = tipo + ' <span style="' + resaltado + '">' + color + '</span> ' + numero + ' <span style="' + resaltado + '">' + talle + '</span>';
 
                   const completo = [tipo, color, numero, talle].every(p => !p.includes('\u00b7'));
                   const ean13El = document.getElementById('texto-ean13-stock');
@@ -918,7 +921,13 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                       suma += parseInt(base[i]) * peso;
                     }
                     const digitoControl = (10 - (suma % 10)) % 10;
-                    ean13El.textContent = base.slice(0, 12) + digitoControl;
+                    const ean13Completo = base.slice(0, 12) + digitoControl;
+                    const antesColor = ean13Completo.slice(0, 4);
+                    const parteColor = ean13Completo.slice(4, 6);
+                    const entreMedio = ean13Completo.slice(6, 9);
+                    const parteTalle = ean13Completo.slice(9, 11);
+                    const resto = ean13Completo.slice(11);
+                    ean13El.innerHTML = antesColor + '<span style="' + resaltado + '">' + parteColor + '</span>' + entreMedio + '<span style="' + resaltado + '">' + parteTalle + '</span>' + resto;
                   } else if (ean13El) {
                     ean13El.textContent = '\u00b7\u00b7\u00b7\u00b7 \u00b7\u00b7 \u00b7\u00b7\u00b7\u00b7 \u00b7\u00b7\u00b7 \u00b7\u00b7 \u00b7';
                   }
@@ -942,7 +951,8 @@ defmodule DaleAppWeb.StockPanoramicoLive do
 
                 window.actualizarSelectorCombosCodigo = () => {
                   const cont = document.getElementById('selector-combos-codigo-stock');
-                  if (!cont) return;
+                  const wrap = document.getElementById('selector-combos-codigo-stock-wrap');
+                  if (!cont || !wrap) return;
 
                   const talles = tallesElegidos.length > 0 ? tallesElegidos : (talleCodigoElegido ? [talleCodigoElegido] : []);
                   const colores = coloresElegidos.length > 0 ? coloresElegidos : (colorCodigoElegido ? [colorCodigoElegido] : []);
@@ -957,7 +967,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   });
 
                   if (combos.length <= 1) {
-                    cont.style.display = 'none';
+                    wrap.style.display = 'none';
                     cont.innerHTML = '';
                     claveCodigoPreview = combos.length === 1 ? combos[0] : null;
                     return;
@@ -967,7 +977,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                     claveCodigoPreview = combos[0];
                   }
 
-                  cont.style.display = 'flex';
+                  wrap.style.display = 'block';
                   let html = '';
                   combos.forEach(clave => {
                     const partes = clave.split('_');
