@@ -327,6 +327,62 @@ defmodule DaleAppWeb.StockPanoramicoLive do
     end)
   end
 
+  defp filas_de_categoria(productos_todos, codigo_tipo) do
+    productos =
+      productos_todos
+      |> Enum.map(fn {producto, _total, _codigos} -> producto end)
+      |> Enum.filter(fn producto -> producto.codigo_tipo == codigo_tipo end)
+
+    ids = Enum.map(productos, & &1.id)
+
+    stock_items_por_producto =
+      if ids == [] do
+        %{}
+      else
+        from(s in StockItem, where: s.product_id in ^ids)
+        |> Repo.all()
+        |> Enum.group_by(& &1.product_id)
+      end
+
+    productos
+    |> Enum.map(fn producto ->
+      items = Map.get(stock_items_por_producto, producto.id, [])
+
+      talles =
+        items
+        |> Enum.group_by(& &1.codigo_talle)
+        |> Enum.map(fn {codigo_talle, lista} ->
+          {codigo_talle, Enum.sum(Enum.map(lista, & &1.cantidad))}
+        end)
+        |> Enum.sort_by(fn {codigo_talle, _cantidad} -> codigo_talle end)
+
+      codigo_color =
+        case items do
+          [primero | _] -> primero.codigo_color
+          [] -> nil
+        end
+
+      %{producto: producto, codigo_color: codigo_color, talles: talles}
+    end)
+    |> Enum.group_by(fn fila -> fila.producto.name end)
+    |> Enum.sort_by(fn {nombre, _filas} -> nombre end)
+  end
+
+  defp estado_talle(cantidad) when cantidad <= 0, do: {"#fdecea", "#c0392b"}
+  defp estado_talle(cantidad) when cantidad < 5, do: {"#fff6d9", "#a67c00"}
+  defp estado_talle(_cantidad), do: {"#e6f4e6", "#186904"}
+
+  defp color_hex_por_codigo(codigo_color) do
+    mapa = %{
+      "Negro" => "#1a1a1a", "Blanco" => "#ffffff", "Gris" => "#9e9e9e", "Beige" => "#e8dcc8",
+      "Rojo" => "#d32f2f", "Bordó" => "#6d1b1b", "Rosa" => "#e91e8c", "Naranja" => "#f57c00",
+      "Amarillo" => "#fbc02d", "Verde" => "#43a047", "Verde oscuro" => "#1b5e20", "Celeste" => "#4fc3f7",
+      "Azul" => "#1565c0", "Azul marino" => "#0d1b4c", "Violeta" => "#7b1fa2", "Marrón" => "#5d3a1a",
+      "Dorado" => "#c9a227", "Plateado" => "#b0b0b0"
+    }
+    Map.get(mapa, StockItem.nombre_color(codigo_color), "#cccccc")
+  end
+
   defp icono_svg("remera"), do: ~s(<path d="M15 4l6 2v5h-3v8a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1v-8h-3v-5l6 -2a3 3 0 0 0 6 0"/>)
   defp icono_svg("pantalon"), do: ~s(<path d="M6 3h12l1 6-2 12h-4l-1-9-1 9h-4l-2-12z"/>)
   defp icono_svg("buzo"), do: ~s(<path d="M15 4l6 3v5h-3v9a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1v-9h-3v-5l6 -3a3 3 0 0 0 6 0"/>)
@@ -510,6 +566,45 @@ defmodule DaleAppWeb.StockPanoramicoLive do
           <span style="font-size: 28px; line-height: 1; font-weight: 300;">+</span>
           Crear producto en <%= @categoria_seleccionada.nombre %>
         </button>
+      <% end %>
+
+      <%= if @categoria_seleccionada && !@mostrar_formulario_producto do %>
+        <%= for {nombre_articulo, filas} <- filas_de_categoria(@productos_todos, @categoria_seleccionada.codigo) do %>
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px;">
+            <%= for fila <- filas do %>
+              <div style="display: flex; align-items: center; gap: 12px; padding: 10px; border: 1px solid #eee; border-radius: 14px; background: white;">
+                <div style="width: 52px; height: 52px; border-radius: 10px; overflow: hidden; background: #f5f5f5; flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative;">
+                  <%= if fila.producto.image do %>
+                    <img src={fila.producto.image} style="width: 100%; height: 100%; object-fit: cover;" />
+                  <% else %>
+                    <svg width="55%" height="55%" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;">
+                      {raw(icono_svg_por_codigo(@categoria_seleccionada.codigo, @categorias))}
+                    </svg>
+                  <% end %>
+                  <%= if fila.codigo_color do %>
+                    <span style={"position: absolute; bottom: 2px; right: 2px; width: 12px; height: 12px; border-radius: 50%; background: #{color_hex_por_codigo(fila.codigo_color)}; border: 1.5px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.25);"}></span>
+                  <% end %>
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                  <p style="margin: 0 0 6px; font-size: 14px; font-weight: 700; color: #222; font-family: Poppins, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    <%= nombre_articulo %>
+                  </p>
+                  <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                    <%= if fila.talles == [] do %>
+                      <span style="font-size: 11px; color: #bbb; font-family: Poppins, sans-serif;">Sin talles cargados</span>
+                    <% end %>
+                    <%= for {codigo_talle, cantidad} <- fila.talles do %>
+                      <% {bg, texto} = estado_talle(cantidad) %>
+                      <span style={"font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 8px; background: #{bg}; color: #{texto}; font-family: Poppins, sans-serif;"}>
+                        <%= StockItem.nombre_talle(codigo_talle) %>
+                      </span>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
       <% end %>
 
       <%= if @categoria_seleccionada && @mostrar_formulario_producto do %>
@@ -959,6 +1054,9 @@ defmodule DaleAppWeb.StockPanoramicoLive do
 
                   if (!nombre) { alert('Ponele un nombre al producto.'); return; }
 
+                  const claves = Object.keys(cantidadesStock);
+                  if (claves.length === 0) { alert('Elegí al menos un color y un talle con cantidad.'); return; }
+
                   enviarProductoStock(nombre, precio, descripcion);
                 };
 
@@ -969,24 +1067,25 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   formData.append('precio_original', precio);
                   formData.append('precio_final', precio);
                   formData.append('descripcion', descripcion);
-                  formData.append('talles', tallesSeleccionadosStock.join(','));
-                  formData.append('categorias', '');
                   formData.append('codigo_tipo', codigoTipo);
+                  formData.append('variantes', JSON.stringify(cantidadesStock));
 
                   const btn = document.getElementById('boton-guardar-stock');
                   btn.textContent = "Guardando..."; btn.disabled = true;
 
-                  const res = await fetch('/mi-tienda/productos/crear', { method: 'POST', body: formData });
+                  const res = await fetch('/mi-tienda/stock/crear-articulo', { method: 'POST', body: formData });
                   const data = await res.json();
 
                   if (data.ok) {
-                    if (imagenBlobStock) {
-                      const imgForm = new FormData();
-                      imgForm.append('_csrf_token', csrfTokenStock);
-                      imgForm.append('imagen', imagenBlobStock, 'producto.jpg');
-                      await fetch('/productos/' + data.id + '/imagen', { method: 'POST', body: imgForm });
+                    if (imagenBlobStock && data.ids) {
+                      for (const id of data.ids) {
+                        const imgForm = new FormData();
+                        imgForm.append('_csrf_token', csrfTokenStock);
+                        imgForm.append('imagen', imagenBlobStock, 'producto.jpg');
+                        await fetch('/productos/' + id + '/imagen', { method: 'POST', body: imgForm });
+                      }
                     }
-                    window.location.href = '/mi-tienda/productos/' + data.id + '/stock';
+                    window.location.href = '/mi-tienda/stock';
                   } else {
                     btn.textContent = "Guardar producto"; btn.disabled = false;
                     alert('Error al guardar.');
