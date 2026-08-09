@@ -1492,13 +1492,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   const botonAbrirImprimirReal = document.getElementById('boton-abrir-pantalla-imprimir-real-stock');
                   if (botonAbrirImprimirReal) botonAbrirImprimirReal.click();
 
-                  const reforzarPreviewImprimir = () => {
-                    const tarjetaChicoRefuerzo = document.querySelector('.tarjeta-tamano-imprimir[data-tamano="chico"]');
-                    if (tarjetaChicoRefuerzo) elegirTamanoImprimir(tarjetaChicoRefuerzo);
-                  };
-                  requestAnimationFrame(() => {
-                    requestAnimationFrame(reforzarPreviewImprimir);
-                  });
+
                 };
 
                 window.cerrarPantallaImprimirStock = () => {
@@ -1833,6 +1827,16 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                 if (this.el.dataset.mostrarImprimir === 'true') {
                   const tarjetaChico = document.querySelector('.tarjeta-tamano-imprimir[data-tamano="chico"]');
                   if (tarjetaChico) elegirTamanoImprimir(tarjetaChico);
+                }
+
+                if (typeof ResizeObserver !== 'undefined') {
+                  const contenedorObservadoImprimir = document.getElementById('hojas-preview-imprimir-container');
+                  if (contenedorObservadoImprimir) {
+                    const resizeObserverImprimir = new ResizeObserver(() => {
+                      if (typeof window.actualizarPreviewImprimir === 'function') window.actualizarPreviewImprimir();
+                    });
+                    resizeObserverImprimir.observe(contenedorObservadoImprimir);
+                  }
                 }
               }
             }
