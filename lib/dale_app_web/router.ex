@@ -50,26 +50,33 @@ live "/registro", RegistroLive
     post "/admin/:id/ban", AdminController, :ban
     post "/admin/brand/:id/disable", AdminController, :disable_brand
     post "/admin/brand/:id/slot", AdminController, :assign_slot
-    get "/mi-tienda", BrandController, :mi_tienda
+    live "/mi-tienda", MiTiendaLive
     post "/mi-tienda", BrandController, :update
     post "/mi-tienda/colores", BrandController, :actualizar_colores
     get "/mi-stand", BrandController, :mi_stand
     get "/mi-tienda/cupon", CouponController, :new
     post "/mi-tienda/cupon", CouponController, :create
     live "/mi-tienda/cajeros", CajerosLive
+    live "/mi-tienda/cajeros/ventas", VentasLive
+    live "/mi-tienda/cajeros/gestores", GestoresLive
+    live "/mi-tienda/cajeros/mercado", MercadoPuntosLive
     live "/mi-tienda/sedes", SedesLive
     live "/mi-tienda/stock", StockPanoramicoLive
+    live "/mi-tienda/stock/configuracion", ConfiguracionStockLive
+    live "/mi-tienda/stock/bitacora", BitacoraLive
     post "/mi-tienda/stock/crear-articulo", StockController, :crear_articulo
     post "/mi-tienda/stock/actualizar-articulo", StockController, :actualizar_articulo
     post "/mi-tienda/stock/productos/:id/imagen", StockController, :subir_imagen
+    post "/push/suscribir", PushController, :suscribir
+    post "/push/desuscribir", PushController, :desuscribir
     post "/mi-tienda/categorias/:id/imagen", BrandController, :upload_imagen_categoria
-    live "/mi-tienda/productos/:id/stock", StockLive
     post "/mi-tienda/pin/generar", BrandController, :generar_pin
     post "/mi-tienda/asistencia/toggle", BrandController, :toggle_asistencia
     get "/mi-tienda/horarios", BrandController, :horarios
     get "/mi-tienda/horarios/nuevo", BrandController, :nuevo_horario
     post "/mi-tienda/horarios/crear", BrandController, :crear_horario
     live "/mi-tienda/cajeros/asistencia", AsistenciaLive
+    live "/vender", VentaLive
     get "/mi-tienda/cajeros/:id", BrandController, :cajero_detalle
     post "/mi-tienda/cajeros/:id/actualizar", BrandController, :actualizar_cajero
     post "/mi-tienda/cajeros/:id/foto", BrandController, :subir_foto_cajero

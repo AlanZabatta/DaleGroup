@@ -13,6 +13,12 @@ defmodule DaleApp.Brands.Brand do
     field :colores, :map, default: %{}
     field :asistencia_activa, :boolean, default: false
     field :asistencia_activada_en, :utc_datetime
+    field :ventas_activa, :boolean, default: false
+    field :ventas_activada_en, :utc_datetime
+    field :gestiones_activa, :boolean, default: false
+    field :gestiones_activada_en, :utc_datetime
+    field :empleado_puntos_activa, :boolean, default: false
+    field :empleado_puntos_activada_en, :utc_datetime
     field :latitude, :float
     field :longitude, :float
     field :image_limit, :integer, default: 12
@@ -23,6 +29,11 @@ defmodule DaleApp.Brands.Brand do
     field :categorias, {:array, :string}, default: []
     field :pin_hash, :string
     field :pin_visto, :boolean, default: false
+    field :notificaciones_seguridad_activas, :boolean, default: false
+    field :notificaciones_stock_activas, :boolean, default: false
+    field :umbral_poco_stock, :integer, default: 4
+    field :umbral_mucho_stock, :integer, default: 5
+    field :ocultar_sin_stock, :boolean, default: false
     belongs_to :user, DaleApp.Accounts.User
 
     timestamps()
@@ -30,7 +41,7 @@ defmodule DaleApp.Brands.Brand do
 
   def changeset(brand, attrs) do
     brand
-    |> cast(attrs, [:name, :logo, :cover_image, :description, :address, :address_full, :horario_atencion, :colores, :latitude, :longitude, :image_limit, :active, :modalidad, :featured_slot, :user_id, :discount, :categorias, :asistencia_activa, :asistencia_activada_en])
+    |> cast(attrs, [:name, :logo, :cover_image, :description, :address, :address_full, :horario_atencion, :colores, :latitude, :longitude, :image_limit, :active, :modalidad, :featured_slot, :user_id, :discount, :categorias, :asistencia_activa, :asistencia_activada_en, :ventas_activa, :ventas_activada_en, :gestiones_activa, :gestiones_activada_en, :empleado_puntos_activa, :empleado_puntos_activada_en, :notificaciones_seguridad_activas, :notificaciones_stock_activas, :umbral_poco_stock, :umbral_mucho_stock, :ocultar_sin_stock])
     |> validate_required([:user_id])
     |> validate_inclusion(:modalidad, ["presencial", "digital", "ambos"])
     |> validate_number(:discount, greater_than_or_equal_to: 0, less_than_or_equal_to: 100)

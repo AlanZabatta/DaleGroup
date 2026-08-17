@@ -68,8 +68,23 @@
   </div>
 
   <div style="margin-bottom: 18px;">
-    <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Zona / puesto</p>
-    <input type="text" id="input-zona" value={@cajero.zona} placeholder="Ej: Cajero" oninput="empleadoModificado = true" style="width: 100%; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; color: #333; outline: none; box-sizing: border-box;"/>
+    <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Rol</p>
+    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px;">
+      <%= for {codigo, datos} <- DaleApp.Accounts.RolEmpleado.roles() do %>
+        <label style="display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1.5px solid #e0e0e0; border-radius: 14px; cursor: pointer; font-family: Poppins, sans-serif; font-size: 14px; color: #333;">
+          <input
+            type="radio"
+            name="rol-empleado"
+            class="radio-rol"
+            value={codigo}
+            checked={@cajero.zona == codigo}
+            onchange="empleadoModificado = true"
+            style="width: 18px; height: 18px; accent-color: #186904; flex-shrink: 0;"
+          />
+          <%= datos.nombre %>
+        </label>
+      <% end %>
+    </div>
   </div>
 
   <div style="margin-bottom: 28px;">
@@ -177,7 +192,8 @@
     formData.append('telefono', document.getElementById('input-telefono').value);
     const sedesMarcadas = Array.from(document.querySelectorAll('.checkbox-sede:checked')).map(cb => cb.value).join(',');
     formData.append('sedes_ids', sedesMarcadas);
-    formData.append('zona', document.getElementById('input-zona').value);
+    const rolSeleccionado = document.querySelector('.radio-rol:checked');
+    formData.append('zona', rolSeleccionado ? rolSeleccionado.value : '');
     formData.append('horario_laboral', document.getElementById('input-horario').value);
     const res = await fetch('/mi-tienda/cajeros/' + cajeroId + '/actualizar', { method: 'POST', body: formData });
     const data = await res.json();

@@ -137,4 +137,25 @@ defmodule DaleApp.Accounts do
     end
   end
 
+
+  # --- Push Subscriptions (notificaciones) ---
+
+  alias DaleApp.Accounts.PushSubscription
+
+  def guardar_push_subscription(attrs) do
+    %PushSubscription{}
+    |> PushSubscription.changeset(attrs)
+    |> Repo.insert(
+      on_conflict: {:replace, [:user_id, :p256dh, :auth, :updated_at]},
+      conflict_target: :endpoint
+    )
+  end
+
+  def listar_push_subscriptions(user_id) do
+    Repo.all(from p in PushSubscription, where: p.user_id == ^user_id)
+  end
+
+  def borrar_push_subscription(endpoint) do
+    Repo.delete_all(from p in PushSubscription, where: p.endpoint == ^endpoint)
+  end
 end

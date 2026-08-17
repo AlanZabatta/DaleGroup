@@ -1,7 +1,7 @@
 defmodule DaleApp.Products.CategoriaCustom do
   use Ecto.Schema
   import Ecto.Changeset
-  @iconos ~w(remera pantalon buzo campera anteojos bolso)
+  @iconos ~w(remera pantalon buzo campera anteojos bolso tienda)
   schema "categorias_custom" do
     field :nombre, :string
     field :icono, :string

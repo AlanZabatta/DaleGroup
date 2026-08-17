@@ -52,7 +52,7 @@ defmodule DaleAppWeb.SedesLive do
   def render(assigns) do
     ~H"""
     <div style="padding: 24px 18px 40px; font-family: Poppins, sans-serif; max-width: 600px; margin: 0 auto; background-color: white; min-height: 100vh;">
-      <a href="/mi-tienda" style="display: inline-flex; background: none; border: none; color: #186904; font-size: 22px; font-weight: 700; cursor: pointer; line-height: 1; text-decoration: none; margin-bottom: 16px;">&#x2715;</a>
+      <.link navigate="/mi-tienda" style="display: inline-flex; background: none; border: none; color: #186904; font-size: 22px; font-weight: 700; cursor: pointer; line-height: 1; text-decoration: none; margin-bottom: 16px;">&#x2715;</.link>
       <p style="font-size: 26px; font-weight: 800; color: #186904; margin: 0 0 6px;">Mis Sedes</p>
       <p style="font-size: 13px; color: #999; margin: 0 0 20px; font-family: Poppins, sans-serif;">Las sedes se crean cargando direcciones en el editor de tu tienda. Acá podés ponerles un nombre.</p>
 

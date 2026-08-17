@@ -158,11 +158,27 @@ defmodule DaleAppWeb.ProductoController do
         end
       end)
 
+      DaleApp.Products.IncidenciasStock.resolver_todas_de_producto(product.id, user_id)
+
+      if creado_hoy?(product.inserted_at) do
+        Repo.delete_all(
+          from(m in DaleApp.Products.MovimientoStock,
+            where: m.producto_id == ^product.id and m.tipo_accion == "creado"
+          )
+        )
+      end
+
       Products.delete_product(product)
       json(conn, %{ok: true})
     else
       json(conn, %{ok: false})
     end
+  end
+
+  defp creado_hoy?(inserted_at) do
+    ahora_ar = NaiveDateTime.add(NaiveDateTime.utc_now(), -3 * 3600, :second)
+    creado_ar = NaiveDateTime.add(inserted_at, -3 * 3600, :second)
+    NaiveDateTime.to_date(ahora_ar) == NaiveDateTime.to_date(creado_ar)
   end
 
   defp extraer_public_id(url) when is_binary(url) do

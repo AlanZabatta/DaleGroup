@@ -57,7 +57,8 @@ defmodule DaleAppWeb.StockController do
               position_in_brand: count + 1,
               active: false,
               codigo_tipo: codigo_tipo,
-              codigo_numero: codigo_numero
+              codigo_numero: codigo_numero,
+              creado_por_user_id: user_id
             }
 
             case DaleApp.Products.create_product(atributos) do
@@ -75,6 +76,23 @@ defmodule DaleAppWeb.StockController do
                   })
                   |> Repo.insert()
                 end)
+
+                DaleApp.Products.registrar_movimiento_stock(%{
+                  brand_id: brand.id,
+                  user_id: user_id,
+                  tipo_accion: "creado",
+                  descripcion: "Ha creado \"#{nombre}\"",
+                  producto_id: producto.id,
+                  producto_nombre: nombre
+                })
+                DaleApp.Products.NotificacionesSeguridad.revisar(%{
+                  brand_id: brand.id,
+                  user_id: user_id,
+                  tipo_accion: "creado",
+                  nombre_producto: nombre,
+                  precio_anterior: nil,
+                  precio_nuevo: nil
+                })
 
                 {:cont, {:ok, [producto.id | ids]}}
 
@@ -145,6 +163,23 @@ defmodule DaleAppWeb.StockController do
               Dale9.liberar_numero(brand.id, producto.codigo_tipo, producto.codigo_numero)
             end
 
+            DaleApp.Products.registrar_movimiento_stock(%{
+              brand_id: brand.id,
+              user_id: user_id,
+              tipo_accion: "eliminado",
+              descripcion: "Ha eliminado \"#{producto.name}\"",
+              producto_id: producto.id,
+              producto_nombre: producto.name
+            })
+            DaleApp.Products.NotificacionesSeguridad.revisar(%{
+              brand_id: brand.id,
+              user_id: user_id,
+              tipo_accion: "eliminado",
+              nombre_producto: producto.name,
+              precio_anterior: nil,
+              precio_nuevo: nil
+            })
+
             Repo.delete(producto)
           end
         end)
@@ -156,6 +191,44 @@ defmodule DaleAppWeb.StockController do
 
             producto =
               if producto_existente && producto_existente.brand_id == brand.id do
+                if producto_existente.name != nombre do
+                  DaleApp.Products.registrar_movimiento_stock(%{
+                    brand_id: brand.id,
+                    user_id: user_id,
+                    tipo_accion: "editado",
+                    descripcion: "Ha cambiado el nombre de \"#{producto_existente.name}\" a \"#{nombre}\"",
+                    producto_id: producto_existente.id,
+                    producto_nombre: nombre
+                  })
+                  DaleApp.Products.NotificacionesSeguridad.revisar(%{
+                    brand_id: brand.id,
+                    user_id: user_id,
+                    tipo_accion: "editado",
+                    nombre_producto: nombre,
+                    precio_anterior: nil,
+                    precio_nuevo: nil
+                  })
+                end
+
+                if producto_existente.price != precio_final do
+                  DaleApp.Products.registrar_movimiento_stock(%{
+                    brand_id: brand.id,
+                    user_id: user_id,
+                    tipo_accion: "editado",
+                    descripcion: "Ha cambiado el precio de \"#{nombre}\" de $#{producto_existente.price} a $#{precio_final}",
+                    producto_id: producto_existente.id,
+                    producto_nombre: nombre
+                  })
+                  DaleApp.Products.NotificacionesSeguridad.revisar(%{
+                    brand_id: brand.id,
+                    user_id: user_id,
+                    tipo_accion: "editado",
+                    nombre_producto: nombre,
+                    precio_anterior: producto_existente.price,
+                    precio_nuevo: precio_final
+                  })
+                end
+
                 {:ok, actualizado} =
                   DaleApp.Products.update_product(producto_existente, %{
                     name: nombre,
@@ -187,6 +260,34 @@ defmodule DaleAppWeb.StockController do
                       |> Repo.insert()
 
                     item ->
+                      if item.cantidad != cantidad do
+                        tipo_cambio = if cantidad > item.cantidad, do: "aumentado", else: "disminuido"
+                        DaleApp.Products.registrar_movimiento_stock(%{
+                          brand_id: brand.id,
+                          user_id: user_id,
+                          tipo_accion: tipo_cambio,
+                          descripcion: "Ha #{tipo_cambio} el stock de \"#{nombre}\" de #{item.cantidad} a #{cantidad}",
+                          producto_id: actualizado.id,
+                          producto_nombre: nombre
+                        })
+                        DaleApp.Products.NotificacionesSeguridad.revisar(%{
+                          brand_id: brand.id,
+                          user_id: user_id,
+                          tipo_accion: tipo_cambio,
+                          nombre_producto: nombre,
+                          precio_anterior: nil,
+                          precio_nuevo: nil
+                        })
+                        DaleApp.Products.NotificacionesStock.revisar(%{
+                          brand_id: brand.id,
+                          user_id: user_id,
+                          stock_item: item,
+                          cantidad_anterior: item.cantidad,
+                          cantidad_nueva: cantidad,
+                          nombre_producto: nombre,
+                          product_id: actualizado.id
+                        })
+                      end
                       item |> StockItem.changeset(%{cantidad: cantidad}) |> Repo.update()
                   end
                 end)
@@ -212,7 +313,8 @@ defmodule DaleAppWeb.StockController do
                     position_in_brand: count + 1,
                     active: false,
                     codigo_tipo: codigo_tipo,
-                    codigo_numero: codigo_numero
+                    codigo_numero: codigo_numero,
+                    creado_por_user_id: user_id
                   })
 
                 Enum.each(filas, fn {codigo_color, codigo_talle, cantidad} ->
@@ -258,11 +360,11 @@ defmodule DaleAppWeb.StockController do
           else
             case DaleApp.Storage.upload_image(imagen.path, imagen.filename) do
               {:ok, %{body: body}} when is_map(body) ->
-                guardar_imagen_stock(conn, producto, body["secure_url"], imagenes_actuales)
+                guardar_imagen_stock(conn, producto, body["secure_url"], imagenes_actuales, user_id)
 
               {:ok, %{body: body}} when is_binary(body) ->
                 case Jason.decode(body) do
-                  {:ok, decoded} -> guardar_imagen_stock(conn, producto, decoded["secure_url"], imagenes_actuales)
+                  {:ok, decoded} -> guardar_imagen_stock(conn, producto, decoded["secure_url"], imagenes_actuales, user_id)
                   _ -> json(conn, %{ok: false, error: "No se pudo procesar la respuesta de la imagen"})
                 end
 
@@ -276,13 +378,29 @@ defmodule DaleAppWeb.StockController do
     end
   end
 
-  defp guardar_imagen_stock(conn, _producto, nil, _imagenes_actuales) do
+  defp guardar_imagen_stock(conn, _producto, nil, _imagenes_actuales, _user_id) do
     json(conn, %{ok: false, error: "No se recibió la URL de la imagen"})
   end
 
-  defp guardar_imagen_stock(conn, producto, url, imagenes_actuales) do
+  defp guardar_imagen_stock(conn, producto, url, imagenes_actuales, user_id) do
     nuevas_imagenes = imagenes_actuales ++ [url]
     imagen_principal = List.first(nuevas_imagenes)
+    DaleApp.Products.registrar_movimiento_stock(%{
+      brand_id: producto.brand_id,
+      user_id: user_id,
+      tipo_accion: "editado",
+      descripcion: "Ha agregado una foto a \"#{producto.name}\"",
+      producto_id: producto.id,
+      producto_nombre: producto.name
+    })
+    DaleApp.Products.NotificacionesSeguridad.revisar(%{
+      brand_id: producto.brand_id,
+      user_id: user_id,
+      tipo_accion: "editado",
+      nombre_producto: producto.name,
+      precio_anterior: nil,
+      precio_nuevo: nil
+    })
     DaleApp.Products.update_product(producto, %{images: nuevas_imagenes, image: imagen_principal, active: true})
     json(conn, %{ok: true, url: url, images: nuevas_imagenes})
   end

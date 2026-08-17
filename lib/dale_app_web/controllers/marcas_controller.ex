@@ -18,7 +18,7 @@ defmodule DaleAppWeb.MarcasController do
     cupon = Repo.one(from c in Coupon, where: c.brand_id == ^marca.id and c.active == true, limit: 1)
     user_id = get_session(conn, :user_id)
     current_user = conn.assigns[:current_user]
-    productos = Products.list_brand_products(marca.id)
+    productos = Products.list_brand_products_visibles(marca.id, marca.ocultar_sin_stock)
     en_mapa = if user_id do
       saved = MapSaves.list_user_map(user_id)
       Enum.any?(saved, fn s -> s.brand_id == marca.id end)
