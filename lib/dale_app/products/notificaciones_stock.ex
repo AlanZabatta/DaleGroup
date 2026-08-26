@@ -34,15 +34,15 @@ defmodule DaleApp.Products.NotificacionesStock do
     cn = attrs.cantidad_nueva
 
     if cn == 0 and ca > 0 do
-      IncidenciasStock.abrir(attrs.brand_id, attrs.product_id, "talle_agotado", attrs.stock_item.codigo_talle)
+      IncidenciasStock.abrir(attrs.brand_id, attrs.product_id, "talle_agotado", attrs.stock_item.codigo_talle, attrs.stock_item.brand_location_id)
     end
 
     if total_nuevo == 0 and total_anterior > 0 do
-      IncidenciasStock.abrir(attrs.brand_id, attrs.product_id, "agotado")
+      IncidenciasStock.abrir(attrs.brand_id, attrs.product_id, "agotado", nil, attrs.stock_item.brand_location_id)
     end
 
     if total_nuevo > 0 and total_nuevo <= brand.umbral_poco_stock and total_anterior > brand.umbral_poco_stock do
-      IncidenciasStock.abrir(attrs.brand_id, attrs.product_id, "poco_stock")
+      IncidenciasStock.abrir(attrs.brand_id, attrs.product_id, "poco_stock", nil, attrs.stock_item.brand_location_id)
     end
 
     if cn > 0 do

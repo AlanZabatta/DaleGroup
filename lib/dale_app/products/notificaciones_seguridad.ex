@@ -160,13 +160,19 @@ defmodule DaleApp.Products.NotificacionesSeguridad do
   defp enviar(brand, mensaje) do
     suscripciones = Accounts.listar_push_subscriptions(brand.user_id)
 
-    Enum.each(suscripciones, fn sub ->
+    suscripciones
+    |> Enum.filter(fn sub -> sub.endpoint && sub.p256dh && sub.auth end)
+    |> Enum.each(fn sub ->
       subscription_json =
         Jason.encode!(%{endpoint: sub.endpoint, keys: %{p256dh: sub.p256dh, auth: sub.auth}})
 
       payload = Jason.encode!(%{titulo: "Alerta de seguridad", cuerpo: mensaje, url: "/mi-tienda/stock/bitacora"})
 
-      WebPushElixir.send_notification(subscription_json, payload)
+      try do
+        WebPushElixir.send_notification(subscription_json, payload)
+      rescue
+        _ -> :ok
+      end
     end)
   end
 end

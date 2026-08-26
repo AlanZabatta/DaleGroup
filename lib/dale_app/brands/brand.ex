@@ -34,6 +34,8 @@ defmodule DaleApp.Brands.Brand do
     field :umbral_poco_stock, :integer, default: 4
     field :umbral_mucho_stock, :integer, default: 5
     field :ocultar_sin_stock, :boolean, default: false
+    field :tipo_marca, :string, default: "normal"
+    field :ocultar_info_adicional_stock, :boolean, default: false
     belongs_to :user, DaleApp.Accounts.User
 
     timestamps()
@@ -41,11 +43,12 @@ defmodule DaleApp.Brands.Brand do
 
   def changeset(brand, attrs) do
     brand
-    |> cast(attrs, [:name, :logo, :cover_image, :description, :address, :address_full, :horario_atencion, :colores, :latitude, :longitude, :image_limit, :active, :modalidad, :featured_slot, :user_id, :discount, :categorias, :asistencia_activa, :asistencia_activada_en, :ventas_activa, :ventas_activada_en, :gestiones_activa, :gestiones_activada_en, :empleado_puntos_activa, :empleado_puntos_activada_en, :notificaciones_seguridad_activas, :notificaciones_stock_activas, :umbral_poco_stock, :umbral_mucho_stock, :ocultar_sin_stock])
+    |> cast(attrs, [:name, :logo, :cover_image, :description, :address, :address_full, :horario_atencion, :colores, :latitude, :longitude, :image_limit, :active, :modalidad, :featured_slot, :user_id, :discount, :categorias, :asistencia_activa, :asistencia_activada_en, :ventas_activa, :ventas_activada_en, :gestiones_activa, :gestiones_activada_en, :empleado_puntos_activa, :empleado_puntos_activada_en, :notificaciones_seguridad_activas, :notificaciones_stock_activas, :umbral_poco_stock, :umbral_mucho_stock, :ocultar_sin_stock, :tipo_marca, :ocultar_info_adicional_stock])
     |> validate_required([:user_id])
     |> validate_inclusion(:modalidad, ["presencial", "digital", "ambos"])
     |> validate_number(:discount, greater_than_or_equal_to: 0, less_than_or_equal_to: 100)
     |> validate_inclusion(:image_limit, [12, 14, 18, 22, 30])
+    |> validate_inclusion(:tipo_marca, ["normal", "aliada"])
   end
 
   def crear_pin_changeset(brand, pin) do

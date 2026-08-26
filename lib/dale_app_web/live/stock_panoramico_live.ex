@@ -3,6 +3,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
   import Ecto.Query, only: [from: 2]
   alias DaleApp.Repo
   alias DaleApp.Brands.Brand
+  alias DaleApp.Coupons.Coupon
   alias DaleApp.Products.{Product, StockItem, CategoriaCustom, TalleCustom}
 
   defp formato_fecha_movimiento(nil), do: ""
@@ -54,23 +55,26 @@ defmodule DaleAppWeb.StockPanoramicoLive do
     user_id = session["user_id"]
     brand = if user_id, do: Repo.get_by(Brand, user_id: user_id), else: nil
     if brand, do: asegurar_categorias_fijas(brand.id)
-    productos_todos = if brand, do: listar_productos_con_stock(brand.id), else: []
     categorias = if brand, do: listar_categorias(brand.id), else: []
     talles_custom = if brand, do: listar_talles_custom(brand.id), else: []
-    panel = if brand, do: calcular_panel(brand, productos_todos), else: nil
-    talles_totales = if brand, do: calcular_talles_totales(brand.id, talles_custom), else: []
-    movimientos_stock = if brand, do: DaleApp.Products.listar_movimientos_stock(brand.id), else: []
-    top_vendidos = if brand, do: DaleApp.Products.top_productos_vendidos(brand.id, 3, "mensual"), else: []
-    menos_vendidos = if brand, do: DaleApp.Products.productos_menos_vendidos(brand.id, 3, "mensual"), else: []
-    menos_rotacion = if brand, do: DaleApp.Products.stock_sin_movimiento(brand.id, 30, 5), else: []
+    sedes = if brand, do: Repo.all(from(l in DaleApp.Brands.BrandLocation, where: l.brand_id == ^brand.id, order_by: l.id)), else: []
+    sede_actual = List.first(sedes)
+    productos_todos = if brand, do: listar_productos_con_stock(brand.id, sede_actual && sede_actual.id), else: []
+    panel = if brand, do: calcular_panel(brand, productos_todos, sede_actual && sede_actual.id), else: nil
+    talles_totales = if brand, do: calcular_talles_totales(brand.id, talles_custom, sede_actual && sede_actual.id), else: []
+    movimientos_stock = if brand, do: DaleApp.Products.listar_movimientos_stock(brand.id, 50, sede_actual && sede_actual.id), else: []
+    top_vendidos = if brand, do: DaleApp.Products.top_productos_vendidos(brand.id, 3, "mensual", sede_actual && sede_actual.id), else: []
+    menos_vendidos = if brand, do: DaleApp.Products.productos_menos_vendidos(brand.id, 3, "mensual", sede_actual && sede_actual.id), else: []
+    menos_rotacion = if brand, do: DaleApp.Products.stock_sin_movimiento(brand.id, 30, 5, sede_actual && sede_actual.id), else: []
     if brand, do: DaleApp.Products.NotificacionesStock.revisar_rotacion(brand, menos_rotacion)
     # TODO Remontada: cuando se sumen chatbot personalizado y calificaciones de usuarios,
     # actualizar esta seccion para que tambien queden registradas como parte del seguimiento.
-    sell_through = if brand, do: DaleApp.Products.registrar_snapshot_sell_through(brand.id, "stock"), else: %{porcentaje: 0, vendidas: 0, stock_actual: 0}
-    sell_through_dale = if brand, do: DaleApp.Products.registrar_snapshot_sell_through(brand.id, "dale"), else: %{porcentaje: 0, vendidas: 0, stock_actual: 0}
-    talles_incompletos_lista = if brand, do: DaleApp.Products.talles_incompletos(brand.id, "severidad", 5), else: []
+    sell_through = if brand, do: DaleApp.Products.registrar_snapshot_sell_through(brand.id, "stock", sede_actual && sede_actual.id), else: %{porcentaje: 0, vendidas: 0, stock_actual: 0}
+    sell_through_dale = if brand, do: DaleApp.Products.registrar_snapshot_sell_through(brand.id, "dale", sede_actual && sede_actual.id), else: %{porcentaje: 0, vendidas: 0, stock_actual: 0}
+    talles_incompletos_lista = if brand, do: DaleApp.Products.talles_incompletos(brand.id, "severidad", 5, sede_actual && sede_actual.id), else: []
     talla_seleccionada_rendimiento = talles_totales |> List.first() |> then(fn t -> t && elem(t, 0) end)
-    rendimiento_talla = if brand && talla_seleccionada_rendimiento, do: DaleApp.Products.rendimiento_por_talla(brand.id, talla_seleccionada_rendimiento), else: %{stock_actual: 0, vendidas: 0}
+    rendimiento_talla = if brand && talla_seleccionada_rendimiento, do: DaleApp.Products.rendimiento_por_talla(brand.id, talla_seleccionada_rendimiento, sede_actual && sede_actual.id), else: %{stock_actual: 0, vendidas: 0}
+    cupon_activo = if brand, do: Repo.one(from(c in Coupon, where: c.brand_id == ^brand.id, limit: 1)), else: nil
     ids_usuarios_bitacora = movimientos_stock |> Enum.map(& &1.user_id) |> Enum.reject(&is_nil/1) |> Enum.uniq()
     usuarios_bitacora =
       if ids_usuarios_bitacora == [] do
@@ -87,6 +91,11 @@ defmodule DaleAppWeb.StockPanoramicoLive do
        productos_todos: productos_todos,
        productos: productos_todos,
        termino: "",
+       termino_categoria: "",
+       sedes: sedes,
+       sede_actual: sede_actual,
+       mostrar_selector_sede: false,
+       mostrar_ayuda_info_adicional_stock: false,
        categoria_seleccionada: nil,
        categorias: categorias,
        talles_custom: talles_custom,
@@ -105,9 +114,13 @@ defmodule DaleAppWeb.StockPanoramicoLive do
        mostrar_formulario_producto: false,
        mostrar_pantalla_imprimir: false,
        ruta_actual: "/mi-tienda/stock",
+       origen_edicion: nil,
+       mostrar_confirmar_borrar_articulo: false,
+       articulo_a_borrar: nil,
        combo_destacado_stock: nil,
        vista_panorama: "stock",
        user_id: user_id,
+       cupon_activo: cupon_activo,
        movimientos_stock: movimientos_stock,
        top_vendidos: top_vendidos,
        menos_vendidos: menos_vendidos,
@@ -156,13 +169,15 @@ defmodule DaleAppWeb.StockPanoramicoLive do
       end
 
     mostrar_pantalla_imprimir = Map.get(params, "pantalla") == "imprimir"
+    origen_edicion = Map.get(params, "origen", socket.assigns[:origen_edicion])
 
     {:noreply,
      assign(socket,
        categoria_seleccionada: categoria_seleccionada,
        mostrar_formulario_producto: mostrar_formulario_producto,
        articulo_editando: articulo_editando,
-       mostrar_pantalla_imprimir: mostrar_pantalla_imprimir
+       mostrar_pantalla_imprimir: mostrar_pantalla_imprimir,
+       origen_edicion: origen_edicion
      )}
   end
 
@@ -173,7 +188,11 @@ defmodule DaleAppWeb.StockPanoramicoLive do
 
   def handle_event("cerrar_formulario_producto", _params, socket) do
     codigo = socket.assigns.categoria_seleccionada && socket.assigns.categoria_seleccionada.codigo
-    {:noreply, push_patch(socket, to: url_stock(codigo))}
+    if socket.assigns[:origen_edicion] == "productos_dale" do
+      {:noreply, push_navigate(socket, to: "/mi-tienda/productos")}
+    else
+      {:noreply, push_patch(socket, to: url_stock(codigo))}
+    end
   end
   def handle_event("abrir_pantalla_imprimir", _params, socket) do
     codigo = socket.assigns.categoria_seleccionada && socket.assigns.categoria_seleccionada.codigo
@@ -197,6 +216,78 @@ defmodule DaleAppWeb.StockPanoramicoLive do
     codigo = socket.assigns.categoria_seleccionada.codigo
     {:noreply, push_patch(socket, to: url_stock(codigo, "editar", nombre))}
   end
+  def handle_event("editar_articulo_busqueda", %{"nombre" => nombre, "codigo_tipo" => codigo}, socket) do
+    {:noreply, push_patch(socket, to: url_stock(codigo, "editar", nombre))}
+  end
+  def handle_event("pedir_borrar_producto_stock", %{"id" => id}, socket) do
+    {:noreply, assign(socket, mostrar_confirmar_borrar_articulo: true, articulo_a_borrar: String.to_integer(id))}
+  end
+  def handle_event("cancelar_borrar_articulo", _params, socket) do
+    {:noreply, assign(socket, mostrar_confirmar_borrar_articulo: false, articulo_a_borrar: nil)}
+  end
+  def handle_event("confirmar_borrar_articulo", _params, socket) do
+    id = socket.assigns.articulo_a_borrar
+    brand = socket.assigns.brand
+    user_id = socket.assigns.user_id
+    producto = id && Repo.get(Product, id)
+    if producto && brand && producto.brand_id == brand.id do
+      borrar_producto_stock(brand, producto, user_id)
+      sede_id = socket.assigns.sede_actual && socket.assigns.sede_actual.id
+      productos_todos = listar_productos_con_stock(brand.id, sede_id)
+      panel = calcular_panel(brand, productos_todos, sede_id)
+      {:noreply,
+       socket
+       |> assign(
+         productos_todos: productos_todos,
+         productos: productos_todos,
+         panel: panel,
+         mostrar_confirmar_borrar_articulo: false,
+         articulo_a_borrar: nil
+       )}
+    else
+      {:noreply, assign(socket, mostrar_confirmar_borrar_articulo: false, articulo_a_borrar: nil)}
+    end
+  end
+  defp borrar_producto_stock(brand, producto, user_id) do
+    imagenes_a_borrar = (producto.images || []) ++ (if producto.image, do: [producto.image], else: [])
+    imagenes_a_borrar
+    |> Enum.uniq()
+    |> Enum.each(fn url ->
+      case extraer_public_id_stock(url) do
+        nil -> :ok
+        public_id -> DaleApp.Storage.delete_image(public_id)
+      end
+    end)
+    sedes_del_producto =
+      from(s in StockItem, where: s.product_id == ^producto.id, select: s.brand_location_id, distinct: true)
+      |> Repo.all()
+    sedes_del_producto = if sedes_del_producto == [], do: [nil], else: sedes_del_producto
+
+    from(s in StockItem, where: s.product_id == ^producto.id) |> Repo.delete_all()
+    DaleApp.Products.IncidenciasStock.resolver_todas_de_producto(producto.id, user_id)
+    if producto.codigo_tipo && producto.codigo_numero do
+      DaleApp.Products.Dale9.liberar_numero(brand.id, producto.codigo_tipo, producto.codigo_numero)
+    end
+    Enum.each(sedes_del_producto, fn sede_id ->
+      DaleApp.Products.registrar_movimiento_stock(%{
+        brand_id: brand.id,
+        user_id: user_id,
+        tipo_accion: "eliminado",
+        descripcion: "Ha eliminado \"#{producto.name}\"",
+        producto_id: producto.id,
+        producto_nombre: producto.name,
+        brand_location_id: sede_id
+      })
+    end)
+    Repo.delete(producto)
+  end
+  defp extraer_public_id_stock(url) when is_binary(url) do
+    case Regex.run(~r{/upload/(?:v\d+/)?(.+)\.[a-zA-Z0-9]+(?:\?.*)?$}, url) do
+      [_, public_id] -> public_id
+      _ -> nil
+    end
+  end
+  defp extraer_public_id_stock(_), do: nil
 
   defp construir_articulo_editando(socket, codigo_tipo, nombre) do
     productos =
@@ -251,6 +342,8 @@ defmodule DaleAppWeb.StockPanoramicoLive do
     primero = List.first(productos)
 
     if primero do
+      oferta = Repo.get_by(DaleApp.Products.OfertaProducto, product_id: primero.id, activa: true)
+
       %{
         nombre: primero.name,
         precio: primero.price,
@@ -258,7 +351,11 @@ defmodule DaleAppWeb.StockPanoramicoLive do
         imagen: primero.image,
         variantes: variantes,
         productos_por_color: productos_por_color,
-        numeros_por_color: numeros_por_color
+        numeros_por_color: numeros_por_color,
+        oferta_tipo: oferta && oferta.tipo,
+        oferta_valor: oferta && oferta.valor,
+        material: primero.material || [],
+        temporada: primero.temporada
       }
     else
       nil
@@ -350,9 +447,9 @@ defmodule DaleAppWeb.StockPanoramicoLive do
   end
 
   def handle_event("producto_creado_ok", _params, socket) do
-    productos_todos = listar_productos_con_stock(socket.assigns.brand.id)
-    panel = calcular_panel(socket.assigns.brand, productos_todos)
-
+    sede_id = socket.assigns.sede_actual && socket.assigns.sede_actual.id
+    productos_todos = listar_productos_con_stock(socket.assigns.brand.id, sede_id)
+    panel = calcular_panel(socket.assigns.brand, productos_todos, sede_id)
     {:noreply,
      socket
      |> assign(productos_todos: productos_todos, productos: productos_todos, panel: panel)
@@ -360,57 +457,51 @@ defmodule DaleAppWeb.StockPanoramicoLive do
   end
 
   def handle_event("filtrar_bitacora_fecha", %{"fecha" => ""}, socket) do
-    movimientos = if socket.assigns.brand, do: DaleApp.Products.listar_movimientos_stock(socket.assigns.brand.id), else: []
+    sede_id = socket.assigns.sede_actual && socket.assigns.sede_actual.id
+    movimientos = if socket.assigns.brand, do: DaleApp.Products.listar_movimientos_stock(socket.assigns.brand.id, 50, sede_id), else: []
     {:noreply, assign(socket, movimientos_stock: movimientos, fecha_filtro_bitacora: nil)}
   end
-
   def handle_event("filtrar_bitacora_fecha", %{"fecha" => fecha_str}, socket) do
+    sede_id = socket.assigns.sede_actual && socket.assigns.sede_actual.id
     case Date.from_iso8601(fecha_str) do
       {:ok, dia} ->
-        movimientos = if socket.assigns.brand, do: DaleApp.Products.listar_movimientos_stock_por_dia(socket.assigns.brand.id, dia), else: []
+        movimientos = if socket.assigns.brand, do: DaleApp.Products.listar_movimientos_stock_por_dia(socket.assigns.brand.id, dia, sede_id), else: []
         {:noreply, assign(socket, movimientos_stock: movimientos, fecha_filtro_bitacora: fecha_str)}
-
       :error ->
         {:noreply, socket}
     end
   end
 
   def handle_event("cambiar_periodo_ventas", %{"periodo" => periodo}, socket) do
+    sede_id = socket.assigns.sede_actual && socket.assigns.sede_actual.id
     top_vendidos =
-      if socket.assigns.brand, do: DaleApp.Products.top_productos_vendidos(socket.assigns.brand.id, 3, periodo), else: []
-
+      if socket.assigns.brand, do: DaleApp.Products.top_productos_vendidos(socket.assigns.brand.id, 3, periodo, sede_id), else: []
     menos_vendidos =
-      if socket.assigns.brand, do: DaleApp.Products.productos_menos_vendidos(socket.assigns.brand.id, 3, periodo), else: []
-
+      if socket.assigns.brand, do: DaleApp.Products.productos_menos_vendidos(socket.assigns.brand.id, 3, periodo, sede_id), else: []
     {:noreply, assign(socket, periodo_ventas: periodo, top_vendidos: top_vendidos, menos_vendidos: menos_vendidos)}
   end
-
   def handle_event("toggle_consejos_sell_through", _params, socket) do
     {:noreply, assign(socket, mostrar_consejos_sell_through: !socket.assigns.mostrar_consejos_sell_through)}
   end
-
   def handle_event("cambiar_orden_talles_incompletos", %{"orden" => orden}, socket) do
+    sede_id = socket.assigns.sede_actual && socket.assigns.sede_actual.id
     lista =
-      if socket.assigns.brand, do: DaleApp.Products.talles_incompletos(socket.assigns.brand.id, orden, 10), else: []
-
+      if socket.assigns.brand, do: DaleApp.Products.talles_incompletos(socket.assigns.brand.id, orden, 10, sede_id), else: []
     {:noreply, assign(socket, orden_talles_incompletos: orden, talles_incompletos_lista: lista, limite_talles_incompletos: 10)}
   end
   def handle_event("cargar_mas_talles_incompletos", _params, socket) do
+    sede_id = socket.assigns.sede_actual && socket.assigns.sede_actual.id
     nuevo_limite = socket.assigns.limite_talles_incompletos + 10
-
     lista =
       if socket.assigns.brand,
-        do: DaleApp.Products.talles_incompletos(socket.assigns.brand.id, socket.assigns.orden_talles_incompletos, nuevo_limite),
+        do: DaleApp.Products.talles_incompletos(socket.assigns.brand.id, socket.assigns.orden_talles_incompletos, nuevo_limite, sede_id),
         else: []
-
     {:noreply, assign(socket, limite_talles_incompletos: nuevo_limite, talles_incompletos_lista: lista)}
   end
-
-
   def handle_event("seleccionar_talla_rendimiento", %{"talla" => talla}, socket) do
+    sede_id = socket.assigns.sede_actual && socket.assigns.sede_actual.id
     rendimiento =
-      if socket.assigns.brand, do: DaleApp.Products.rendimiento_por_talla(socket.assigns.brand.id, talla), else: %{stock_actual: 0, vendidas: 0}
-
+      if socket.assigns.brand, do: DaleApp.Products.rendimiento_por_talla(socket.assigns.brand.id, talla, sede_id), else: %{stock_actual: 0, vendidas: 0}
     {:noreply, assign(socket, talla_seleccionada_rendimiento: talla, rendimiento_talla: rendimiento)}
   end
 
@@ -445,6 +536,39 @@ defmodule DaleAppWeb.StockPanoramicoLive do
     case StockItem.desde_ean13(termino) do
       {:ok, dale9} -> dale9
       {:error, _} -> nil
+    end
+  end
+
+  def handle_event("borrar_producto_busqueda", %{"id" => id_str}, socket) do
+    id = String.to_integer(id_str)
+    producto = Repo.get(Product, id)
+
+    if producto && producto.brand_id == socket.assigns.brand.id do
+      DaleApp.Products.delete_product(producto)
+      sede_id = socket.assigns.sede_actual && socket.assigns.sede_actual.id
+      productos_todos = listar_productos_con_stock(socket.assigns.brand.id, sede_id)
+      panel = calcular_panel(socket.assigns.brand, productos_todos, sede_id)
+
+      termino_norm = socket.assigns.termino |> String.trim() |> String.downcase()
+      productos_filtrados =
+        if termino_norm == "" do
+          productos_todos
+        else
+          Enum.filter(productos_todos, fn {p, _total, codigos} ->
+            nombre_match = p.name && String.contains?(String.downcase(p.name), termino_norm)
+            codigo_match = Enum.any?(codigos, fn c -> String.contains?(String.downcase(c), termino_norm) end)
+            nombre_match || codigo_match
+          end)
+        end
+
+      {:noreply,
+       assign(socket,
+         productos_todos: productos_todos,
+         productos: productos_filtrados,
+         panel: panel
+       )}
+    else
+      {:noreply, socket}
     end
   end
 
@@ -547,7 +671,8 @@ defmodule DaleAppWeb.StockPanoramicoLive do
            |> Repo.insert() do
         {:ok, _} ->
           talles_custom = listar_talles_custom(socket.assigns.brand.id)
-          talles_totales = calcular_talles_totales(socket.assigns.brand.id, talles_custom)
+          sede_id = socket.assigns.sede_actual && socket.assigns.sede_actual.id
+          talles_totales = calcular_talles_totales(socket.assigns.brand.id, talles_custom, sede_id)
           {:noreply, assign(socket, talles_custom: talles_custom, talles_totales: talles_totales, mostrar_modal_talle: false, error_talle: nil)}
 
         {:error, _} ->
@@ -620,12 +745,61 @@ defmodule DaleAppWeb.StockPanoramicoLive do
     end)
   end
 
-  defp calcular_panel(brand, productos_todos) do
+  defp disponibilidad_talle_por_sede(product_id, codigo_color, codigo_talle, sedes) do
+    cantidades =
+      from(s in StockItem,
+        where: s.product_id == ^product_id and s.codigo_color == ^codigo_color and s.codigo_talle == ^codigo_talle,
+        group_by: s.brand_location_id,
+        select: {s.brand_location_id, sum(s.cantidad)}
+      )
+      |> Repo.all()
+      |> Map.new()
+
+    Enum.map(sedes, fn sede ->
+      cantidad = Map.get(cantidades, sede.id, 0) || 0
+      {sede, cantidad > 0}
+    end)
+  end
+
+  defp disponibilidad_por_sede(product_id, sedes) do
+    cantidades =
+      from(s in StockItem,
+        where: s.product_id == ^product_id,
+        group_by: s.brand_location_id,
+        select: {s.brand_location_id, sum(s.cantidad)}
+      )
+      |> Repo.all()
+      |> Map.new()
+
+    Enum.map(sedes, fn sede ->
+      cantidad = Map.get(cantidades, sede.id, 0) || 0
+      {sede, cantidad > 0}
+    end)
+  end
+
+  defp texto_sede_actual(sedes, sede_actual) do
+    cond do
+      Enum.empty?(sedes) -> "Elegir sede"
+      sede_actual -> truncar_nombre_sede(sede_actual.nombre)
+      true -> "Todas"
+    end
+  end
+
+  defp truncar_nombre_sede(nil), do: "Sede"
+  defp truncar_nombre_sede(nombre) when byte_size(nombre) > 12, do: String.slice(nombre, 0, 12) <> "..."
+  defp truncar_nombre_sede(nombre), do: nombre
+
+  defp calcular_panel(brand, productos_todos, sede_id \\ nil) do
     total = length(productos_todos)
     limite_dale = brand.image_limit || 12
-    productos_dale = Enum.count(productos_todos, fn {p, _t, _c} -> p.active end)
+    productos_dale =
+      productos_todos
+      |> Enum.filter(fn {p, _t, _c} -> p.active end)
+      |> Enum.map(fn {p, _t, _c} -> {p.name, p.codigo_tipo} end)
+      |> Enum.uniq()
+      |> length()
 
-    sin_stock =
+    sin_stock_query =
       from(s in StockItem,
         join: p in Product, on: p.id == s.product_id,
         where: p.brand_id == ^brand.id and s.cantidad == 0,
@@ -638,9 +812,10 @@ defmodule DaleAppWeb.StockPanoramicoLive do
           codigo_talle: s.codigo_talle
         }
       )
-      |> Repo.all()
+    sin_stock_query = if sede_id, do: from([s, p] in sin_stock_query, where: s.brand_location_id == ^sede_id), else: sin_stock_query
+    sin_stock = Repo.all(sin_stock_query)
 
-    poco_stock =
+    poco_stock_query =
       from(s in StockItem,
         join: p in Product, on: p.id == s.product_id,
         where: p.brand_id == ^brand.id and s.cantidad > 0 and s.cantidad <= ^brand.umbral_poco_stock,
@@ -654,21 +829,23 @@ defmodule DaleAppWeb.StockPanoramicoLive do
           cantidad: s.cantidad
         }
       )
-      |> Repo.all()
+    poco_stock_query = if sede_id, do: from([s, p] in poco_stock_query, where: s.brand_location_id == ^sede_id), else: poco_stock_query
+    poco_stock = Repo.all(poco_stock_query)
 
     %{total: total, productos_dale: productos_dale, limite_dale: limite_dale, sin_stock: sin_stock, poco_stock: poco_stock}
   end
 
-  defp calcular_talles_totales(brand_id, talles_custom) do
-    totales_db =
+  defp calcular_talles_totales(brand_id, talles_custom, sede_id \\ nil) do
+    totales_query =
       from(s in StockItem,
         join: p in Product, on: p.id == s.product_id,
         where: p.brand_id == ^brand_id,
         group_by: s.codigo_talle,
         select: {s.codigo_talle, sum(s.cantidad)}
       )
-      |> Repo.all()
-      |> Map.new()
+
+    totales_query = if sede_id, do: from([s, p] in totales_query, where: s.brand_location_id == ^sede_id), else: totales_query
+    totales_db = totales_query |> Repo.all() |> Map.new()
 
     nombres_custom = Map.new(talles_custom, fn t -> {t.codigo_talle, t.nombre} end)
 
@@ -680,13 +857,18 @@ defmodule DaleAppWeb.StockPanoramicoLive do
     end)
   end
 
-  defp listar_productos_con_stock(brand_id) do
+  defp listar_productos_con_stock(brand_id, sede_id \\ nil) do
+    filtro_sede = fn query ->
+      if sede_id, do: from(s in query, where: s.brand_location_id == ^sede_id), else: query
+    end
+
     variantes_por_producto =
       from(s in StockItem,
         join: p in Product, on: p.id == s.product_id,
         where: p.brand_id == ^brand_id,
         select: {s.product_id, s.codigo}
       )
+      |> filtro_sede.()
       |> Repo.all()
       |> Enum.group_by(fn {product_id, _codigo} -> product_id end, fn {_product_id, codigo} -> codigo end)
 
@@ -697,11 +879,15 @@ defmodule DaleAppWeb.StockPanoramicoLive do
         group_by: s.product_id,
         select: {s.product_id, sum(s.cantidad)}
       )
+      |> filtro_sede.()
       |> Repo.all()
       |> Map.new()
 
     from(p in Product, where: p.brand_id == ^brand_id, order_by: [asc: p.name])
     |> Repo.all()
+    |> Enum.filter(fn producto ->
+      is_nil(sede_id) or Map.has_key?(variantes_por_producto, producto.id)
+    end)
     |> Enum.map(fn producto ->
       total = Map.get(totales, producto.id, 0)
       codigos_variantes = Map.get(variantes_por_producto, producto.id, [])
@@ -710,7 +896,116 @@ defmodule DaleAppWeb.StockPanoramicoLive do
     end)
   end
 
-  defp filas_de_categoria(productos_todos, codigo_tipo) do
+  def handle_event("toggle_selector_sede", _params, socket) do
+    {:noreply, assign(socket, mostrar_selector_sede: !socket.assigns.mostrar_selector_sede)}
+  end
+
+  def handle_event("toggle_info_adicional_stock", _params, socket) do
+    brand = socket.assigns.brand
+    nuevo_valor = !brand.ocultar_info_adicional_stock
+
+    {:ok, brand_actualizada} =
+      brand
+      |> DaleApp.Brands.Brand.changeset(%{ocultar_info_adicional_stock: nuevo_valor})
+      |> Repo.update()
+
+    {:noreply, assign(socket, brand: brand_actualizada)}
+  end
+
+  def handle_event("toggle_ayuda_info_adicional_stock", _params, socket) do
+    mostrar = !socket.assigns.mostrar_ayuda_info_adicional_stock
+
+    socket =
+      if mostrar && socket.assigns.brand.ocultar_info_adicional_stock do
+        {:ok, brand_actualizada} =
+          socket.assigns.brand
+          |> DaleApp.Brands.Brand.changeset(%{ocultar_info_adicional_stock: false})
+          |> Repo.update()
+
+        assign(socket, brand: brand_actualizada)
+      else
+        socket
+      end
+
+    {:noreply, assign(socket, mostrar_ayuda_info_adicional_stock: mostrar)}
+  end
+  def handle_event("elegir_sede", %{"id" => id_str}, socket) do
+    id = String.to_integer(id_str)
+    sede = Enum.find(socket.assigns.sedes, fn s -> s.id == id end)
+    {:noreply, cargar_datos_de_sede(socket, sede)}
+  end
+
+  def handle_event("elegir_todas_sedes", _params, socket) do
+    {:noreply, cargar_datos_de_sede(socket, nil)}
+  end
+
+  defp cargar_datos_de_sede(socket, sede) do
+    brand = socket.assigns.brand
+    sede_id = sede && sede.id
+    productos_todos = listar_productos_con_stock(brand.id, sede_id)
+    panel = calcular_panel(brand, productos_todos, sede_id)
+    movimientos_stock = DaleApp.Products.listar_movimientos_stock(brand.id, 50, sede_id)
+    top_vendidos = DaleApp.Products.top_productos_vendidos(brand.id, 3, "mensual", sede_id)
+    menos_vendidos = DaleApp.Products.productos_menos_vendidos(brand.id, 3, "mensual", sede_id)
+    menos_rotacion = DaleApp.Products.stock_sin_movimiento(brand.id, 30, 5, sede_id)
+    sell_through = DaleApp.Products.registrar_snapshot_sell_through(brand.id, "stock", sede_id)
+    sell_through_dale = DaleApp.Products.registrar_snapshot_sell_through(brand.id, "dale", sede_id)
+    talles_incompletos_lista = DaleApp.Products.talles_incompletos(brand.id, "severidad", 5, sede_id)
+    talles_totales = calcular_talles_totales(brand.id, socket.assigns.talles_custom, sede_id)
+    talla_seleccionada_rendimiento = talles_totales |> List.first() |> then(fn t -> t && elem(t, 0) end)
+    rendimiento_talla =
+      if talla_seleccionada_rendimiento do
+        DaleApp.Products.rendimiento_por_talla(brand.id, talla_seleccionada_rendimiento, sede_id)
+      else
+        %{stock_actual: 0, vendidas: 0}
+      end
+
+    termino_norm = socket.assigns.termino |> String.trim() |> String.downcase()
+    productos_filtrados =
+      if termino_norm == "" do
+        productos_todos
+      else
+        Enum.filter(productos_todos, fn {p, _total, codigos} ->
+          nombre_match = p.name && String.contains?(String.downcase(p.name), termino_norm)
+          codigo_match = Enum.any?(codigos, fn c -> String.contains?(String.downcase(c), termino_norm) end)
+          nombre_match || codigo_match
+        end)
+      end
+
+    assign(socket,
+      sede_actual: sede,
+      mostrar_selector_sede: false,
+      productos_todos: productos_todos,
+      productos: productos_filtrados,
+      panel: panel,
+      movimientos_stock: movimientos_stock,
+      fecha_filtro_bitacora: nil,
+      top_vendidos: top_vendidos,
+      menos_vendidos: menos_vendidos,
+      menos_rotacion: menos_rotacion,
+      sell_through: sell_through,
+      sell_through_dale: sell_through_dale,
+      talles_incompletos_lista: talles_incompletos_lista,
+      talles_totales: talles_totales,
+      talla_seleccionada_rendimiento: talla_seleccionada_rendimiento,
+      rendimiento_talla: rendimiento_talla
+    )
+  end
+  def handle_event("buscar_categoria", %{"termino_categoria" => termino}, socket) do
+    {:noreply, assign(socket, termino_categoria: termino)}
+  end
+
+  defp filas_de_categoria_filtradas(productos_todos, codigo_tipo, termino_categoria, sede_id \\ nil, sedes \\ []) do
+    termino_norm = termino_categoria |> String.trim() |> String.downcase()
+    filas_de_categoria(productos_todos, codigo_tipo, sede_id, sedes)
+    |> Enum.filter(fn {nombre_articulo, _filas} ->
+      termino_norm == "" || String.contains?(String.downcase(nombre_articulo), termino_norm)
+    end)
+  end
+
+  defp filas_de_categoria(productos_todos, codigo_tipo, sede_id \\ nil, sedes \\ []) do
+    modo_todas_sedes = is_nil(sede_id) and length(sedes) > 1
+
     productos =
       productos_todos
       |> Enum.map(fn {producto, _total, _codigos} -> producto end)
@@ -722,38 +1017,77 @@ defmodule DaleAppWeb.StockPanoramicoLive do
       if ids == [] do
         %{}
       else
-        from(s in StockItem, where: s.product_id in ^ids)
+        query = from(s in StockItem, where: s.product_id in ^ids)
+        query = if sede_id, do: from(s in query, where: s.brand_location_id == ^sede_id), else: query
+
+        query
         |> Repo.all()
         |> Enum.group_by(& &1.product_id)
       end
 
-    productos
-    |> Enum.map(fn producto ->
-      items = Map.get(stock_items_por_producto, producto.id, [])
+    if modo_todas_sedes do
+      productos
+      |> Enum.flat_map(fn producto ->
+        items = Map.get(stock_items_por_producto, producto.id, [])
 
-      talles =
         items
-        |> Enum.group_by(& &1.codigo_talle)
-        |> Enum.map(fn {codigo_talle, lista} ->
-          {codigo_talle, Enum.sum(Enum.map(lista, & &1.cantidad))}
+        |> Enum.group_by(fn i -> {i.codigo_color, i.codigo_talle} end)
+        |> Enum.map(fn {{codigo_color, codigo_talle}, _lista} ->
+          disponibilidad = disponibilidad_talle_por_sede(producto.id, codigo_color, codigo_talle, sedes)
+
+          %{
+            producto: producto,
+            codigo_color: codigo_color,
+            codigo_talle: codigo_talle,
+            disponibilidad: disponibilidad,
+            es_fila_individual: true
+          }
         end)
-        |> Enum.sort_by(fn {codigo_talle, _cantidad} -> codigo_talle end)
+      end)
+      |> Enum.group_by(fn fila -> fila.producto.name end)
+      |> Enum.sort_by(fn {nombre, _filas} -> nombre end)
+    else
+      productos
+      |> Enum.map(fn producto ->
+        items = Map.get(stock_items_por_producto, producto.id, [])
 
-      codigo_color =
-        case items do
-          [primero | _] -> primero.codigo_color
-          [] -> nil
-        end
+        talles =
+          items
+          |> Enum.group_by(& &1.codigo_talle)
+          |> Enum.map(fn {codigo_talle, lista} ->
+            {codigo_talle, Enum.sum(Enum.map(lista, & &1.cantidad))}
+          end)
+          |> Enum.sort_by(fn {codigo_talle, _cantidad} -> codigo_talle end)
 
-      %{producto: producto, codigo_color: codigo_color, talles: talles}
-    end)
-    |> Enum.group_by(fn fila -> fila.producto.name end)
-    |> Enum.sort_by(fn {nombre, _filas} -> nombre end)
+        codigo_color =
+          case items do
+            [primero | _] -> primero.codigo_color
+            [] -> nil
+          end
+
+        %{producto: producto, codigo_color: codigo_color, talles: talles, es_fila_individual: false}
+      end)
+      |> Enum.group_by(fn fila -> fila.producto.name end)
+      |> Enum.sort_by(fn {nombre, _filas} -> nombre end)
+    end
   end
-
   defp estado_talle(cantidad, _umbral_poco) when cantidad <= 0, do: {"#fdecea", "#c0392b"}
   defp estado_talle(cantidad, umbral_poco) when cantidad <= umbral_poco, do: {"#fff6d9", "#a67c00"}
   defp estado_talle(_cantidad, _umbral_poco), do: {"#e6f4e6", "#186904"}
+
+  defp sugerencias_porcentaje(cupon_discount) do
+    ladder = [20, 30, 40, 50, 60, 70, 80]
+
+    base =
+      case Integer.parse(to_string(cupon_discount || "0")) do
+        {n, _} -> n
+        :error -> 0
+      end
+
+    ladder
+    |> Enum.filter(&(&1 > base))
+    |> Enum.take(2)
+  end
 
   defp color_hex_por_codigo(codigo_color) do
     mapa = %{
@@ -814,6 +1148,9 @@ defmodule DaleAppWeb.StockPanoramicoLive do
       <% end %>
 
       <style>
+        [phx-click] { -webkit-tap-highlight-color: transparent; }
+        html, body { scrollbar-width: none; }
+        html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
         @keyframes blurCambioBusqueda {
           0% { filter: blur(0px); opacity: 1; }
           45% { filter: blur(6px); opacity: 0.2; }
@@ -841,7 +1178,9 @@ defmodule DaleAppWeb.StockPanoramicoLive do
           style="width: 100%; box-sizing: border-box; padding: 13px 16px 13px 42px; border: 1.5px solid #999; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; font-weight: 700; color: #333; outline: none; background: white;"
         />
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); pointer-events: none;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <span id="placeholder-buscar-stock" style="position: absolute; left: 42px; top: 50%; transform: translateY(-50%); font-family: Poppins, sans-serif; font-size: 14px; font-weight: 700; color: #186904; pointer-events: none;">Buscar Mi Stock</span>
+        <%= if @termino == "" do %>
+          <span id="placeholder-buscar-stock" style="position: absolute; left: 42px; top: 50%; transform: translateY(-50%); font-family: Poppins, sans-serif; font-size: 14px; font-weight: 700; color: #186904; pointer-events: none;">Buscar Mi Stock</span>
+        <% end %>
         <script :type={Phoenix.LiveView.ColocatedHook} name=".BuscadorStock">
           export default {
             mounted() {
@@ -886,7 +1225,40 @@ defmodule DaleAppWeb.StockPanoramicoLive do
           }
         </script>
       </form>
-      <%= if is_nil(@categoria_seleccionada) && @panel do %>
+
+      <%= if is_nil(@categoria_seleccionada) do %>
+        <div style="position: relative; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 14px; padding: 10px 14px; margin-bottom: 16px; box-shadow: 0 3px 10px rgba(24,105,4,0.08);">
+          <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0; font-family: Poppins, sans-serif;">
+            Sede visualizando: <span style="font-weight: 800;"><%= texto_sede_actual(@sedes, @sede_actual) %></span>
+          </p>
+          <button type="button" phx-click="toggle_selector_sede" style="display: flex; align-items: center; gap: 6px; background: white; border: 1.5px solid #186904; border-radius: 20px; padding: 6px 12px; cursor: pointer; font-family: Poppins, sans-serif; font-size: 12px; font-weight: 700; color: #186904;">
+            <%= texto_sede_actual(@sedes, @sede_actual) %>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style={"transition: transform 0.15s; transform: rotate(#{if @mostrar_selector_sede, do: "180deg", else: "0deg"});"}>
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <%= if @mostrar_selector_sede do %>
+            <div style="position: absolute; top: calc(100% + 6px); right: 0; z-index: 20; background: white; border: 1.5px solid #eee; border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); min-width: 180px; overflow: hidden;">
+              <%= if Enum.empty?(@sedes) do %>
+                <p style="font-size: 12.5px; color: #999; margin: 0; padding: 14px; font-family: Poppins, sans-serif; text-align: center;">Todavía no cargaste sedes.</p>
+              <% else %>
+                <%= if length(@sedes) > 1 do %>
+                  <button type="button" phx-click="elegir_todas_sedes" style={"display: block; width: 100%; text-align: left; padding: 12px 16px; border: none; border-bottom: 1px solid #f2f2f2; cursor: pointer; font-family: Poppins, sans-serif; font-size: 13px; font-weight: 700; background: #{if is_nil(@sede_actual), do: "#eef4ec", else: "white"}; color: #{if is_nil(@sede_actual), do: "#186904", else: "#333"};"}>
+                    Todas las sedes
+                  </button>
+                <% end %>
+                <%= for sede <- @sedes do %>
+                  <button type="button" phx-click="elegir_sede" phx-value-id={sede.id} style={"display: block; width: 100%; text-align: left; padding: 12px 16px; border: none; cursor: pointer; font-family: Poppins, sans-serif; font-size: 13px; font-weight: 600; background: #{if @sede_actual && @sede_actual.id == sede.id, do: "#eef4ec", else: "white"}; color: #{if @sede_actual && @sede_actual.id == sede.id, do: "#186904", else: "#333"};"}>
+                    <%= sede.nombre %>
+                  </button>
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+
+      <%= if is_nil(@categoria_seleccionada) && @panel && @termino == "" do %>
         <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 20px; padding: 22px 20px; margin-bottom: 16px; box-shadow: 0 4px 14px rgba(24,105,4,0.10);">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px;">
             <p style="font-size: 11.5px; font-weight: 800; color: #186904; margin: 0; text-transform: uppercase; letter-spacing: 1.2px;">Panorama</p>
@@ -1031,7 +1403,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
         </div>
       <% end %>
 
-      <%= if is_nil(@categoria_seleccionada) do %>
+      <%= if is_nil(@categoria_seleccionada) && @termino == "" do %>
         <p style="font-size: 12px; font-weight: 700; color: #186904; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 1px;">Categorías</p>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
           <%= for cat <- @categorias do %>
@@ -1068,6 +1440,46 @@ defmodule DaleAppWeb.StockPanoramicoLive do
             </div>
           </button>
         </div>
+      <% end %>
+
+      <%= if is_nil(@categoria_seleccionada) && @termino != "" do %>
+        <p style="font-size: 12px; font-weight: 700; color: #186904; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 1px;">Resultados de "<%= @termino %>"</p>
+        <%= if Enum.empty?(@productos) do %>
+          <p style="font-size: 13px; color: #999; text-align: center; padding: 40px 0; font-family: Poppins, sans-serif;">No encontramos productos que coincidan con la búsqueda.</p>
+        <% else %>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <%= for {producto, _total, _codigos} <- @productos do %>
+              <div style="border-radius: 16px; overflow: hidden; border: 1px solid #f2f2f2; position: relative; cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,0.06);" phx-click="editar_articulo_busqueda" phx-value-nombre={producto.name} phx-value-codigo_tipo={producto.codigo_tipo}>
+                <button type="button" onclick="event.stopPropagation();" phx-click="borrar_producto_busqueda" phx-value-id={producto.id} data-confirm="¿Borrar este producto? Esta acción no se puede deshacer." style="position: absolute; top: 6px; right: 6px; z-index: 10; background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 26px; height: 26px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center;">🗑</button>
+                <div style="aspect-ratio: 3/4; background: #f0f0f0; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                  <%= if producto.image do %>
+                    <img src={producto.image} style="width: 100%; height: 100%; object-fit: cover;"/>
+                  <% else %>
+                    <svg width="40%" height="40%" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.4;">
+                      {raw(icono_svg_por_codigo(producto.codigo_tipo, @categorias))}
+                    </svg>
+                  <% end %>
+                </div>
+                <div style="background: white; padding: 8px 10px;">
+                  <p style="font-size: 12px; font-weight: 500; margin: 0; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><%= producto.name %></p>
+                  <%= if producto.original_price && producto.original_price != producto.price do %>
+                    <p style="font-size: 11px; color: #999; margin: 2px 0 0; text-decoration: line-through;">$<%= producto.original_price %></p>
+                  <% end %>
+                  <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0;">$<%= producto.price %></p>
+                  <%= if is_nil(@sede_actual) && length(@sedes) > 1 do %>
+                    <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;">
+                      <%= for {sede, hay_stock} <- disponibilidad_por_sede(producto.id, @sedes) do %>
+                        <span style={"font-size: 8.5px; font-weight: 700; padding: 2px 6px; border-radius: 6px; font-family: Poppins, sans-serif; background: #{if hay_stock, do: "#eef9f0", else: "#fdecea"}; color: #{if hay_stock, do: "#186904", else: "#c0392b"};"}>
+                          <%= sede.nombre %>
+                        </span>
+                      <% end %>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
       <% end %>
 
         </div>
@@ -1530,47 +1942,116 @@ defmodule DaleAppWeb.StockPanoramicoLive do
           <span style="font-size: 28px; line-height: 1; font-weight: 300;">+</span>
           Crear producto en <%= @categoria_seleccionada.nombre %>
         </button>
+
+        <form phx-change="buscar_categoria" style="position: relative; width: 100%; margin-bottom: 18px;">
+          <input
+            type="text"
+            name="termino_categoria"
+            value={@termino_categoria}
+            autocomplete="off"
+            placeholder={"Buscar en #{@categoria_seleccionada.nombre}"}
+            style="width: 100%; box-sizing: border-box; padding: 12px 16px 12px 40px; border: 1.5px solid #ddd; border-radius: 14px; font-family: Poppins, sans-serif; font-size: 13.5px; font-weight: 600; color: #333; outline: none; background: white;"
+          />
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 13px; top: 50%; transform: translateY(-50%); pointer-events: none;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </form>
       <% end %>
 
       <%= if @categoria_seleccionada && !@mostrar_formulario_producto do %>
-        <%= for {nombre_articulo, filas} <- filas_de_categoria(@productos_todos, @categoria_seleccionada.codigo) do %>
+        <%= for {nombre_articulo, filas} <- filas_de_categoria_filtradas(@productos_todos, @categoria_seleccionada.codigo, @termino_categoria, @sede_actual && @sede_actual.id, @sedes) do %>
           <div phx-click="editar_articulo" phx-value-nombre={nombre_articulo} style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; cursor: pointer;">
             <%= for fila <- filas do %>
-              <div style="display: flex; align-items: center; gap: 12px; padding: 10px; border: 1px solid #eee; border-radius: 14px; background: white;">
-                <div style="width: 52px; height: 52px; border-radius: 10px; overflow: hidden; background: #f5f5f5; flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative;">
-                  <%= if fila.producto.image do %>
-                    <img src={fila.producto.image} style="width: 100%; height: 100%; object-fit: cover;" />
-                  <% else %>
-                    <svg width="55%" height="55%" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;">
-                      {raw(icono_svg_por_codigo(@categoria_seleccionada.codigo, @categorias))}
-                    </svg>
-                  <% end %>
-                  <%= if fila.codigo_color do %>
-                    <span style={"position: absolute; bottom: 2px; right: 2px; width: 12px; height: 12px; border-radius: 50%; background: #{color_hex_por_codigo(fila.codigo_color)}; border: 1.5px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.25);"}></span>
-                  <% end %>
-                </div>
-                <div style="flex: 1; min-width: 0;">
-                  <p style="margin: 0 0 6px; font-size: 14px; font-weight: 700; color: #222; font-family: Poppins, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                    <%= nombre_articulo %>
-                  </p>
-                  <div style="display: flex; flex-wrap: wrap; gap: 5px;">
-                    <%= if fila.talles == [] do %>
-                      <span style="font-size: 11px; color: #bbb; font-family: Poppins, sans-serif;">Sin talles cargados</span>
+              <%= if Map.get(fila, :es_fila_individual, false) do %>
+                <div style="display: flex; align-items: center; gap: 12px; padding: 10px; border: 1px solid #eee; border-radius: 14px; background: white;">
+                  <div style="width: 52px; height: 52px; border-radius: 10px; overflow: hidden; background: #f5f5f5; flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative;">
+                    <%= if fila.producto.image do %>
+                      <img src={fila.producto.image} style="width: 100%; height: 100%; object-fit: cover;" />
+                    <% else %>
+                      <svg width="55%" height="55%" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;">
+                        {raw(icono_svg_por_codigo(@categoria_seleccionada.codigo, @categorias))}
+                      </svg>
                     <% end %>
-                    <%= for {codigo_talle, cantidad} <- fila.talles do %>
-                      <% {bg, texto} = estado_talle(cantidad, @brand.umbral_poco_stock) %>
-                      <span style={"font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 8px; background: #{bg}; color: #{texto}; font-family: Poppins, sans-serif;"}>
-                        <%= StockItem.nombre_talle(codigo_talle) %>
-                      </span>
+                    <%= if fila.codigo_color do %>
+                      <span style={"position: absolute; bottom: 2px; right: 2px; width: 12px; height: 12px; border-radius: 50%; background: #{color_hex_por_codigo(fila.codigo_color)}; border: 1.5px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.25);"}></span>
                     <% end %>
                   </div>
+                  <div style="flex: 1; min-width: 0;">
+                    <p style="margin: 0 0 4px; font-size: 14px; font-weight: 700; color: #222; font-family: Poppins, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                      <%= nombre_articulo %> · <%= StockItem.nombre_talle(fila.codigo_talle) %>
+                    </p>
+                    <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                      <%= for {sede, hay_stock} <- fila.disponibilidad do %>
+                        <span style={"font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 7px; font-family: Poppins, sans-serif; background: #{if hay_stock, do: "#eef9f0", else: "#fdecea"}; color: #{if hay_stock, do: "#186904", else: "#c0392b"};"}>
+                          <%= sede.nombre %>
+                        </span>
+                      <% end %>
+                    </div>
+                  </div>
+                  <button type="button" phx-click="pedir_borrar_producto_stock" phx-value-id={fila.producto.id} style="flex-shrink: 0; background: none; border: none; cursor: pointer; padding: 6px; display: flex; align-items: center; justify-content: center; outline: none; -webkit-appearance: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none;">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                      <line x1="10" y1="11" x2="10" y2="17"/>
+                      <line x1="14" y1="11" x2="14" y2="17"/>
+                    </svg>
+                  </button>
                 </div>
-              </div>
+              <% else %>
+                <div style="display: flex; align-items: center; gap: 12px; padding: 10px; border: 1px solid #eee; border-radius: 14px; background: white;">
+                  <div style="width: 52px; height: 52px; border-radius: 10px; overflow: hidden; background: #f5f5f5; flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative;">
+                    <%= if fila.producto.image do %>
+                      <img src={fila.producto.image} style="width: 100%; height: 100%; object-fit: cover;" />
+                    <% else %>
+                      <svg width="55%" height="55%" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;">
+                        {raw(icono_svg_por_codigo(@categoria_seleccionada.codigo, @categorias))}
+                      </svg>
+                    <% end %>
+                    <%= if fila.codigo_color do %>
+                      <span style={"position: absolute; bottom: 2px; right: 2px; width: 12px; height: 12px; border-radius: 50%; background: #{color_hex_por_codigo(fila.codigo_color)}; border: 1.5px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.25);"}></span>
+                    <% end %>
+                  </div>
+                  <div style="flex: 1; min-width: 0;">
+                    <p style="margin: 0 0 6px; font-size: 14px; font-weight: 700; color: #222; font-family: Poppins, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                      <%= nombre_articulo %>
+                    </p>
+                    <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                      <%= if fila.talles == [] do %>
+                        <span style="font-size: 11px; color: #bbb; font-family: Poppins, sans-serif;">Sin talles cargados</span>
+                      <% end %>
+                      <%= for {codigo_talle, cantidad} <- fila.talles do %>
+                        <% {bg, texto} = estado_talle(cantidad, @brand.umbral_poco_stock) %>
+                        <span style={"font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 8px; background: #{bg}; color: #{texto}; font-family: Poppins, sans-serif;"}>
+                          <%= StockItem.nombre_talle(codigo_talle) %>
+                        </span>
+                      <% end %>
+                    </div>
+                  </div>
+                  <button type="button" phx-click="pedir_borrar_producto_stock" phx-value-id={fila.producto.id} style="flex-shrink: 0; background: none; border: none; cursor: pointer; padding: 6px; display: flex; align-items: center; justify-content: center; outline: none; -webkit-appearance: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none;">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                      <line x1="10" y1="11" x2="10" y2="17"/>
+                      <line x1="14" y1="11" x2="14" y2="17"/>
+                    </svg>
+                  </button>
+                </div>
+              <% end %>
             <% end %>
           </div>
         <% end %>
       <% end %>
 
+      <%= if @mostrar_confirmar_borrar_articulo do %>
+        <div style="display:flex; position:fixed; inset:0; z-index:9998; background:rgba(0,0,0,0.4); align-items:center; justify-content:center;">
+          <div style="background:white; border-radius:12px; padding:24px; max-width:300px; width:90%; text-align:center;">
+            <p style="font-family:Poppins,sans-serif; font-size:13px; font-weight:700; color:#186904; margin:0 0 8px; text-transform:uppercase; letter-spacing:1px;">Aviso</p>
+            <p style="font-family:Poppins,sans-serif; font-size:14px; color:#111; margin:0 0 20px;">¿Borrar este producto?</p>
+            <div style="display:flex; gap:10px;">
+              <button type="button" phx-click="cancelar_borrar_articulo" style="flex:1; padding:10px; border:1.5px solid #ddd; border-radius:8px; background:white; cursor:pointer; font-size:14px;">Cancelar</button>
+              <button type="button" phx-click="confirmar_borrar_articulo" style="flex:1; padding:10px; border:none; border-radius:8px; background:#c0392b; color:white; cursor:pointer; font-size:14px; font-weight:600;">Borrar</button>
+            </div>
+          </div>
+        </div>
+      <% end %>
       <%= if @categoria_seleccionada && @mostrar_formulario_producto do %>
         <div id="form-producto-stock" phx-hook=".FormularioProductoStock" data-codigo-tipo={@categoria_seleccionada && @categoria_seleccionada.codigo} data-numero-preview={@categoria_seleccionada && @categoria_seleccionada.numero_preview} data-articulo={if @articulo_editando, do: Jason.encode!(@articulo_editando), else: ""} data-mostrar-imprimir={to_string(@mostrar_pantalla_imprimir)} data-combo-destacado={@combo_destacado_stock || ""} data-dalestand-fijo={to_string(@categoria_seleccionada && @categoria_seleccionada.codigo == "99")} style="margin-bottom: 24px;">
           <div id="contenido-formulario-producto-stock" style={"display: #{if @mostrar_pantalla_imprimir, do: "none", else: "block"};"}>
@@ -1603,6 +2084,45 @@ defmodule DaleAppWeb.StockPanoramicoLive do
             <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 16px 0 6px;">Descripción (opcional)</p>
             <textarea id="input-descripcion-stock" placeholder="Detalles del producto" oninput="limitarPalabrasStock(this); this.style.height='auto'; this.style.height=(this.scrollHeight)+'px';" style="width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; resize: none; height: 70px; min-height: 70px; outline: none; background: white; overflow: hidden;"><%= @articulo_editando && @articulo_editando.descripcion %></textarea>
             <p id="contador-palabras-stock" style="font-size: 11px; color: #aaa; margin: 4px 0 0; text-align: right; font-family: Poppins, sans-serif;">0/500 palabras</p>
+          </div>
+
+          <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+              <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0;">Producto en oferta</p>
+              <button type="button" id="switch-oferta-stock" onclick="toggleOfertaProducto()" style="width: 38px; height: 22px; border-radius: 20px; border: none; padding: 2px; display: flex; align-items: center; transition: background 0.2s; background: #ccc; justify-content: flex-start; cursor: pointer;">
+                <div style="width: 18px; height: 18px; border-radius: 50%; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.3); transition: transform 0.2s;"></div>
+              </button>
+            </div>
+            <p style="font-size: 12px; color: #666; margin: 0 0 12px; line-height: 1.4;">
+              ¿Este producto tiene una oferta?
+            </p>
+            <%= if @cupon_activo && @brand.tipo_marca == "aliada" do %>
+              <p style="font-size: 11.5px; color: #186904; background: #eef9f0; border-radius: 10px; padding: 6px 10px; margin: 0 0 12px; line-height: 1.4;">
+                Tiene que ser mayor al cupón general de tu marca (hoy: <%= @cupon_activo.discount %>%)
+              </p>
+            <% end %>
+            <div id="input-oferta-container-stock" style="display: none;">
+              <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 8px;">Tipo de oferta</p>
+              <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+                <%= for cantidad <- ["2x1", "3x2", "3x1", "4x3"] do %>
+                  <button type="button" class="chip-oferta-cantidad" data-valor={cantidad} onclick={"seleccionarOfertaCantidad('#{cantidad}')"} style="padding: 8px 14px; border-radius: 20px; border: 1.5px solid #cfe4cf; background: white; font-family: Poppins, sans-serif; font-size: 13px; font-weight: 600; color: #186904; cursor: pointer;">
+                    <%= cantidad %>
+                  </button>
+                <% end %>
+                <%= if @cupon_activo do %>
+                  <%= for pct <- sugerencias_porcentaje(@cupon_activo.discount) do %>
+                    <button type="button" class="chip-oferta-pct" data-valor={pct} onclick={"seleccionarOfertaPorcentaje(#{pct})"} style="padding: 8px 14px; border-radius: 20px; border: 1.5px solid #cfe4cf; background: white; font-family: Poppins, sans-serif; font-size: 13px; font-weight: 600; color: #186904; cursor: pointer;">
+                      <%= pct %>%
+                    </button>
+                  <% end %>
+                <% end %>
+                <button type="button" id="chip-oferta-otro" onclick="seleccionarOfertaOtro()" style="padding: 8px 14px; border-radius: 20px; border: 1.5px solid #cfe4cf; background: white; font-family: Poppins, sans-serif; font-size: 13px; font-weight: 600; color: #666; cursor: pointer;">
+                  Otro
+                </button>
+              </div>
+              <input id="input-oferta-descuento-stock" type="number" min="0" max="100" placeholder="Ej: 30" oninput="if (typeof actualizarOfertaOtroInputStock === 'function') actualizarOfertaOtroInputStock(this.value); if (typeof actualizarPrecioFinalStock === 'function') actualizarPrecioFinalStock();" style="display: none; width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; outline: none; background: white; margin-top: 4px;"/>
+              <p id="error-oferta-stock" style="display: none; font-size: 11.5px; color: #c0392b; margin: 6px 0 0;"></p>
+            </div>
           </div>
 
           <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px;">
@@ -1739,6 +2259,23 @@ defmodule DaleAppWeb.StockPanoramicoLive do
             </div>
           </div>
 
+          <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px;">
+            <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 4px;">Sedes</p>
+            <p style="font-size: 11px; color: #999; margin: 0 0 12px; line-height: 1.4;">Elegí en qué sedes va a estar disponible este producto. La cantidad cargada se carga igual en cada una.</p>
+            <%= if Enum.empty?(@sedes) do %>
+              <p style="font-size: 12px; color: #bbb; text-align: center; margin: 8px 0; font-family: Poppins, sans-serif;">Todavía no cargaste sedes.</p>
+            <% else %>
+              <div id="sedes-form-stock" style="display: flex; flex-direction: column; gap: 8px;">
+                <%= for sede <- @sedes do %>
+                  <label style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #f9f9f9; border-radius: 12px; cursor: pointer;">
+                    <input type="checkbox" class="checkbox-sede-stock" value={sede.id} checked style="width: 18px; height: 18px; accent-color: #186904; cursor: pointer;" />
+                    <span style="font-size: 13px; font-weight: 600; color: #333;"><%= sede.nombre %></span>
+                  </label>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+
           <%= if @categoria_seleccionada do %>
             <% es_dalestand_fijo = @categoria_seleccionada.codigo == "99" %>
             <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px;">
@@ -1762,6 +2299,21 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                 <p style="font-size: 11.5px; font-weight: 800; color: #186904; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 0.6px;">Imágenes del producto</p>
               </div>
               <div id="imagenes-por-color-stock" style="display: none; flex-direction: column; gap: 10px;"></div>
+              <%= if @brand.tipo_marca == "aliada" do %>
+                <div id="precio-final-dalestand-stock" data-cupon-descuento={(@cupon_activo && @cupon_activo.discount) || "0"} style="display: none; background: white; border: 1.5px solid #e0e0e0; border-radius: 14px; padding: 12px 14px; margin-top: 12px;">
+                  <p style="font-size: 11px; font-weight: 700; color: #186904; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.6px;">Precio final</p>
+                  <%= if @cupon_activo do %>
+                    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px;">
+                      <span style="font-size: 12px; color: #999; text-decoration: line-through;" id="precio-final-original-stock"></span>
+                      <span style="font-size: 10px; font-weight: 700; color: #186904; background: #eef9f0; padding: 2px 8px; border-radius: 10px;">-<%= @cupon_activo.discount %>%</span>
+                      <span style="font-size: 20px; font-weight: 800; color: #186904; margin-left: auto;" id="precio-final-resultado-stock"></span>
+                    </div>
+                    <p style="font-size: 10.5px; color: #999; margin: 6px 0 0;">Es lo que va a pagar el cliente en tu Stand, con el cupón activo aplicado.</p>
+                  <% else %>
+                    <p style="font-size: 12px; color: #999; margin: 0;">No tenés un cupón activo — el cliente va a pagar el precio que cargaste arriba.</p>
+                  <% end %>
+                </div>
+              <% end %>
             </div>
           <% end %>
 
@@ -1833,6 +2385,52 @@ defmodule DaleAppWeb.StockPanoramicoLive do
               end
           %>
 
+          <%= if @brand.ocultar_info_adicional_stock do %>
+            <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 12px 18px; margin-top: 16px; display: flex; align-items: center; justify-content: space-between;">
+              <div style="display: flex; align-items: center; gap: 8px; cursor: pointer;" phx-click="toggle_info_adicional_stock">
+                <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0;">Información adicional</p>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"/><path d="M9.4 5.4A9.6 9.6 0 0 1 12 5c5 0 9 4 10 7-.3 1-1 2.1-1.9 3.2M6.5 6.6C4.6 7.9 3.2 9.7 2 12c1 3 5 7 10 7 1.3 0 2.5-.3 3.6-.7"/></svg>
+              </div>
+              <button type="button" phx-click="toggle_ayuda_info_adicional_stock" style="width: 28px; height: 28px; border-radius: 50%; background: white; border: 1.5px solid #e0e0e0; cursor: pointer; color: #186904; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.06); flex-shrink: 0;">
+                <%= if @mostrar_ayuda_info_adicional_stock, do: "✕", else: "?" %>
+              </button>
+            </div>
+          <% else %>
+            <div style="position: relative; background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px;">
+              <button type="button" phx-click="toggle_info_adicional_stock" style="position: absolute; top: 14px; left: 14px; background: none; border: none; cursor: pointer; padding: 2px; display: flex;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+              <button type="button" phx-click="toggle_ayuda_info_adicional_stock" style="position: absolute; top: 14px; right: 14px; width: 28px; height: 28px; border-radius: 50%; background: white; border: 1.5px solid #e0e0e0; cursor: pointer; color: #186904; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.06);">
+                <%= if @mostrar_ayuda_info_adicional_stock, do: "✕", else: "?" %>
+              </button>
+              <%= if @mostrar_ayuda_info_adicional_stock do %>
+                <p style="font-size: 13px; font-weight: 700; color: #186904; margin: 38px 0 14px; text-transform: uppercase; letter-spacing: 1px;">¿Para qué sirve?</p>
+                <p style="font-size: 13.5px; color: #444; line-height: 1.7; margin: 0;">
+                  Estos datos son opcionales, pero lejos de ser inútiles: te dan información detallada de tus productos por temporada y por material, ayudándote a entender mejor tu catálogo.
+                  <br/><br/>
+                  Además, los productos con más detalle tienen mayor probabilidad de conversión y reciben un pequeño boost en el algoritmo de Dale.
+                </p>
+              <% else %>
+                <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 38px 0 10px;">Material (opcional)</p>
+                <div id="chips-material-stock" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;">
+                  <%= for mat <- ["Algodón", "Poliéster", "Lino", "Lana", "Cuero", "Cuerina", "Denim", "Seda", "Nylon", "Elastano/Lycra", "Viscosa", "Acrílico", "Gamuza"] do %>
+                    <button type="button" class="chip-material-stock" data-material={mat} onclick={"toggleMaterialStock('#{mat}')"} style="padding: 7px 13px; border-radius: 20px; border: 1.5px solid #cfe4cf; background: white; font-family: Poppins, sans-serif; font-size: 12.5px; font-weight: 600; color: #186904; cursor: pointer;">
+                      <%= mat %>
+                    </button>
+                  <% end %>
+                </div>
+                <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 10px;">Temporada (opcional)</p>
+                <div id="chips-temporada-stock" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                  <%= for {cod, emoji, etiqueta} <- [{"invernal", "❄️", "Invernal"}, {"verano", "☀️", "Verano"}, {"otono", "🍂", "Otoño"}, {"primavera", "🌸", "Primavera"}] do %>
+                    <button type="button" class="chip-temporada-stock" data-temporada={cod} onclick={"elegirTemporadaStock('#{cod}')"} style="padding: 7px 13px; border-radius: 20px; border: 1.5px solid #cfe4cf; background: white; font-family: Poppins, sans-serif; font-size: 12.5px; font-weight: 600; color: #186904; cursor: pointer;">
+                      <%= emoji %> <%= etiqueta %>
+                    </button>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+
           <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px; text-align: center;">
             <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 10px;">Código DALE9</p>
             <div id="selector-combos-codigo-stock-wrap" style={"display: #{if length(combos_editando) > 1, do: "block", else: "none"}; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px dashed #d9ead9;"}>
@@ -1881,6 +2479,28 @@ defmodule DaleAppWeb.StockPanoramicoLive do
             <button type="button" id="boton-imprimir-qr-stock" onclick="abrirImpresionQRStock()" style={"display: #{if @articulo_editando, do: "inline-block", else: "none"}; margin: 8px auto 0; background: #186904; color: white; border: none; border-radius: 12px; padding: 8px 20px; font-size: 12.5px; font-weight: 700; font-family: Poppins, sans-serif; cursor: pointer;"}>Imprimir</button>
           </div>
 
+          <div id="resumen-precio-stock" data-cupon-descuento={(@cupon_activo && @cupon_activo.discount) || "0"} data-tipo-marca={@brand.tipo_marca} style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 16px 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-top: 16px;">
+            <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 10px;">Resumen</p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-size: 12.5px; color: #666;">Precio original</span>
+              <span id="resumen-precio-original-stock" style="font-size: 13px; color: #333; font-weight: 600;">-</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span id="resumen-label-descuento-stock" style="font-size: 12.5px; color: #666;">Beneficio Dale</span>
+              <span id="resumen-valor-descuento-stock" style="font-size: 13px; color: #333; font-weight: 600;">-</span>
+            </div>
+            <div style="padding-top: 8px; margin-top: 4px; border-top: 1px dashed #d9ead9;">
+              <p style="font-size: 12.5px; color: #186904; font-weight: 700; margin: 0 0 6px;">Precio final por unidad</p>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <span style="font-size: 12.5px; color: #666;">Con Dale</span>
+                <span id="resumen-precio-final-stock" style="font-size: 16px; color: #186904; font-weight: 800;">-</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 12.5px; color: #666;">General</span>
+                <span id="resumen-precio-sindale-stock" style="font-size: 16px; color: #186904; font-weight: 800;">-</span>
+              </div>
+            </div>
+          </div>
           <button id="boton-guardar-stock" onclick="guardarProductoStock()" style="width: 100%; margin-top: 20px; background: #186904; color: white; border: none; border-radius: 16px; padding: 15px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Poppins, sans-serif; box-shadow: 0 3px 10px rgba(24,105,4,0.25);">
             Guardar producto
           </button>
@@ -2065,6 +2685,8 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   const precio = document.getElementById('input-precio-stock').value;
                   document.getElementById('prev-nombre-stock').textContent = nombre;
                   document.getElementById('prev-precio-stock').textContent = precio ? '$' + parseInt(precio).toLocaleString() : '';
+                  if (typeof actualizarPrecioFinalStock === 'function') actualizarPrecioFinalStock();
+                  if (typeof actualizarResumenOfertaStock === 'function') actualizarResumenOfertaStock();
                 };
 
                 let colorCodigoElegido = null;
@@ -2131,6 +2753,163 @@ defmodule DaleAppWeb.StockPanoramicoLive do
 
                 let imagenesPorColorStock = {};
 
+                let ofertaProductoActiva = false;
+
+                window.toggleOfertaProducto = () => {
+                  ofertaProductoActiva = !ofertaProductoActiva;
+                  const sw = document.getElementById('switch-oferta-stock');
+                  const cont = document.getElementById('input-oferta-container-stock');
+                  if (sw) {
+                    sw.style.background = ofertaProductoActiva ? '#186904' : '#ccc';
+                    sw.style.justifyContent = ofertaProductoActiva ? 'flex-end' : 'flex-start';
+                  }
+                  if (cont) cont.style.display = ofertaProductoActiva ? 'block' : 'none';
+                  if (!ofertaProductoActiva) {
+                    const input = document.getElementById('input-oferta-descuento-stock');
+                    if (input) input.value = '';
+                    const error = document.getElementById('error-oferta-stock');
+                    if (error) error.style.display = 'none';
+                  }
+                  if (typeof actualizarPrecioFinalStock === 'function') actualizarPrecioFinalStock();
+                  if (typeof actualizarResumenOfertaStock === 'function') actualizarResumenOfertaStock();
+                };
+
+                let ofertaSeleccionActual = null;
+
+                const resetChipsOferta = () => {
+                  document.querySelectorAll('.chip-oferta-cantidad, .chip-oferta-pct').forEach(chip => {
+                    chip.style.background = 'white';
+                    chip.style.color = '#186904';
+                  });
+                  const otro = document.getElementById('chip-oferta-otro');
+                  if (otro) {
+                    otro.style.background = 'white';
+                    otro.style.color = '#666';
+                  }
+                };
+
+                const CANTIDAD_A_FRACCION_PAGADA = {
+                  '2x1': 1 / 2,
+                  '3x2': 2 / 3,
+                  '3x1': 1 / 3,
+                  '4x3': 3 / 4,
+                };
+
+                const actualizarResumenOfertaStock = () => {
+                  const original = document.getElementById('resumen-precio-original-stock');
+                  const label = document.getElementById('resumen-label-descuento-stock');
+                  const valorDescuento = document.getElementById('resumen-valor-descuento-stock');
+                  const final = document.getElementById('resumen-precio-final-stock');
+                  const sinDale = document.getElementById('resumen-precio-sindale-stock');
+                  const cont = document.getElementById('resumen-precio-stock');
+                  if (!original || !label || !valorDescuento || !final || !sinDale || !cont) return;
+
+                  const precioInput = document.getElementById('input-precio-stock');
+                  const precio = parseFloat(precioInput ? precioInput.value : 0) || 0;
+
+                  let fraccionPagada = null;
+                  let esOferta = false;
+                  let textoDescuento = '';
+
+                  if (ofertaProductoActiva && ofertaSeleccionActual) {
+                    if (ofertaSeleccionActual.tipo === 'cantidad') {
+                      fraccionPagada = CANTIDAD_A_FRACCION_PAGADA[ofertaSeleccionActual.valor] ?? null;
+                      if (fraccionPagada !== null) {
+                        textoDescuento = ofertaSeleccionActual.valor;
+                        esOferta = true;
+                      }
+                    } else if (ofertaSeleccionActual.tipo === 'porcentaje' || ofertaSeleccionActual.tipo === 'otro') {
+                      const pct = parseFloat(ofertaSeleccionActual.valor);
+                      if (!isNaN(pct) && pct > 0) {
+                        fraccionPagada = 1 - pct / 100;
+                        textoDescuento = pct + '%';
+                        esOferta = true;
+                      }
+                    }
+                  }
+
+                  if (!esOferta) {
+                    const esMarcaAliada = cont.dataset.tipoMarca === 'aliada';
+                    const cuponDescuento = parseFloat(cont.dataset.cuponDescuento || '0') || 0;
+                    const porcentajeMostrado = esMarcaAliada ? Math.max(cuponDescuento, 10) : 0;
+                    fraccionPagada = 1 - porcentajeMostrado / 100;
+                    textoDescuento = porcentajeMostrado + '%';
+                  }
+
+                  label.textContent = esOferta ? 'Oferta' : 'Beneficio Dale';
+                  valorDescuento.textContent = textoDescuento;
+
+                  if (precio <= 0) {
+                    original.textContent = '-';
+                    final.textContent = '-';
+                    sinDale.textContent = '-';
+                    return;
+                  }
+
+                  const precioFinal = Math.round(precio * fraccionPagada);
+                  original.textContent = '$' + precio.toLocaleString();
+                  final.textContent = '$' + precioFinal.toLocaleString();
+                  sinDale.textContent = esOferta ? ('$' + precioFinal.toLocaleString()) : ('$' + precio.toLocaleString());
+                };
+
+                window.actualizarOfertaOtroInputStock = (valor) => {
+                  if (!ofertaSeleccionActual || ofertaSeleccionActual.tipo !== 'otro') return;
+                  ofertaSeleccionActual.valor = valor;
+                  actualizarResumenOfertaStock();
+                };
+
+                window.seleccionarOfertaCantidad = (valor) => {
+                  resetChipsOferta();
+                  const chip = document.querySelector('.chip-oferta-cantidad[data-valor="' + valor + '"]');
+                  if (chip) {
+                    chip.style.background = '#186904';
+                    chip.style.color = 'white';
+                  }
+                  const input = document.getElementById('input-oferta-descuento-stock');
+                  if (input) {
+                    input.style.display = 'none';
+                    input.value = '';
+                  }
+                  ofertaSeleccionActual = { tipo: 'cantidad', valor: valor };
+                  actualizarResumenOfertaStock();
+                  if (typeof actualizarPrecioFinalStock === 'function') actualizarPrecioFinalStock();
+                };
+
+                window.seleccionarOfertaPorcentaje = (pct) => {
+                  resetChipsOferta();
+                  const chip = document.querySelector('.chip-oferta-pct[data-valor="' + pct + '"]');
+                  if (chip) {
+                    chip.style.background = '#186904';
+                    chip.style.color = 'white';
+                  }
+                  const input = document.getElementById('input-oferta-descuento-stock');
+                  if (input) {
+                    input.style.display = 'none';
+                    input.value = pct;
+                  }
+                  ofertaSeleccionActual = { tipo: 'porcentaje', valor: pct };
+                  actualizarResumenOfertaStock();
+                  if (typeof actualizarPrecioFinalStock === 'function') actualizarPrecioFinalStock();
+                };
+
+                window.seleccionarOfertaOtro = () => {
+                  resetChipsOferta();
+                  const otro = document.getElementById('chip-oferta-otro');
+                  if (otro) {
+                    otro.style.background = '#186904';
+                    otro.style.color = 'white';
+                  }
+                  const input = document.getElementById('input-oferta-descuento-stock');
+                  if (input) {
+                    input.style.display = 'block';
+                    input.value = '';
+                    input.focus();
+                  }
+                  ofertaSeleccionActual = { tipo: 'otro', valor: null };
+                  actualizarResumenOfertaStock();
+                  if (typeof actualizarPrecioFinalStock === 'function') actualizarPrecioFinalStock();
+                };
+
                 window.toggleAgregarDaleStand = () => {
                   agregarADaleStandActivo = !agregarADaleStandActivo;
                   codigoTipo = agregarADaleStandActivo ? '99' : codigoTipoOriginal;
@@ -2145,10 +2924,46 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   actualizarImagenesPorColorStock();
                 };
 
+                window.actualizarPrecioFinalStock = () => {
+                  const cont = document.getElementById('precio-final-dalestand-stock');
+                  if (!cont) return;
+
+                  if (!agregarADaleStandActivo) {
+                    cont.style.display = 'none';
+                    return;
+                  }
+                  cont.style.display = 'block';
+
+                  const descuento = parseFloat(cont.dataset.cuponDescuento || '0');
+                  if (descuento <= 0) return;
+
+                  const precioInput = document.getElementById('input-precio-stock');
+                  const precio = parseFloat(precioInput ? precioInput.value : 0) || 0;
+                  const original = document.getElementById('precio-final-original-stock');
+                  const resultado = document.getElementById('precio-final-resultado-stock');
+                  if (!original || !resultado) return;
+
+                  if (precio <= 0) {
+                    original.textContent = '';
+                    resultado.textContent = 'Cargá un precio arriba';
+                    resultado.style.color = '#999';
+                    resultado.style.fontSize = '13px';
+                    return;
+                  }
+
+                  const final = Math.round(precio * (1 - descuento / 100));
+                  original.textContent = '$' + precio.toLocaleString();
+                  resultado.textContent = '$' + final.toLocaleString();
+                  resultado.style.color = '#186904';
+                  resultado.style.fontSize = '20px';
+                };
+
                 window.actualizarImagenesPorColorStock = () => {
                   const cont = document.getElementById('imagenes-por-color-stock');
                   const titulo = document.getElementById('titulo-imagenes-por-color-stock');
                   if (!cont) return;
+
+                  actualizarPrecioFinalStock();
 
                   if (!agregarADaleStandActivo) {
                     cont.style.display = 'none';
@@ -2215,6 +3030,28 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                 let tallesElegidos = [];
                 let coloresElegidos = [];
                 let cantidadesStock = {};
+                let materialesElegidos = [];
+                let temporadaElegida = null;
+
+                window.toggleMaterialStock = (mat) => {
+                  const chip = document.querySelector('.chip-material-stock[data-material="' + mat + '"]');
+                  if (materialesElegidos.includes(mat)) {
+                    materialesElegidos = materialesElegidos.filter(m => m !== mat);
+                    if (chip) { chip.style.background = 'white'; chip.style.color = '#186904'; }
+                  } else {
+                    materialesElegidos.push(mat);
+                    if (chip) { chip.style.background = '#186904'; chip.style.color = 'white'; }
+                  }
+                };
+
+                window.elegirTemporadaStock = (cod) => {
+                  temporadaElegida = temporadaElegida === cod ? null : cod;
+                  document.querySelectorAll('.chip-temporada-stock').forEach(chip => {
+                    const activo = chip.dataset.temporada === temporadaElegida;
+                    chip.style.background = activo ? '#186904' : 'white';
+                    chip.style.color = activo ? 'white' : '#186904';
+                  });
+                };
                 let clavesExcluidasStock = new Set();
 
                 const mapaHexColores = {
@@ -3014,8 +3851,15 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   if (!precioRaw || precio <= 0) faltantes.push('El precio (no puede ser $0)');
                   const claves = Object.keys(cantidadesStock);
                   if (claves.length === 0) faltantes.push('Al menos un color y talle con cantidad cargada');
-                  if (agregarADaleStandActivo && !imagenBlobStock) {
-                    faltantes.push('Al menos una foto (obligatoria para productos en tu Stand Dale)');
+                  if (agregarADaleStandActivo) {
+                    const coloresParaValidar = multiColorActivo ? coloresElegidos : (colorCodigoElegido ? [colorCodigoElegido] : []);
+                    const faltaFotoPorColor = coloresParaValidar.length === 0 || coloresParaValidar.some(cod => {
+                      const fotos = imagenesPorColorStock[cod] || [];
+                      return !fotos.some(f => f);
+                    });
+                    if (faltaFotoPorColor) {
+                      faltantes.push('Al menos una foto por color (obligatoria para productos en tu Stand Dale)');
+                    }
                   }
 
                   if (faltantes.length > 0) {
@@ -3049,6 +3893,17 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   formData.append('descripcion', descripcion);
                   formData.append('codigo_tipo', codigoTipo);
                   formData.append('variantes', JSON.stringify(cantidadesStock));
+                  formData.append('material', JSON.stringify(materialesElegidos));
+                  formData.append('temporada', temporadaElegida || '');
+                  const sedesElegidas = Array.from(document.querySelectorAll('.checkbox-sede-stock:checked')).map(el => el.value);
+                  formData.append('sedes_ids', JSON.stringify(sedesElegidas));
+
+                  formData.append('oferta_activa', ofertaProductoActiva ? 'true' : 'false');
+                  if (ofertaProductoActiva && ofertaSeleccionActual) {
+                    const tipoOferta = ofertaSeleccionActual.tipo === 'cantidad' ? 'cantidad' : 'porcentaje';
+                    formData.append('oferta_tipo', tipoOferta);
+                    formData.append('oferta_valor', String(ofertaSeleccionActual.valor || ''));
+                  }
 
                   const btn = document.getElementById('boton-guardar-stock');
                   btn.textContent = "Guardando..."; btn.disabled = true;
@@ -3072,6 +3927,35 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                         await fetch('/mi-tienda/stock/productos/' + id + '/imagen', { method: 'POST', body: imgForm });
                       }
                     }
+
+                    const erroresSubidaFotos = [];
+                    if (data.colores_ids) {
+                      for (const [cod, fotos] of Object.entries(imagenesPorColorStock)) {
+                        const productId = data.colores_ids[cod];
+                        if (!productId || !fotos) continue;
+                        for (const foto of fotos) {
+                          if (!foto || !foto.file) continue;
+                          const ext = foto.file.type && foto.file.type.includes('png') ? 'png'
+                            : (foto.file.type && foto.file.type.includes('webp') ? 'webp' : 'jpg');
+                          const imgForm = new FormData();
+                          imgForm.append('_csrf_token', csrfTokenStock);
+                          imgForm.append('imagen', foto.file, 'producto.' + ext);
+                          try {
+                            const resImg = await fetch('/mi-tienda/stock/productos/' + productId + '/imagen', { method: 'POST', body: imgForm });
+                            const dataImg = await resImg.json();
+                            if (!dataImg.ok) {
+                              erroresSubidaFotos.push('Color ' + cod + ': ' + (dataImg.error || 'error desconocido'));
+                            }
+                          } catch (e) {
+                            erroresSubidaFotos.push('Color ' + cod + ': ' + e.message);
+                          }
+                        }
+                      }
+                    }
+                    if (erroresSubidaFotos.length > 0) {
+                      alert('El producto se guardó, pero algunas fotos no se pudieron subir:\n\n' + erroresSubidaFotos.join('\n') + '\n\nVolvé a editar el producto para reintentar.');
+                    }
+
                     window.location.href = '/mi-tienda/stock?categoria=' + codigoTipo;
                   } else {
                     btn.textContent = editandoArticuloActivo ? "Guardar cambios" : "Guardar producto"; btn.disabled = false;
@@ -3134,6 +4018,22 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                       const botonImprimir = document.getElementById('boton-imprimir-qr-stock');
                       if (textoVistaPrevia) textoVistaPrevia.style.display = 'none';
                       if (botonImprimir) botonImprimir.style.display = 'inline-block';
+
+                      if (datos.oferta_tipo && datos.oferta_valor) {
+                        window.toggleOfertaProducto();
+                        if (datos.oferta_tipo === 'cantidad') {
+                          window.seleccionarOfertaCantidad(datos.oferta_valor);
+                        } else {
+                          window.seleccionarOfertaPorcentaje(parseFloat(datos.oferta_valor));
+                        }
+                      }
+
+                      if (datos.material && datos.material.length > 0) {
+                        datos.material.forEach(mat => window.toggleMaterialStock(mat));
+                      }
+                      if (datos.temporada) {
+                        window.elegirTemporadaStock(datos.temporada);
+                      }
                     }
                   } catch (e) { /* noop */ }
                 }

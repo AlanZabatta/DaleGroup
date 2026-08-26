@@ -73,4 +73,7 @@ config :ueberauth, Ueberauth,
   config :ueberauth, Ueberauth.Strategy.Discord.OAuth,
   client_id: System.get_env("DISCORD_CLIENT_ID"),
   client_secret: System.get_env("DISCORD_CLIENT_SECRET")
+
+config :ex_aws, http_client: DaleApp.ExAwsReqHttpClient
+
 import_config "#{config_env()}.exs"

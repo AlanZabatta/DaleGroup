@@ -15,13 +15,48 @@ defmodule DaleAppWeb.CajerosLive do
     user_id = session["user_id"]
     brand = if user_id, do: Repo.get_by(Brand, user_id: user_id), else: nil
     cajeros = if brand, do: Accounts.list_cajeros(brand.id), else: []
-    ranking_puntualidad = calcular_ranking(brand)
-    ranking_ventas = calcular_ranking_ventas(brand)
-    ranking_gestores = calcular_ranking_gestores(brand)
+    sedes = if brand, do: listar_sedes(brand.id), else: []
+    sede_actual = nil
+    ranking_puntualidad = calcular_ranking(brand, sede_actual)
+    ranking_ventas = calcular_ranking_ventas(brand, sede_actual)
+    ranking_gestores = calcular_ranking_gestores(brand, sede_actual)
     sedes_por_empleado = if brand, do: calcular_sedes_por_empleado(brand.id), else: %{}
 
-    {:ok, assign(socket, brand: brand, cajeros: cajeros, ranking_puntualidad: ranking_puntualidad, ranking_ventas: ranking_ventas, ranking_gestores: ranking_gestores, sedes_por_empleado: sedes_por_empleado)}
+    {:ok,
+     assign(socket,
+       brand: brand,
+       cajeros: cajeros,
+       sedes: sedes,
+       sede_actual: sede_actual,
+       selector_sede_abierto: false,
+       ranking_puntualidad: ranking_puntualidad,
+       ranking_ventas: ranking_ventas,
+       ranking_gestores: ranking_gestores,
+       sedes_por_empleado: sedes_por_empleado
+     )}
   end
+
+  defp listar_sedes(brand_id) do
+    from(l in BrandLocation, where: l.brand_id == ^brand_id, order_by: [asc: l.id])
+    |> Repo.all()
+  end
+
+  defp usuarios_en_sede(sede_id) do
+    from(es in EmpleadoSede, where: es.brand_location_id == ^sede_id, select: es.user_id)
+    |> Repo.all()
+  end
+
+  defp nombre_sede_actual(nil, _sedes), do: "Todas"
+
+  defp nombre_sede_actual(sede_id, sedes) do
+    case Enum.find(sedes, &(&1.id == sede_id)) do
+      nil -> "Todas"
+      sede -> truncar_nombre_sede(if sede.nombre && sede.nombre != "", do: sede.nombre, else: "Sede ##{sede.id}")
+    end
+  end
+
+  defp truncar_nombre_sede(nombre) when byte_size(nombre) > 12, do: String.slice(nombre, 0, 12) <> "..."
+  defp truncar_nombre_sede(nombre), do: nombre
 
   defp calcular_sedes_por_empleado(brand_id) do
     from(es in EmpleadoSede,
@@ -33,6 +68,41 @@ defmodule DaleAppWeb.CajerosLive do
     |> Enum.group_by(fn {user_id, _lid, _nombre} -> user_id end, fn {_uid, lid, nombre} ->
       if nombre && nombre != "", do: nombre, else: "Sede ##{lid}"
     end)
+  end
+
+  def handle_event("toggle_selector_sede", _params, socket) do
+    {:noreply, assign(socket, selector_sede_abierto: !socket.assigns.selector_sede_abierto)}
+  end
+
+  def handle_event("elegir_sede", %{"id" => id_str}, socket) do
+    id = String.to_integer(id_str)
+    brand = socket.assigns.brand
+
+    socket =
+      assign(socket,
+        sede_actual: id,
+        selector_sede_abierto: false,
+        ranking_puntualidad: calcular_ranking(brand, id),
+        ranking_ventas: calcular_ranking_ventas(brand, id),
+        ranking_gestores: calcular_ranking_gestores(brand, id)
+      )
+
+    {:noreply, socket}
+  end
+
+  def handle_event("elegir_todas_sedes", _params, socket) do
+    brand = socket.assigns.brand
+
+    socket =
+      assign(socket,
+        sede_actual: nil,
+        selector_sede_abierto: false,
+        ranking_puntualidad: calcular_ranking(brand, nil),
+        ranking_ventas: calcular_ranking_ventas(brand, nil),
+        ranking_gestores: calcular_ranking_gestores(brand, nil)
+      )
+
+    {:noreply, socket}
   end
 
   def handle_event("toggle_asistencia", _params, socket) do
@@ -51,8 +121,7 @@ defmodule DaleAppWeb.CajerosLive do
       |> Brand.changeset(atributos)
       |> Repo.update()
 
-    ranking_puntualidad = calcular_ranking(brand_actualizada)
-
+    ranking_puntualidad = calcular_ranking(brand_actualizada, socket.assigns.sede_actual)
     {:noreply, assign(socket, brand: brand_actualizada, ranking_puntualidad: ranking_puntualidad)}
   end
 
@@ -72,8 +141,7 @@ defmodule DaleAppWeb.CajerosLive do
       |> Brand.changeset(atributos)
       |> Repo.update()
 
-    ranking_ventas = calcular_ranking_ventas(brand_actualizada)
-
+    ranking_ventas = calcular_ranking_ventas(brand_actualizada, socket.assigns.sede_actual)
     {:noreply, assign(socket, brand: brand_actualizada, ranking_ventas: ranking_ventas)}
   end
 
@@ -93,8 +161,7 @@ defmodule DaleAppWeb.CajerosLive do
       |> Brand.changeset(atributos)
       |> Repo.update()
 
-    ranking_gestores = calcular_ranking_gestores(brand_actualizada)
-
+    ranking_gestores = calcular_ranking_gestores(brand_actualizada, socket.assigns.sede_actual)
     {:noreply, assign(socket, brand: brand_actualizada, ranking_gestores: ranking_gestores)}
   end
 
@@ -117,9 +184,10 @@ defmodule DaleAppWeb.CajerosLive do
       |> Brand.changeset(atributos)
       |> Repo.update()
 
-    ranking_puntualidad = calcular_ranking(brand_actualizada)
-    ranking_ventas = calcular_ranking_ventas(brand_actualizada)
-    ranking_gestores = calcular_ranking_gestores(brand_actualizada)
+    sede_actual = socket.assigns.sede_actual
+    ranking_puntualidad = calcular_ranking(brand_actualizada, sede_actual)
+    ranking_ventas = calcular_ranking_ventas(brand_actualizada, sede_actual)
+    ranking_gestores = calcular_ranking_gestores(brand_actualizada, sede_actual)
 
     {:noreply,
      assign(socket,
@@ -149,10 +217,10 @@ defmodule DaleAppWeb.CajerosLive do
     {:noreply, assign(socket, brand: brand_actualizada)}
   end
 
-  defp calcular_ranking(nil), do: []
-  defp calcular_ranking(%{asistencia_activada_en: nil}), do: []
+  defp calcular_ranking(nil, _sede_id), do: []
+  defp calcular_ranking(%{asistencia_activada_en: nil}, _sede_id), do: []
 
-  defp calcular_ranking(brand) do
+  defp calcular_ranking(brand, sede_id) do
     dias_desde_activacion = DateTime.diff(DateTime.utc_now(), brand.asistencia_activada_en, :day)
     ciclo_actual = div(dias_desde_activacion, 30)
 
@@ -163,8 +231,23 @@ defmodule DaleAppWeb.CajerosLive do
 
     fin_ciclo = Date.add(inicio_ciclo, 30)
 
-    from(a in Asistencia,
-      where: a.brand_id == ^brand.id and a.fecha >= ^inicio_ciclo and a.fecha < ^fin_ciclo,
+    base =
+      from(a in Asistencia,
+        where: a.brand_id == ^brand.id and a.fecha >= ^inicio_ciclo and a.fecha < ^fin_ciclo
+      )
+
+    query =
+      if sede_id do
+        ids_empleados = usuarios_en_sede(sede_id)
+
+        from(a in base,
+          where: a.user_id in ^ids_empleados and (is_nil(a.brand_location_id) or a.brand_location_id == ^sede_id)
+        )
+      else
+        base
+      end
+
+    from(a in query,
       group_by: a.user_id,
       select: {a.user_id, sum(a.puntos)},
       order_by: [desc: sum(a.puntos)],
@@ -175,10 +258,10 @@ defmodule DaleAppWeb.CajerosLive do
     |> Enum.reject(fn {cajero, _puntos} -> is_nil(cajero) end)
   end
 
-  defp calcular_ranking_ventas(nil), do: []
-  defp calcular_ranking_ventas(%{ventas_activada_en: nil}), do: []
+  defp calcular_ranking_ventas(nil, _sede_id), do: []
+  defp calcular_ranking_ventas(%{ventas_activada_en: nil}, _sede_id), do: []
 
-  defp calcular_ranking_ventas(brand) do
+  defp calcular_ranking_ventas(brand, sede_id) do
     dias_desde_activacion = DateTime.diff(DateTime.utc_now(), brand.ventas_activada_en, :day)
     ciclo_actual = div(dias_desde_activacion, 30)
 
@@ -189,11 +272,25 @@ defmodule DaleAppWeb.CajerosLive do
 
     fin_ciclo_dt = NaiveDateTime.add(inicio_ciclo_dt, 30 * 86400, :second)
 
-    from(v in Venta,
-      where: v.brand_id == ^brand.id and not is_nil(v.user_id) and v.inserted_at >= ^inicio_ciclo_dt and v.inserted_at < ^fin_ciclo_dt,
-      group_by: [v.user_id, v.grupo_venta],
-      select: {v.user_id, count(v.id)}
-    )
+    base =
+      from(v in Venta,
+        where:
+          v.brand_id == ^brand.id and not is_nil(v.user_id) and v.inserted_at >= ^inicio_ciclo_dt and
+            v.inserted_at < ^fin_ciclo_dt
+      )
+
+    query =
+      if sede_id do
+        ids_empleados = usuarios_en_sede(sede_id)
+
+        from(v in base,
+          where: v.user_id in ^ids_empleados and (is_nil(v.brand_location_id) or v.brand_location_id == ^sede_id)
+        )
+      else
+        base
+      end
+
+    from(v in query, group_by: [v.user_id, v.grupo_venta], select: {v.user_id, count(v.id)})
     |> Repo.all()
     |> Enum.group_by(fn {user_id, _cantidad} -> user_id end, fn {_user_id, cantidad} -> cantidad end)
     |> Enum.map(fn {user_id, cantidades_por_grupo} ->
@@ -218,10 +315,10 @@ defmodule DaleAppWeb.CajerosLive do
     round(10 * cantidad_items * multiplicador)
   end
 
-  defp calcular_ranking_gestores(nil), do: []
-  defp calcular_ranking_gestores(%{gestiones_activada_en: nil}), do: []
+  defp calcular_ranking_gestores(nil, _sede_id), do: []
+  defp calcular_ranking_gestores(%{gestiones_activada_en: nil}, _sede_id), do: []
 
-  defp calcular_ranking_gestores(brand) do
+  defp calcular_ranking_gestores(brand, sede_id) do
     dias_desde_activacion = DateTime.diff(DateTime.utc_now(), brand.gestiones_activada_en, :day)
     ciclo_actual = div(dias_desde_activacion, 30)
 
@@ -232,25 +329,51 @@ defmodule DaleAppWeb.CajerosLive do
 
     fin_ciclo_dt = NaiveDateTime.add(inicio_ciclo_dt, 30 * 86400, :second)
 
-    puntos_creaciones =
+    base_movs =
       from(m in MovimientoStock,
         where:
           m.brand_id == ^brand.id and m.tipo_accion == "creado" and not is_nil(m.user_id) and
-            m.inserted_at >= ^inicio_ciclo_dt and m.inserted_at < ^fin_ciclo_dt,
-        group_by: m.user_id,
-        select: {m.user_id, count(m.id) * 10}
+            m.inserted_at >= ^inicio_ciclo_dt and m.inserted_at < ^fin_ciclo_dt
       )
+
+    query_movs =
+      if sede_id do
+        ids_empleados = usuarios_en_sede(sede_id)
+
+        from(m in base_movs,
+          where: m.user_id in ^ids_empleados and (is_nil(m.brand_location_id) or m.brand_location_id == ^sede_id)
+        )
+      else
+        base_movs
+      end
+
+    puntos_creaciones =
+      from(m in query_movs, group_by: m.user_id, select: {m.user_id, count(m.id) * 10})
       |> Repo.all()
       |> Map.new()
 
-    puntos_incidencias =
+    base_inc =
       from(i in IncidenciaStock,
         where:
           i.brand_id == ^brand.id and i.resuelta == true and not is_nil(i.resuelto_por_user_id) and
-            i.fecha_resolucion >= ^inicio_ciclo_dt and i.fecha_resolucion < ^fin_ciclo_dt,
-        group_by: i.resuelto_por_user_id,
-        select: {i.resuelto_por_user_id, sum(i.puntos_otorgados)}
+            i.fecha_resolucion >= ^inicio_ciclo_dt and i.fecha_resolucion < ^fin_ciclo_dt
       )
+
+    query_inc =
+      if sede_id do
+        ids_empleados = usuarios_en_sede(sede_id)
+
+        from(i in base_inc,
+          where:
+            i.resuelto_por_user_id in ^ids_empleados and
+              (is_nil(i.brand_location_id) or i.brand_location_id == ^sede_id)
+        )
+      else
+        base_inc
+      end
+
+    puntos_incidencias =
+      from(i in query_inc, group_by: i.resuelto_por_user_id, select: {i.resuelto_por_user_id, sum(i.puntos_otorgados)})
       |> Repo.all()
       |> Map.new()
 
@@ -260,7 +383,6 @@ defmodule DaleAppWeb.CajerosLive do
     |> Enum.map(fn {user_id, puntos} -> {Accounts.get_user(user_id), puntos} end)
     |> Enum.reject(fn {cajero, _puntos} -> is_nil(cajero) end)
   end
-
 
   defp nombre_corto(cajero) do
     cond do
@@ -280,6 +402,17 @@ defmodule DaleAppWeb.CajerosLive do
 
   def render(assigns) do
     ~H"""
+    <style>
+      html, body {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      html::-webkit-scrollbar, body::-webkit-scrollbar {
+        display: none;
+        width: 0;
+        height: 0;
+      }
+    </style>
     <div style="padding: 24px 18px 40px; font-family: Poppins, sans-serif; max-width: 600px; margin: 0 auto; background-color: white; min-height: 100vh;">
       <.link navigate="/mi-tienda" style="display: inline-flex; background: none; border: none; color: #186904; font-size: 22px; font-weight: 700; cursor: pointer; line-height: 1; text-decoration: none; margin-bottom: 16px;">&#x2715;</.link>
       <p style="font-size: 26px; font-weight: 800; color: #186904; margin: 0 0 20px;">Mis Empleados</p>
@@ -363,6 +496,38 @@ defmodule DaleAppWeb.CajerosLive do
         </button>
       </div>
 
+      <%= if @brand.asistencia_activa do %>
+        <div style="position: relative; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 14px; padding: 10px 14px; margin-bottom: 16px; box-shadow: 0 3px 10px rgba(24,105,4,0.08);">
+          <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0; font-family: Poppins, sans-serif;">
+            Sede visualizando: <span style="font-weight: 800;"><%= nombre_sede_actual(@sede_actual, @sedes) %></span>
+          </p>
+          <button type="button" phx-click="toggle_selector_sede" style="display: flex; align-items: center; gap: 6px; background: white; border: 1.5px solid #186904; border-radius: 20px; padding: 6px 12px; cursor: pointer; font-family: Poppins, sans-serif; font-size: 12px; font-weight: 700; color: #186904;">
+            <%= nombre_sede_actual(@sede_actual, @sedes) %>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style={"transition: transform 0.15s; transform: rotate(#{if @selector_sede_abierto, do: "180deg", else: "0deg"});"}>
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <%= if @selector_sede_abierto do %>
+            <div style="position: absolute; top: calc(100% + 6px); right: 0; z-index: 20; background: white; border: 1.5px solid #eee; border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); min-width: 180px; overflow: hidden;">
+              <%= if Enum.empty?(@sedes) do %>
+                <p style="font-size: 12.5px; color: #999; margin: 0; padding: 14px; font-family: Poppins, sans-serif; text-align: center;">Todavía no cargaste sedes.</p>
+              <% else %>
+                <%= if length(@sedes) > 1 do %>
+                  <button type="button" phx-click="elegir_todas_sedes" style={"display: block; width: 100%; text-align: left; padding: 12px 16px; border: none; border-bottom: 1px solid #f2f2f2; cursor: pointer; font-family: Poppins, sans-serif; font-size: 13px; font-weight: 700; background: #{if is_nil(@sede_actual), do: "#eef4ec", else: "white"}; color: #{if is_nil(@sede_actual), do: "#186904", else: "#333"};"}>
+                    Todas las sedes
+                  </button>
+                <% end %>
+                <%= for sede <- @sedes do %>
+                  <button type="button" phx-click="elegir_sede" phx-value-id={sede.id} style={"display: block; width: 100%; text-align: left; padding: 12px 16px; border: none; cursor: pointer; font-family: Poppins, sans-serif; font-size: 13px; font-weight: 600; background: #{if @sede_actual == sede.id, do: "#eef4ec", else: "white"}; color: #{if @sede_actual == sede.id, do: "#186904", else: "#333"};"}>
+                    <%= if sede.nombre && sede.nombre != "", do: sede.nombre, else: "Sede ##{sede.id}" %>
+                  </button>
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+
       <div style="background: #fafaf7; border: 1.5px solid #e6e0d2; border-radius: 22px; padding: 18px 14px;">
 
       <p style="font-size: 12px; font-weight: 700; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 1px; color: #999;">Asistencia</p>
@@ -407,7 +572,7 @@ defmodule DaleAppWeb.CajerosLive do
                   </div>
                 <% end %>
               </div>
-              <div style="flex: 1; min-width: 0; position: relative; display: flex; align-items: flex-end; justify-content: flex-start; gap: 10px; height: 180px; padding: 0 8px; border-radius: 12px; background-color: #f7f5ef; background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 29px, #e6e0d2 29px, #e6e0d2 30px); background-position: bottom; overflow-x: auto; overflow-y: hidden;">
+              <div style="flex: 1; min-width: 0; position: relative; display: flex; align-items: flex-end; justify-content: flex-start; gap: 10px; height: 180px; padding: 0 8px; border-radius: 12px; background-color: #f7f5ef; background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 29px, #e6e0d2 29px, #e6e0d2 30px); background-position: bottom; overflow-x: hidden; overflow-y: hidden;">
                 <%= for {cajero, puntos} <- @ranking_puntualidad do %>
                   <%
                     altura = max(10, round(puntos / max_puntos * 148))
@@ -422,7 +587,7 @@ defmodule DaleAppWeb.CajerosLive do
               </div>
             </div>
           <% end %>
-          <a href="/mi-tienda/cajeros/asistencia" style="display: block; text-align: center; background-color: white; color: #186904; padding: 11px; border-radius: 14px; margin-top: 16px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 13px; border: 1.5px solid #186904; text-decoration: none;">
+          <a href={"/mi-tienda/cajeros/asistencia?sede=#{@sede_actual}"} style="display: block; text-align: center; background-color: white; color: #186904; padding: 11px; border-radius: 14px; margin-top: 16px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 13px; border: 1.5px solid #186904; text-decoration: none;">
             Ver detalle
           </a>
         </div>
@@ -507,7 +672,7 @@ defmodule DaleAppWeb.CajerosLive do
               </div>
             </div>
           <% end %>
-          <.link navigate="/mi-tienda/cajeros/ventas" style="display: block; text-align: center; background-color: white; color: #186904; padding: 11px; border-radius: 14px; margin-top: 16px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 13px; border: 1.5px solid #186904; text-decoration: none;">
+          <.link navigate={"/mi-tienda/cajeros/ventas?sede=#{@sede_actual}"} style="display: block; text-align: center; background-color: white; color: #186904; padding: 11px; border-radius: 14px; margin-top: 16px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 13px; border: 1.5px solid #186904; text-decoration: none;">
             Ver detalle
           </.link>
         </div>
@@ -592,7 +757,7 @@ defmodule DaleAppWeb.CajerosLive do
               </div>
             </div>
           <% end %>
-          <.link navigate="/mi-tienda/cajeros/gestores" style="display: block; text-align: center; background-color: white; color: #186904; padding: 11px; border-radius: 14px; margin-top: 16px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 13px; border: 1.5px solid #186904; text-decoration: none;">
+          <.link navigate={"/mi-tienda/cajeros/gestores?sede=#{@sede_actual}"} style="display: block; text-align: center; background-color: white; color: #186904; padding: 11px; border-radius: 14px; margin-top: 16px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 13px; border: 1.5px solid #186904; text-decoration: none;">
             Ver detalle
           </.link>
         </div>
@@ -602,6 +767,19 @@ defmodule DaleAppWeb.CajerosLive do
         </div>
       <% end %>
 
+      <%= if @brand.asistencia_activa do %>
+        <div style="height: 1px; background: #eee; margin: 24px 0 20px;"></div>
+        <p style="font-size: 12px; font-weight: 700; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 1px; color: #999;">Empleado del mes</p>
+        <div style="background: white; border: 1.5px solid #186904; border-radius: 18px; padding: 24px 16px; box-shadow: 0 3px 12px rgba(24,105,4,0.08); display: flex; flex-direction: column; align-items: center;">
+          <div style="position: relative; margin-bottom: 4px;">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="#f5b301" stroke="#f5b301" style="position: absolute; top: -20px; left: 50%; transform: translateX(-50%); filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));"><path d="M2 18h20l-2-9-5 4-3-7-3 7-5-4-2 9z"/></svg>
+            <div style="width: 72px; height: 72px; border-radius: 50%; background: white; border: 2px solid #f0f0f0; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0,0,0,0.08);">
+              <span style="font-size: 32px; color: #111; font-weight: 800;">?</span>
+            </div>
+          </div>
+          <p style="font-size: 12.5px; color: #999; margin: 8px 0 0; font-family: Poppins, sans-serif; text-align: center;">Todavía no hay empleado del mes</p>
+        </div>
+      <% end %>
       </div>
 
       <div style="height: 1px; background: #eee; margin: 24px 0 20px;"></div>

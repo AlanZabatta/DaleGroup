@@ -151,12 +151,7 @@ defmodule DaleAppWeb.ProductoController do
 
       imagenes_a_borrar
       |> Enum.uniq()
-      |> Enum.each(fn url ->
-        case extraer_public_id(url) do
-          nil -> :ok
-          public_id -> DaleApp.Storage.delete_image(public_id)
-        end
-      end)
+      |> Enum.each(fn url -> DaleApp.Storage.delete_image(url) end)
 
       DaleApp.Products.IncidenciasStock.resolver_todas_de_producto(product.id, user_id)
 
@@ -201,6 +196,87 @@ defmodule DaleAppWeb.ProductoController do
       json(conn, %{ok: false})
     end
   end
+  @colores_hex %{
+    "Negro" => "#1a1a1a", "Blanco" => "#ffffff", "Gris" => "#9e9e9e", "Beige" => "#e8dcc8",
+    "Rojo" => "#d32f2f", "Bordó" => "#6d1b1b", "Rosa" => "#e91e8c", "Naranja" => "#f57c00",
+    "Amarillo" => "#fbc02d", "Verde" => "#43a047", "Verde oscuro" => "#1b5e20", "Celeste" => "#4fc3f7",
+    "Azul" => "#1565c0", "Azul marino" => "#0d1b4c", "Violeta" => "#7b1fa2", "Marrón" => "#5d3a1a",
+    "Dorado" => "#c9a227", "Plateado" => "#b0b0b0"
+  }
+
+  defp color_hex_por_codigo(codigo_color) do
+    Map.get(@colores_hex, DaleApp.Products.StockItem.nombre_color(codigo_color), "#cccccc")
+  end
+
+  defp construir_ficha_color(p) do
+    codigo_color =
+      Repo.one(
+        from s in DaleApp.Products.StockItem,
+          where: s.product_id == ^p.id,
+          select: s.codigo_color,
+          limit: 1
+      )
+
+    if codigo_color do
+      oferta_p = Repo.get_by(DaleApp.Products.OfertaProducto, product_id: p.id, activa: true)
+      imagenes_p = (p.images && p.images != [] && p.images) || (p.image && [p.image]) || []
+
+      %{
+        product_id: p.id,
+        nombre_color: DaleApp.Products.StockItem.nombre_color(codigo_color),
+        hex: color_hex_por_codigo(codigo_color),
+        images: imagenes_p,
+        price: p.price,
+        original_price: p.original_price,
+        talles: p.talles || [],
+        oferta:
+          if oferta_p do
+            %{tipo: oferta_p.tipo, valor: oferta_p.valor}
+          end
+      }
+    end
+  end
+
+  def mostrar(conn, %{"id" => id}) do
+    product = Products.get_product(id)
+    brand = Repo.get(DaleApp.Brands.Brand, product.brand_id)
+    user_id = get_session(conn, :user_id)
+    favorito = if user_id, do: DaleApp.Favorites.favorited?(user_id, product.id), else: false
+    oferta = Repo.get_by(DaleApp.Products.OfertaProducto, product_id: product.id, activa: true)
+
+    hermanos =
+      Repo.all(
+        from p in DaleApp.Products.Product,
+          where: p.name == ^product.name and p.brand_id == ^product.brand_id and p.active == true,
+          order_by: p.id
+      )
+
+    colores =
+      hermanos
+      |> Enum.map(&construir_ficha_color/1)
+      |> Enum.filter(& &1)
+
+    otros_productos =
+      Products.list_brand_products(brand.id)
+      |> Enum.filter(&(&1.active and &1.image != nil and &1.id != product.id and &1.name != product.name))
+      |> Enum.sort_by(& &1.id, :desc)
+      |> Enum.take(4)
+
+    imagenes =
+      (product.images && product.images != [] && product.images) ||
+        (product.image && [product.image]) || []
+
+    render(conn, :mostrar,
+      product: product,
+      brand: brand,
+      favorito: favorito,
+      imagenes: imagenes,
+      otros_productos: otros_productos,
+      oferta: oferta,
+      colores: colores
+    )
+  end
+
   def detalle(conn, %{"id" => id}) do
     product = Products.get_product(id)
     brand = Repo.get(DaleApp.Brands.Brand, product.brand_id)

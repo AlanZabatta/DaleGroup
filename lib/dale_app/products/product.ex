@@ -21,6 +21,8 @@ defmodule DaleApp.Products.Product do
     field :codigo_numero, :string
     field :images_por_color, :map, default: %{}
     field :creado_por_user_id, :integer
+    field :material, {:array, :string}, default: []
+    field :temporada, :string
     belongs_to :brand, DaleApp.Brands.Brand
 
     timestamps()
@@ -28,8 +30,9 @@ defmodule DaleApp.Products.Product do
 
   def changeset(product, attrs) do
     product
-    |> cast(attrs, [:name, :price, :original_price, :image, :images, :gender, :tipo, :talles, :categorias, :estilo, :description, :position_in_brand, :position_global, :active, :brand_id, :codigo_tipo, :codigo_numero, :images_por_color, :creado_por_user_id])
+    |> cast(attrs, [:name, :price, :original_price, :image, :images, :gender, :tipo, :talles, :categorias, :estilo, :description, :position_in_brand, :position_global, :active, :brand_id, :codigo_tipo, :codigo_numero, :images_por_color, :creado_por_user_id, :material, :temporada])
     |> validate_required([:brand_id])
     |> validate_inclusion(:gender, ["hombre", "mujer", "unisex"])
+    |> validate_inclusion(:temporada, ["invernal", "verano", "otono", "primavera"])
   end
 end

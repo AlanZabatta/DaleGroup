@@ -80,7 +80,7 @@
                 <button type="submit" style="background: none; border: none; cursor: pointer; display: block; padding: 14px 0; font-size: 16px; color: #c0392b; width: 100%; text-align: left;">Cerrar sesión</button>
               </form>
             <% else %>
-              <a href="/auth/google" style="display: block; padding: 14px 0; font-size: 16px; color: #1E5C1E; text-decoration: none;">Iniciar sesión</a>
+              <a href="/registro" style="display: block; padding: 14px 0; font-size: 16px; color: #186904; text-decoration: none;">Iniciar sesión</a>
             <% end %>
           </div>
         </div>
@@ -96,33 +96,32 @@
 
         <div style="display: flex; flex-direction: row; align-items: center; gap: 16px; pointer-events: auto;">
           <%= if @current_user && @current_user.role == "dueño" do %>
-            <%= if assigns[:marca] && @marca.user_id == @current_user.id do %>
-              <a id="btn-mi-tienda" href="/mi-tienda" onclick="manejarClickMiTiendaFlotante(event)" style="width: 72px; height: 72px; border-radius: 50%; background-color: white; border: 2px solid #186904; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 4px 20px rgba(0,0,0,0.2); flex-shrink: 0; position: relative;">
-                <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3 21l18 0"/>
-                  <path d="M3 7v1a3 3 0 0 0 6 0v-1m0 1a3 3 0 0 0 6 0v-1m0 1a3 3 0 0 0 6 0v-1h-18l2 -4h14l2 4"/>
-                  <path d="M5 21l0 -10.15"/>
-                  <path d="M19 21l0 -10.15"/>
-                  <path d="M9 21v-4a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v4"/>
+            <% ruta_actual_flotante = (assigns[:conn] && @conn.request_path) || (assigns[:ruta_actual] || "") %>
+            <% es_mi_marca_ahora = assigns[:mi_marca_id] && ruta_actual_flotante == "/marcas/#{@mi_marca_id}" %>
+            <.link navigate={~p"/mi-tienda"} id="btn-mi-tienda-editor" onclick="manejarClickMiTiendaFlotante(event)" data-mi-marca-id={assigns[:mi_marca_id]} style={"width: 72px; height: 72px; border-radius: 50%; background-color: white; border: 2px solid #186904; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 4px 20px rgba(0,0,0,0.2); flex-shrink: 0; position: relative; display: #{if es_mi_marca_ahora, do: "flex", else: "none"};"}>
+              <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 21l18 0"/>
+                <path d="M3 7v1a3 3 0 0 0 6 0v-1m0 1a3 3 0 0 0 6 0v-1m0 1a3 3 0 0 0 6 0v-1h-18l2 -4h14l2 4"/>
+                <path d="M5 21l0 -10.15"/>
+                <path d="M19 21l0 -10.15"/>
+                <path d="M9 21v-4a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v4"/>
+              </svg>
+              <div style="position: absolute; bottom: -4px; right: -4px; width: 32px; height: 32px; border-radius: 50%; background-color: #186904; border: 2px solid white; display: flex; align-items: center; justify-content: center;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4"/>
+                  <path d="M13.5 6.5l4 4"/>
                 </svg>
-                <div style="position: absolute; bottom: -4px; right: -4px; width: 32px; height: 32px; border-radius: 50%; background-color: #186904; border: 2px solid white; display: flex; align-items: center; justify-content: center;">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4"/>
-                    <path d="M13.5 6.5l4 4"/>
-                  </svg>
-                </div>
-              </a>
-            <% else %>
-              <a id="btn-mi-tienda" href="/mi-stand" onclick="manejarClickMiTiendaFlotante(event)" style="width: 72px; height: 72px; border-radius: 50%; background-color: white; border: 2px solid #186904; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 4px 20px rgba(0,0,0,0.2); flex-shrink: 0;">
-                <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3 21l18 0"/>
-                  <path d="M3 7v1a3 3 0 0 0 6 0v-1m0 1a3 3 0 0 0 6 0v-1m0 1a3 3 0 0 0 6 0v-1h-18l2 -4h14l2 4"/>
-                  <path d="M5 21l0 -10.15"/>
-                  <path d="M19 21l0 -10.15"/>
-                  <path d="M9 21v-4a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v4"/>
-                </svg>
-              </a>
-            <% end %>
+              </div>
+            </.link>
+            <.link navigate={~p"/mi-stand"} id="btn-mi-tienda-plain" onclick="manejarClickMiTiendaFlotante(event)" data-mi-marca-id={assigns[:mi_marca_id]} style={"width: 72px; height: 72px; border-radius: 50%; background-color: white; border: 2px solid #186904; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 4px 20px rgba(0,0,0,0.2); flex-shrink: 0; display: #{if es_mi_marca_ahora, do: "none", else: "flex"};"}>
+              <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 21l18 0"/>
+                <path d="M3 7v1a3 3 0 0 0 6 0v-1m0 1a3 3 0 0 0 6 0v-1m0 1a3 3 0 0 0 6 0v-1h-18l2 -4h14l2 4"/>
+                <path d="M5 21l0 -10.15"/>
+                <path d="M19 21l0 -10.15"/>
+                <path d="M9 21v-4a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v4"/>
+              </svg>
+            </.link>
           <% end %>
           <%= if @current_user && @current_user.role == "cajero" do %>
             <a href="/cajero/scanear" style="width: 72px; height: 72px; border-radius: 50%; background-color: #1E5C1E; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 4px 20px rgba(0,0,0,0.3); flex-shrink: 0;">
@@ -152,6 +151,16 @@
             intentarVolver(e);
           }
         }
+        function actualizarBotonMiTiendaFlotante() {
+          const editor = document.getElementById('btn-mi-tienda-editor');
+          const plano = document.getElementById('btn-mi-tienda-plain');
+          if (!editor || !plano) return;
+          const miMarcaId = editor.dataset.miMarcaId;
+          const esMiMarcaAhora = miMarcaId && window.location.pathname === '/marcas/' + miMarcaId;
+          editor.style.display = esMiMarcaAhora ? 'flex' : 'none';
+          plano.style.display = esMiMarcaAhora ? 'none' : 'flex';
+        }
+        window.addEventListener('phx:page-loading-stop', actualizarBotonMiTiendaFlotante);
       </script>
       <!-- BARRA DE NAVEGACIÓN INFERIOR -->
       <div id="bottom-bar" style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 5000; background: rgba(255,255,255,0.96); backdrop-filter: blur(10px); border-top: 1px solid #f0f0f0; height: 11vh; display: flex; align-items: center; justify-content: space-around; padding: 0 8px; transition: none;">
@@ -172,7 +181,7 @@
         </a>
 
         <a href="/" style="display: flex; flex-direction: column; align-items: center; text-decoration: none; flex: 1;">
-          <img src="https://res.cloudinary.com/djziwuaky/image/upload/v1779311629/WhatsApp_Image_2026-05-20_at_6.07.52_PM_2_dz41fk.jpg" style="width: 58px; height: 58px; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"/>
+          <img src="https://pub-04bf6639c7484e5c9c7f46651cfe8feb.r2.dev/7f63d78f-34ac-4f36-a9fa-68a4ff64c014.jpg" style="width: 58px; height: 58px; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"/>
         </a>
 
         <a href="/mapa" style={"display: flex; flex-direction: column; align-items: center; gap: 4px; text-decoration: none; flex: 1; color: #{if ruta == "/mapa", do: "#186904", else: "#9a9a9a"};"}>
@@ -515,7 +524,7 @@
       if (data.ok) {
         document.getElementById('ps-favorito-icono').textContent = data.action === 'added' ? '💚' : '🤍';
       } else if (data.error === 'not_logged_in') {
-        window.location.href = '/auth/google';
+        window.location.href = '/registro';
       }
     }
 

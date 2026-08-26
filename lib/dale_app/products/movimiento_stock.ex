@@ -9,13 +9,14 @@ defmodule DaleApp.Products.MovimientoStock do
     field :descripcion, :string
     field :producto_id, :integer
     field :producto_nombre, :string
+    field :brand_location_id, :id
 
     timestamps()
   end
 
   def changeset(movimiento, attrs) do
     movimiento
-    |> cast(attrs, [:brand_id, :user_id, :tipo_accion, :descripcion, :producto_id, :producto_nombre])
+    |> cast(attrs, [:brand_id, :user_id, :tipo_accion, :descripcion, :producto_id, :producto_nombre, :brand_location_id])
     |> validate_required([:brand_id, :tipo_accion, :descripcion])
   end
 end

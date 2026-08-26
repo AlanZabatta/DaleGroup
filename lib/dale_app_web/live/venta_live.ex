@@ -202,7 +202,8 @@ defmodule DaleAppWeb.VentaLive do
                     codigo_color: stock_item.codigo_color,
                     codigo_talle: stock_item.codigo_talle,
                     precio_unitario: stock_item.product.price,
-                    grupo_venta: grupo_venta_id
+                    grupo_venta: grupo_venta_id,
+                    brand_location_id: stock_item.brand_location_id
                   })
 
                 {actualizado.cantidad, false, venta.id}
@@ -273,7 +274,7 @@ defmodule DaleAppWeb.VentaLive do
 
         <%= if @estado == :sin_sesion do %>
           <p style="font-size: 15px; color: #333; margin: 0 0 20px;">Necesitás iniciar sesión para usar el escáner de ventas.</p>
-          <a href="/auth/google" style="display: inline-block; background: #186904; color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 14px;">Iniciar sesión</a>
+          <a href="/registro" style="display: inline-block; background: #186904; color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 14px;">Iniciar sesión</a>
         <% end %>
 
         <%= if @estado == :esperando_escaneo do %>

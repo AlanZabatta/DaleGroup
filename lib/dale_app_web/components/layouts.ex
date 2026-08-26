@@ -29,7 +29,7 @@ defmodule DaleAppWeb.Layouts do
           class="size-16 rounded-full bg-white border-4 border-[#2F5B2E] shadow-2xl hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer overflow-hidden p-1"
         >
           <img 
-            src="https://res.cloudinary.com/djziwuaky/image/upload/v1779311629/WhatsApp_Image_2026-05-20_at_6.07.52_PM_2_dz41fk.jpg" 
+            src="https://pub-04bf6639c7484e5c9c7f46651cfe8feb.r2.dev/7f63d78f-34ac-4f36-a9fa-68a4ff64c014.jpg" 
             alt="DaleGroup Logo" 
             class="size-full object-contain rounded-full"
           />
@@ -46,7 +46,7 @@ defmodule DaleAppWeb.Layouts do
             class="size-14 rounded-full bg-white shadow-xl hover:scale-110 hover:-translate-y-1 transition-all duration-200 overflow-hidden p-1 border-2 border-gray-100"
           >
             <img 
-              src="https://res.cloudinary.com/djziwuaky/image/upload/v1779315462/WhatsApp_Image_2026-05-20_at_7.17.13_PM-removebg-preview_v8gofi.png" 
+              src="https://pub-04bf6639c7484e5c9c7f46651cfe8feb.r2.dev/f002f633-a6a9-4f99-a60c-9be33c4f03a6.png" 
               alt="Perfil" 
               class="size-full object-contain"
             />
@@ -57,7 +57,7 @@ defmodule DaleAppWeb.Layouts do
             class="size-14 rounded-full bg-white shadow-xl hover:scale-110 hover:-translate-y-1 transition-all duration-200 overflow-hidden p-1 border-2 border-gray-100"
           >
             <img 
-              src="https://res.cloudinary.com/djziwuaky/image/upload/v1780237821/1000029077_preview_rev_1_1_suv2zb.png" 
+              src="https://pub-04bf6639c7484e5c9c7f46651cfe8feb.r2.dev/03029482-d40f-45da-958c-5de964985468.png" 
               alt="Mapa" 
               class="size-full object-contain"
             />
@@ -69,7 +69,7 @@ defmodule DaleAppWeb.Layouts do
             class="size-14 rounded-full bg-white shadow-xl hover:scale-110 hover:-translate-y-1 transition-all duration-200 overflow-hidden p-1 border-2 border-gray-100"
           >
             <img 
-              src="https://res.cloudinary.com/djziwuaky/image/upload/v1779314471/WhatsApp_Image_2026-05-20_at_7.00.25_PM-removebg-preview_mqvxeb.png" 
+              src="https://pub-04bf6639c7484e5c9c7f46651cfe8feb.r2.dev/513e94f6-0195-4e6b-b0a8-5f0e50b55385.png" 
               alt="Cupones" 
               class="size-full object-contain"
             />

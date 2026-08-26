@@ -51,6 +51,8 @@ live "/registro", RegistroLive
     post "/admin/brand/:id/disable", AdminController, :disable_brand
     post "/admin/brand/:id/slot", AdminController, :assign_slot
     live "/mi-tienda", MiTiendaLive
+    live "/mi-tienda/informacion", MiTiendaInformacionLive
+    live "/mi-tienda/estetica", MiTiendaEsteticaLive
     post "/mi-tienda", BrandController, :update
     post "/mi-tienda/colores", BrandController, :actualizar_colores
     get "/mi-stand", BrandController, :mi_stand
@@ -80,14 +82,14 @@ live "/registro", RegistroLive
     get "/mi-tienda/cajeros/:id", BrandController, :cajero_detalle
     post "/mi-tienda/cajeros/:id/actualizar", BrandController, :actualizar_cajero
     post "/mi-tienda/cajeros/:id/foto", BrandController, :subir_foto_cajero
-    get "/mi-tienda/productos", ProductoController, :index
+    live "/mi-tienda/productos", GestionarProductosLive
     post "/mi-tienda/productos/crear", ProductoController, :crear
     post "/mi-tienda/productos/:id/actualizar", ProductoController, :actualizar
     delete "/mi-tienda/productos/:id", ProductoController, :borrar
     delete "/productos/:id/imagen/:indice", ProductoController, :borrar_imagen
     post "/mi-tienda/cajeros/:id/remove", BrandController, :remove_cajero
     get "/marcas", MarcasController, :index
-    get "/marcas/:id", MarcasController, :show
+    live "/marcas/:id", MarcasShowLive
     post "/claims", ClaimController, :create
     get "/cajero/scanear", ClaimController, :redeem
     get "/unirse/:brand_id", BrandController, :unirse
@@ -113,6 +115,7 @@ live "/registro", RegistroLive
     get "/favoritos", FavoritoController, :index
     post "/favoritos/:product_id", FavoritoController, :toggle
     get "/productos/:id/detalle", ProductoController, :detalle
+    get "/productos/:id", ProductoController, :mostrar
   end
   if Application.compile_env(:dale_app, :dev_routes) do
     import Phoenix.LiveDashboard.Router

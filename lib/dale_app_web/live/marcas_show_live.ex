@@ -1,0 +1,355 @@
+defmodule DaleAppWeb.MarcasShowLive do
+  use DaleAppWeb, :live_view
+  import Ecto.Query
+  alias DaleApp.Repo
+  alias DaleApp.Brands.Brand
+  alias DaleApp.Coupons.Coupon
+  alias DaleApp.Events
+  alias DaleApp.Products
+  alias DaleApp.MapSaves
+
+  def mount(%{"id" => id}, session, socket) do
+    marca = Repo.get!(Brand, id)
+    cupon = Repo.one(from c in Coupon, where: c.brand_id == ^marca.id and c.active == true, limit: 1)
+    user_id = session["user_id"]
+    current_user = if user_id, do: DaleApp.Accounts.get_user(user_id), else: nil
+    productos = Products.list_brand_products_visibles(marca.id, marca.ocultar_sin_stock)
+
+    en_mapa =
+      if user_id do
+        saved = MapSaves.list_user_map(user_id)
+        Enum.any?(saved, fn s -> s.brand_id == marca.id end)
+      else
+        false
+      end
+
+    ubicaciones = Repo.all(from l in DaleApp.Brands.BrandLocation, where: l.brand_id == ^marca.id)
+    Events.track("brand_view", user_id, marca.id, %{brand_name: marca.name})
+
+    {:ok,
+     assign(socket,
+       marca: marca,
+       cupon: cupon,
+       productos: productos,
+       en_mapa: en_mapa,
+       current_user: current_user,
+       ubicaciones: ubicaciones
+     )}
+  end
+
+  def render(assigns) do
+    color_principal = (assigns.marca.colores && assigns.marca.colores["principal"]) || "#186904"
+    hex_limpio = String.trim_leading(color_principal, "#")
+
+    {cr, cg, cb} =
+      if String.length(hex_limpio) == 6 do
+        {String.to_integer(String.slice(hex_limpio, 0, 2), 16),
+         String.to_integer(String.slice(hex_limpio, 2, 2), 16),
+         String.to_integer(String.slice(hex_limpio, 4, 2), 16)}
+      else
+        {24, 105, 4}
+      end
+
+    color_rgb = "#{cr},#{cg},#{cb}"
+    color_fondo = (assigns.marca.colores && assigns.marca.colores["fondo"]) || "#ffffff"
+    color_letras = (assigns.marca.colores && assigns.marca.colores["letras"]) || "#1a1a1a"
+    color_gestion = (assigns.marca.colores && assigns.marca.colores["gestion"]) || "#ffffff"
+
+    assigns =
+      assigns
+      |> assign(:color_principal, color_principal)
+      |> assign(:color_rgb, color_rgb)
+      |> assign(:color_fondo, color_fondo)
+      |> assign(:color_letras, color_letras)
+      |> assign(:color_gestion, color_gestion)
+
+    ~H"""
+    <div id="marca-show-root" phx-hook=".MarcaShowHook" data-ubicaciones={Jason.encode!(for u <- @ubicaciones, do: %{lat: u.latitude, lng: u.longitude})} data-color-principal={@color_principal} data-color-gestion={@color_gestion} style="max-width: 480px; margin: 0 auto; overflow: visible; font-family: 'Noto Sans', sans-serif;">
+
+      <!-- PORTADA -->
+      <div style={"position: relative; width: 100%; aspect-ratio: 16/9; overflow: hidden; border-radius: 0 0 28px 28px; background-color: #{@color_principal};#{if @marca.cover_image, do: " background-image: url('#{@marca.cover_image}'); background-size: cover; background-position: center;", else: ""}"}>
+        <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0) 35%, rgba(0,0,0,0.55) 100%);"></div>
+      </div>
+
+      <!-- LOGO FLOTANTE -->
+      <div style="padding: 0 16px; margin-top: -70px; position: relative; z-index: 5;">
+        <div style="position: relative; display: inline-block;">
+          <div style="border: 1.5px solid #f0f0f0; border-radius: 16px; width: 220px; height: 140px; display: flex; align-items: center; justify-content: center; background: white; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.12);">
+            <%= if @marca.logo do %>
+              <img src={@marca.logo} style="width: 100%; height: 100%; object-fit: contain; padding: 16px; box-sizing: border-box; display: block;"/>
+            <% else %>
+              <span style="color: #ccc; font-size: 14px;">Logo</span>
+            <% end %>
+          </div>
+          <%= if @cupon do %>
+            <div style={"position: absolute; bottom: -18px; right: -20px; background-color: #{@color_principal}; color: #{@color_gestion}; font-size: 34px; font-weight: 900; padding: 10px 16px; line-height: 1; font-family: 'Abril Fatface', cursive; border-radius: 16px; box-shadow: 0 6px 16px rgba(#{@color_rgb},0.35);"}>
+              <%= @cupon.discount %>%
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- TARJETA DE IDENTIDAD -->
+      <div style="padding: 16px; margin-top: 16px;">
+        <div style={"background: #{@color_fondo}; border-radius: 20px; padding: 18px; box-shadow: 0 4px 18px rgba(0,0,0,0.07); border: 1px solid #f2f2f2;"}>
+          <h1 style={"font-family: 'Abril Fatface', cursive; font-size: 26px; color: #{@color_letras}; margin: 0; font-weight: 400; line-height: 1.1;"}><%= @marca.name %></h1>
+          <%= if @current_user do %>
+            <%= if @en_mapa do %>
+              <button id="btn-mapa" onclick={"toggleMapa(#{@marca.id}, true)"} style="display: none;">✅ En el Mapa</button>
+            <% else %>
+              <button id="btn-mapa" onclick={"toggleMapa(#{@marca.id}, false)"} style="display: none;">📍 Ver en mapa</button>
+            <% end %>
+          <% else %>
+            <a href="/auth/google" id="btn-mapa" style="display: none;">📍 Ver en mapa</a>
+          <% end %>
+
+          <%= if @marca.categorias && @marca.categorias != [] do %>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px;">
+              <%= for cat <- @marca.categorias do %>
+                <span style={"background: rgba(#{@color_rgb},0.08); color: #{@color_principal}; font-size: 11px; font-weight: 600; padding: 5px 11px; border-radius: 20px; font-family: 'Noto Sans', sans-serif;"}><%= cat %></span>
+              <% end %>
+            </div>
+          <% end %>
+
+          <%= if @marca.address do %>
+            <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid #f2f2f2; display: flex; align-items: stretch; gap: 12px;">
+              <div style="flex: 1; display: flex; flex-direction: column; justify-content: flex-start; gap: 6px;">
+                <%= for dir <- String.split(@marca.address, "|") do %>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill={@color_principal} xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                    <span style={"font-size: 13px; color: #{@color_letras}; font-family: 'Noto Sans', sans-serif; font-weight: 500;"}><%= String.trim(dir) %></span>
+                  </div>
+                <% end %>
+                <%= if @marca.horario_atencion && @marca.horario_atencion != "" do %>
+                  <div style="display: flex; align-items: center; gap: 8px; margin-top: 2px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={@color_principal} stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+                    <span style={"font-size: 13px; color: #{@color_letras}; font-family: 'Noto Sans', sans-serif; font-weight: 500;"}><%= @marca.horario_atencion %></span>
+                  </div>
+                <% end %>
+              </div>
+              <%= if @ubicaciones && @ubicaciones != [] do %>
+                <div style="width: 170px; flex-shrink: 0; position: relative; border-radius: 16px; overflow: hidden; border: 1.5px solid #f0f0f0;">
+                  <div id="mini-mapa-stand" style="width: 100%; height: 100%;"></div>
+                  <div style="position: absolute; bottom: 6px; right: 6px; z-index: 1000; background: white; border-radius: 20px; padding: 4px 9px; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.25); pointer-events: none;">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill={@color_principal} xmlns="http://www.w3.org/2000/svg"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                    <span style={"font-size: 9px; font-weight: 700; color: #{@color_principal}; font-family: 'Noto Sans', sans-serif;"}>Ver mapa</span>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- CUPÓN -->
+      <div style="padding: 0 16px; margin-top: 14px;">
+        <%= if @cupon do %>
+          <div style={"background: #{@color_principal}; border-radius: 18px; padding: 20px; box-shadow: 0 3px 12px rgba(0,0,0,0.08);"}>
+            <form action={~p"/claims"} method="post">
+              <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()}/>
+              <input type="hidden" name="coupon_id" value={@cupon.id}/>
+              <input type="hidden" name="brand_id" value={@marca.id}/>
+              <button type="submit" style={"width: 100%; background-color: white; color: #{@color_principal}; padding: 15px; border: none; border-radius: 16px; font-size: 15px; font-weight: 800; cursor: pointer; font-family: 'Noto Sans', sans-serif;"}>
+                CANJEAR BENEFICIO
+              </button>
+            </form>
+            <div style="margin-top: 10px; text-align: center;">
+              <span style={"color: #{@color_gestion}; opacity: 0.85; font-size: 12px; font-family: 'Noto Sans', sans-serif; font-style: italic;"}>
+                <%= case @marca.modalidad do
+                  "presencial" -> "Válido solo en el local"
+                  "digital" -> "Válido en el sitio digital de la marca"
+                  _ -> "Válido en el local y el sitio digital de la marca"
+                end %>
+              </span>
+            </div>
+          </div>
+        <% else %>
+          <div style="width: 100%; background-color: #f6f6f6; border-radius: 20px; padding: 18px; text-align: center; color: #999; font-size: 13px; font-family: 'Noto Sans', sans-serif; font-weight: 600;">
+            Sin cupón activo
+          </div>
+        <% end %>
+      </div>
+
+      <!-- PRODUCTOS -->
+      <div style="padding: 30px 16px 160px; position: relative; overflow: hidden;">
+        <div style="position: relative; z-index: 1; display: flex; gap: 10px; align-items: flex-start;">
+
+          <!-- COLUMNA IZQUIERDA -->
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 12px;">
+            <%= for {producto, index} <- Enum.with_index(@productos), rem(index, 2) == 0, producto.image != nil do %>
+              <div style={"display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; box-shadow: 0 3px 12px rgba(0,0,0,0.06); background: #{@color_fondo};"}>
+                <div style="position: relative; overflow: hidden; background: #f5f5f5; aspect-ratio: 3/4;">
+                  <button
+                    id={"fav-btn-#{producto.id}"}
+                    onclick={"toggleFavorito(this, #{producto.id})"}
+                    style="position: absolute; top: 8px; right: 8px; z-index: 10; background: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.18);">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                  </button>
+                  <%= if producto.image do %>
+                    <a href={"/productos/#{producto.id}"} style="display: block; width: 100%; height: 100%;">
+                      <img src={producto.image} style="width: 100%; height: 100%; object-fit: cover; display: block; cursor: pointer;"/>
+                    </a>
+                  <% end %>
+                </div>
+                <%= if producto.image do %>
+                  <div style={"background: #{@color_fondo}; padding: 8px 10px;"}>
+                    <p style="font-size: 12px; font-weight: 500; margin: 0; color: #111; font-family: 'Noto Sans', sans-serif;"><%= producto.name %></p>
+                    <%= if producto.original_price do %>
+                      <p style="font-size: 11px; color: #999; margin: 1px 0 0; text-decoration: line-through; font-family: 'Noto Sans', sans-serif;">$<%= producto.original_price %></p>
+                    <% end %>
+                    <%= if producto.price do %>
+                      <p style={"font-size: 15px; font-weight: 700; color: #{@color_principal}; margin: 0; font-family: 'Noto Sans', sans-serif;"}>$<%= producto.price %></p>
+                    <% end %>
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+
+          <!-- COLUMNA DERECHA -->
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 12px;">
+            <%= for {producto, index} <- Enum.with_index(@productos), rem(index, 2) == 1, producto.image != nil do %>
+              <div style={"display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; box-shadow: 0 3px 12px rgba(0,0,0,0.06); background: #{@color_fondo};"}>
+                <div style="position: relative; overflow: hidden; background: #f5f5f5; aspect-ratio: 3/4;">
+                  <button
+                    id={"fav-btn-#{producto.id}"}
+                    onclick={"toggleFavorito(this, #{producto.id})"}
+                    style="position: absolute; top: 8px; right: 8px; z-index: 10; background: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.18);">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                  </button>
+                  <%= if producto.image do %>
+                    <a href={"/productos/#{producto.id}"} style="display: block; width: 100%; height: 100%;">
+                      <img src={producto.image} style="width: 100%; height: 100%; object-fit: cover; display: block; cursor: pointer;"/>
+                    </a>
+                  <% end %>
+                </div>
+                <%= if producto.image do %>
+                  <div style={"background: #{@color_fondo}; padding: 8px 10px;"}>
+                    <p style="font-size: 12px; font-weight: 500; margin: 0; color: #111; font-family: 'Noto Sans', sans-serif;"><%= producto.name %></p>
+                    <%= if producto.original_price do %>
+                      <p style="font-size: 11px; color: #999; margin: 1px 0 0; text-decoration: line-through; font-family: 'Noto Sans', sans-serif;">$<%= producto.original_price %></p>
+                    <% end %>
+                    <%= if producto.price do %>
+                      <p style={"font-size: 15px; font-weight: 700; color: #{@color_principal}; margin: 0; font-family: 'Noto Sans', sans-serif;"}>$<%= producto.price %></p>
+                    <% end %>
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script :type={Phoenix.LiveView.ColocatedHook} name=".MarcaShowHook">
+      export default {
+        mounted() {
+          const csrfToken = document.querySelector("meta[name='csrf-token']")?.getAttribute("content");
+          const colorPrincipal = this.el.dataset.colorPrincipal;
+          const colorGestion = this.el.dataset.colorGestion;
+          let ubicacionesStand = [];
+          try { ubicacionesStand = JSON.parse(this.el.dataset.ubicaciones || "[]"); } catch (e) { ubicacionesStand = []; }
+
+          const el = document.getElementById('mini-mapa-stand');
+          if (el && ubicacionesStand.length > 0 && typeof L !== 'undefined') {
+            el.style.height = el.offsetHeight > 0 ? el.offsetHeight + 'px' : '100%';
+            const miniMap = L.map('mini-mapa-stand', {
+              zoomControl: false,
+              dragging: false,
+              scrollWheelZoom: false,
+              doubleClickZoom: false,
+              boxZoom: false,
+              touchZoom: false,
+              attributionControl: false
+            });
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(miniMap);
+
+            const icono = L.divIcon({
+              className: '',
+              html: '<div style="width:14px;height:14px;background:' + colorPrincipal + ';border:2px solid white;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.4);"></div>',
+              iconSize: [14, 14],
+              iconAnchor: [7, 7]
+            });
+
+            const puntos = ubicacionesStand.map(u => [u.lat, u.lng]);
+            puntos.forEach(p => L.marker(p, { icon: icono }).addTo(miniMap));
+
+            if (puntos.length === 1) {
+              miniMap.setView(puntos[0], 14);
+            } else {
+              miniMap.fitBounds(puntos, { padding: [10, 10] });
+            }
+
+            miniMap.getContainer().style.cursor = 'pointer';
+            miniMap.on('click', function() {
+              const btnMapa = document.getElementById('btn-mapa');
+              if (btnMapa) {
+                btnMapa.click();
+              } else {
+                window.location.href = '/auth/google';
+              }
+            });
+          }
+
+          window.toggleMapa = (brandId, enMapa) => {
+            const btn = document.getElementById("btn-mapa");
+            if (enMapa) {
+              fetch("/mapa/quitar/" + brandId, {
+                method: "DELETE",
+                headers: { "x-csrf-token": csrfToken, "Content-Type": "application/json" }
+              })
+              .then(r => r.json())
+              .then(data => {
+                if (data.ok) {
+                  btn.innerText = "📍 Ver en mapa";
+                  btn.style.backgroundColor = "#f0f0f0";
+                  btn.style.color = colorPrincipal;
+                  btn.style.border = "none";
+                  btn.setAttribute("onclick", "toggleMapa(" + brandId + ", false)");
+                }
+              });
+            } else {
+              fetch("/mapa/agregar/" + brandId, {
+                method: "POST",
+                headers: { "x-csrf-token": csrfToken, "Content-Type": "application/json" }
+              })
+              .then(r => r.json())
+              .then(data => {
+                if (data.ok) {
+                  btn.innerText = "✅ En el Mapa";
+                  btn.style.backgroundColor = colorPrincipal;
+                  btn.style.color = colorGestion;
+                  btn.style.border = "none";
+                  btn.setAttribute("onclick", "toggleMapa(" + brandId + ", true)");
+                } else if (data.error) {
+                  alert(data.error);
+                }
+              });
+            }
+          };
+
+          const svgCorazonLleno = '<svg width="15" height="15" viewBox="0 0 24 24" fill="#186904" stroke="#186904" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>';
+          const svgCorazonVacio = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>';
+
+          window.toggleFavorito = async (btn, productId) => {
+            const res = await fetch('/favoritos/' + productId, {
+              method: 'POST',
+              headers: { 'x-csrf-token': csrfToken, 'content-type': 'application/json' }
+            });
+            const data = await res.json();
+            if (data.ok) {
+              btn.innerHTML = data.action === 'added' ? svgCorazonLleno : svgCorazonVacio;
+            } else if (data.error === 'not_logged_in') {
+              window.location.href = '/auth/google';
+            }
+          };
+        }
+      }
+    </script>
+    """
+  end
+end

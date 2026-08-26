@@ -17,5 +17,16 @@ defmodule DaleApp.Coupons.Coupon do
     coupon
     |> cast(attrs, [:discount, :description, :stock, :expires_at, :active, :brand_id])
     |> validate_required([:discount, :brand_id])
+    |> validate_discount_minimo()
+  end
+
+  defp validate_discount_minimo(changeset) do
+    validate_change(changeset, :discount, fn :discount, valor ->
+      case Integer.parse(to_string(valor)) do
+        {numero, _} when numero < 10 -> [discount: "El descuento mínimo es 10%"]
+        {_numero, _} -> []
+        :error -> [discount: "Ingresá un número válido"]
+      end
+    end)
   end
 end

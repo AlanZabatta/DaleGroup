@@ -10,7 +10,7 @@ defmodule DaleAppWeb.ClaimController do
     if is_nil(user_id) do
       conn
       |> put_flash(:error, "Necesitás iniciar sesión para reclamar beneficios.")
-      |> redirect(to: "/auth/google")
+      |> redirect(to: "/registro")
     else
       case Claims.create_claim(user_id, String.to_integer(coupon_id), String.to_integer(brand_id)) do
         {:ok, claim} ->

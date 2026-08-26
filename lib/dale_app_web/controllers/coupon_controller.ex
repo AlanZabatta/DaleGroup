@@ -16,19 +16,39 @@ defmodule DaleAppWeb.CouponController do
     user_id = get_session(conn, :user_id)
     brand = Repo.get_by(Brand, user_id: user_id)
     cupon = Repo.one(from c in Coupon, where: c.brand_id == ^brand.id, limit: 1)
+    coupon_params = Map.put(coupon_params, "stock", 999_999)
 
-    if cupon do
-      cupon
-      |> Coupon.changeset(coupon_params)
-      |> Repo.update()
-    else
-      %Coupon{}
-      |> Coupon.changeset(Map.put(coupon_params, "brand_id", brand.id))
-      |> Repo.insert()
+    resultado =
+      if cupon do
+        cupon
+        |> Coupon.changeset(coupon_params)
+        |> Repo.update()
+      else
+        %Coupon{}
+        |> Coupon.changeset(Map.put(coupon_params, "brand_id", brand.id))
+        |> Repo.insert()
+      end
+
+    case resultado do
+      {:ok, _cupon} ->
+        conn
+        |> put_flash(:info, "Cupón guardado.")
+        |> redirect(to: ~p"/mi-tienda/cupon")
+
+      {:error, changeset} ->
+        mensaje = mensaje_de_error(changeset)
+
+        conn
+        |> put_flash(:error, mensaje)
+        |> redirect(to: ~p"/mi-tienda/cupon")
     end
+  end
 
-    conn
-    |> put_flash(:info, "Cupón guardado.")
-    |> redirect(to: ~p"/mi-stand")
+  defp mensaje_de_error(changeset) do
+    changeset
+    |> Ecto.Changeset.traverse_errors(fn {msg, _opts} -> msg end)
+    |> Map.values()
+    |> List.flatten()
+    |> List.first() || "Hubo un error al guardar el cupón."
   end
 end

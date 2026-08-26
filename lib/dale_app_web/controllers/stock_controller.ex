@@ -15,12 +15,35 @@ defmodule DaleAppWeb.StockController do
     descripcion = Map.get(params, "descripcion", "")
     codigo_tipo = Map.get(params, "codigo_tipo")
     variantes_json = Map.get(params, "variantes", "{}")
+    sedes_ids_json = Map.get(params, "sedes_ids", "[]")
+    material_json = Map.get(params, "material", "[]")
+    temporada_raw = Map.get(params, "temporada", "")
+
+    oferta_activa = Map.get(params, "oferta_activa") == "true"
+    oferta_attrs = %{"tipo" => Map.get(params, "oferta_tipo"), "valor" => Map.get(params, "oferta_valor")}
 
     variantes =
       case Jason.decode(variantes_json) do
         {:ok, mapa} -> mapa
         _ -> %{}
       end
+
+    material =
+      case Jason.decode(material_json) do
+        {:ok, lista} -> lista
+        _ -> []
+      end
+
+    temporada = if temporada_raw == "", do: nil, else: temporada_raw
+
+    sedes_ids =
+      case Jason.decode(sedes_ids_json) do
+        {:ok, lista} -> Enum.map(lista, &String.to_integer/1)
+        _ -> []
+      end
+
+    validacion_oferta =
+      if oferta_activa and brand, do: DaleApp.Products.validar_oferta(brand.id, oferta_attrs), else: :ok
 
     cond do
       is_nil(brand) ->
@@ -32,6 +55,10 @@ defmodule DaleAppWeb.StockController do
       variantes == %{} ->
         json(conn, %{ok: false, error: "No hay color/talle/cantidad cargados"})
 
+      validacion_oferta != :ok ->
+        {:error, mensaje} = validacion_oferta
+        json(conn, %{ok: false, error: mensaje})
+
       true ->
         grupos_por_color =
           variantes
@@ -42,7 +69,7 @@ defmodule DaleAppWeb.StockController do
           |> Enum.group_by(fn {codigo_color, _talle, _cant} -> codigo_color end)
 
         resultado =
-          Enum.reduce_while(grupos_por_color, {:ok, []}, fn {_codigo_color, filas}, {:ok, ids} ->
+          Enum.reduce_while(grupos_por_color, {:ok, []}, fn {codigo_color, filas}, {:ok, ids} ->
             codigo_numero = Dale9.proximo_numero(brand.id, codigo_tipo)
             count = length(DaleApp.Products.list_brand_products(brand.id))
             talles_nombres = filas |> Enum.map(fn {_c, t, _cant} -> StockItem.nombre_talle(t) end) |> Enum.uniq()
@@ -58,43 +85,50 @@ defmodule DaleAppWeb.StockController do
               active: false,
               codigo_tipo: codigo_tipo,
               codigo_numero: codigo_numero,
-              creado_por_user_id: user_id
+              creado_por_user_id: user_id,
+              material: material,
+              temporada: temporada
             }
 
             case DaleApp.Products.create_product(atributos) do
               {:ok, producto} ->
+                DaleApp.Products.guardar_oferta_producto(producto, %{
+                  "activa" => oferta_activa,
+                  "tipo" => Map.get(oferta_attrs, "tipo"),
+                  "valor" => Map.get(oferta_attrs, "valor")
+                })
+
+                sedes_para_crear = if sedes_ids == [], do: [nil], else: sedes_ids
+
                 Enum.each(filas, fn {codigo_color, codigo_talle, cantidad} ->
                   codigo = StockItem.armar_codigo(codigo_tipo, codigo_color, codigo_numero, codigo_talle)
 
-                  %StockItem{}
-                  |> StockItem.changeset(%{
-                    codigo: codigo,
-                    cantidad: cantidad,
-                    codigo_color: codigo_color,
-                    codigo_talle: codigo_talle,
-                    product_id: producto.id
-                  })
-                  |> Repo.insert()
+                  Enum.each(sedes_para_crear, fn sede_id ->
+                    %StockItem{}
+                    |> StockItem.changeset(%{
+                      codigo: codigo,
+                      cantidad: cantidad,
+                      codigo_color: codigo_color,
+                      codigo_talle: codigo_talle,
+                      product_id: producto.id,
+                      brand_location_id: sede_id
+                    })
+                    |> Repo.insert()
+                  end)
                 end)
 
-                DaleApp.Products.registrar_movimiento_stock(%{
-                  brand_id: brand.id,
-                  user_id: user_id,
-                  tipo_accion: "creado",
-                  descripcion: "Ha creado \"#{nombre}\"",
-                  producto_id: producto.id,
-                  producto_nombre: nombre
-                })
-                DaleApp.Products.NotificacionesSeguridad.revisar(%{
-                  brand_id: brand.id,
-                  user_id: user_id,
-                  tipo_accion: "creado",
-                  nombre_producto: nombre,
-                  precio_anterior: nil,
-                  precio_nuevo: nil
-                })
-
-                {:cont, {:ok, [producto.id | ids]}}
+                Enum.each(sedes_para_crear, fn sede_id ->
+                  DaleApp.Products.registrar_movimiento_stock(%{
+                    brand_id: brand.id,
+                    user_id: user_id,
+                    tipo_accion: "creado",
+                    descripcion: "Ha creado \"#{nombre}\"",
+                    producto_id: producto.id,
+                    producto_nombre: nombre,
+                    brand_location_id: sede_id
+                  })
+                end)
+                {:cont, {:ok, [{codigo_color, producto.id} | ids]}}
 
               {:error, _cambios} ->
                 {:halt, {:error, ids}}
@@ -102,7 +136,21 @@ defmodule DaleAppWeb.StockController do
           end)
 
         case resultado do
-          {:ok, ids} -> json(conn, %{ok: true, ids: Enum.reverse(ids)})
+          {:ok, pares} ->
+            pares = Enum.reverse(pares)
+
+            if pares != [] do
+              DaleApp.Products.NotificacionesSeguridad.revisar(%{
+                brand_id: brand.id,
+                user_id: user_id,
+                tipo_accion: "creado",
+                nombre_producto: nombre,
+                precio_anterior: nil,
+                precio_nuevo: nil
+              })
+            end
+
+            json(conn, %{ok: true, ids: Enum.map(pares, fn {_c, id} -> id end), colores_ids: Map.new(pares)})
           {:error, _ids} -> json(conn, %{ok: false, error: "Error al crear un color"})
         end
     end
@@ -119,6 +167,17 @@ defmodule DaleAppWeb.StockController do
     codigo_tipo = Map.get(params, "codigo_tipo")
     variantes_json = Map.get(params, "variantes", "{}")
     productos_por_color_json = Map.get(params, "productos_por_color", "{}")
+    sedes_ids_json = Map.get(params, "sedes_ids", "[]")
+    material_json = Map.get(params, "material", "[]")
+    temporada_raw = Map.get(params, "temporada", "")
+
+    material =
+      case Jason.decode(material_json) do
+        {:ok, lista} -> lista
+        _ -> []
+      end
+
+    temporada = if temporada_raw == "", do: nil, else: temporada_raw
 
     variantes =
       case Jason.decode(variantes_json) do
@@ -131,6 +190,16 @@ defmodule DaleAppWeb.StockController do
         {:ok, mapa} -> mapa
         _ -> %{}
       end
+    sedes_ids =
+      case Jason.decode(sedes_ids_json) do
+        {:ok, lista} -> Enum.map(lista, &String.to_integer/1)
+        _ -> []
+      end
+
+    oferta_activa = Map.get(params, "oferta_activa") == "true"
+    oferta_attrs = %{"tipo" => Map.get(params, "oferta_tipo"), "valor" => Map.get(params, "oferta_valor")}
+    validacion_oferta =
+      if oferta_activa and brand, do: DaleApp.Products.validar_oferta(brand.id, oferta_attrs), else: :ok
 
     cond do
       is_nil(brand) ->
@@ -138,6 +207,10 @@ defmodule DaleAppWeb.StockController do
 
       is_nil(codigo_tipo) or codigo_tipo == "" ->
         json(conn, %{ok: false, error: "Falta el tipo de prenda"})
+
+      validacion_oferta != :ok ->
+        {:error, mensaje} = validacion_oferta
+        json(conn, %{ok: false, error: mensaje})
 
       true ->
         grupos_por_color =
@@ -157,32 +230,55 @@ defmodule DaleAppWeb.StockController do
           producto = Repo.get(Product, producto_id)
 
           if producto && producto.brand_id == brand.id do
+            sedes_del_producto =
+              from(s in StockItem, where: s.product_id == ^producto.id, select: s.brand_location_id, distinct: true)
+              |> Repo.all()
+            sedes_del_producto = if sedes_del_producto == [], do: [nil], else: sedes_del_producto
+
             from(s in StockItem, where: s.product_id == ^producto.id) |> Repo.delete_all()
 
             if producto.codigo_tipo && producto.codigo_numero do
               Dale9.liberar_numero(brand.id, producto.codigo_tipo, producto.codigo_numero)
             end
 
-            DaleApp.Products.registrar_movimiento_stock(%{
-              brand_id: brand.id,
-              user_id: user_id,
-              tipo_accion: "eliminado",
-              descripcion: "Ha eliminado \"#{producto.name}\"",
-              producto_id: producto.id,
-              producto_nombre: producto.name
-            })
-            DaleApp.Products.NotificacionesSeguridad.revisar(%{
-              brand_id: brand.id,
-              user_id: user_id,
-              tipo_accion: "eliminado",
-              nombre_producto: producto.name,
-              precio_anterior: nil,
-              precio_nuevo: nil
-            })
+            Enum.each(sedes_del_producto, fn sede_id ->
+              DaleApp.Products.registrar_movimiento_stock(%{
+                brand_id: brand.id,
+                user_id: user_id,
+                tipo_accion: "eliminado",
+                descripcion: "Ha eliminado \"#{producto.name}\"",
+                producto_id: producto.id,
+                producto_nombre: producto.name,
+                brand_location_id: sede_id
+              })
+            end)
 
             Repo.delete(producto)
           end
         end)
+
+        if colores_a_borrar != [] do
+          DaleApp.Products.NotificacionesSeguridad.revisar(%{
+            brand_id: brand.id,
+            user_id: user_id,
+            tipo_accion: "eliminado",
+            nombre_producto: nombre,
+            precio_anterior: nil,
+            precio_nuevo: nil
+          })
+        end
+
+        producto_referencia =
+          productos_por_color_ids
+          |> Map.values()
+          |> List.first()
+          |> case do
+            nil -> nil
+            id -> Repo.get(Product, id)
+          end
+
+        cambio_nombre = producto_referencia && producto_referencia.name != nombre
+        cambio_precio = producto_referencia && producto_referencia.price != precio_final
 
         ids_finales =
           Enum.map(grupos_por_color, fn {codigo_color, filas} ->
@@ -200,14 +296,6 @@ defmodule DaleAppWeb.StockController do
                     producto_id: producto_existente.id,
                     producto_nombre: nombre
                   })
-                  DaleApp.Products.NotificacionesSeguridad.revisar(%{
-                    brand_id: brand.id,
-                    user_id: user_id,
-                    tipo_accion: "editado",
-                    nombre_producto: nombre,
-                    precio_anterior: nil,
-                    precio_nuevo: nil
-                  })
                 end
 
                 if producto_existente.price != precio_final do
@@ -219,14 +307,6 @@ defmodule DaleAppWeb.StockController do
                     producto_id: producto_existente.id,
                     producto_nombre: nombre
                   })
-                  DaleApp.Products.NotificacionesSeguridad.revisar(%{
-                    brand_id: brand.id,
-                    user_id: user_id,
-                    tipo_accion: "editado",
-                    nombre_producto: nombre,
-                    precio_anterior: producto_existente.price,
-                    precio_nuevo: precio_final
-                  })
                 end
 
                 {:ok, actualizado} =
@@ -234,67 +314,78 @@ defmodule DaleAppWeb.StockController do
                     name: nombre,
                     original_price: precio_original,
                     price: precio_final,
-                    description: descripcion
+                    description: descripcion,
+                    material: material,
+                    temporada: temporada
                   })
+
+                sedes_para_crear = if sedes_ids == [], do: [nil], else: sedes_ids
 
                 items_actuales =
                   from(s in StockItem, where: s.product_id == ^actualizado.id)
                   |> Repo.all()
-                  |> Map.new(fn item -> {item.codigo_talle, item} end)
+                  |> Map.new(fn item -> {{item.codigo_talle, item.brand_location_id}, item} end)
 
-                talles_nuevos = Enum.map(filas, fn {_c, t, _cant} -> t end)
+                combos_nuevos =
+                  for {_c, t, _cant} <- filas, sede_id <- sedes_para_crear, do: {t, sede_id}
 
                 Enum.each(filas, fn {codigo_color, codigo_talle, cantidad} ->
-                  case Map.get(items_actuales, codigo_talle) do
-                    nil ->
-                      codigo = StockItem.armar_codigo(codigo_tipo, codigo_color, actualizado.codigo_numero, codigo_talle)
+                  Enum.each(sedes_para_crear, fn sede_id ->
+                    case Map.get(items_actuales, {codigo_talle, sede_id}) do
+                      nil ->
+                        codigo = StockItem.armar_codigo(codigo_tipo, codigo_color, actualizado.codigo_numero, codigo_talle)
 
-                      %StockItem{}
-                      |> StockItem.changeset(%{
-                        codigo: codigo,
-                        cantidad: cantidad,
-                        codigo_color: codigo_color,
-                        codigo_talle: codigo_talle,
-                        product_id: actualizado.id
-                      })
-                      |> Repo.insert()
+                        %StockItem{}
+                        |> StockItem.changeset(%{
+                          codigo: codigo,
+                          cantidad: cantidad,
+                          codigo_color: codigo_color,
+                          codigo_talle: codigo_talle,
+                          product_id: actualizado.id,
+                          brand_location_id: sede_id
+                        })
+                        |> Repo.insert()
 
-                    item ->
-                      if item.cantidad != cantidad do
-                        tipo_cambio = if cantidad > item.cantidad, do: "aumentado", else: "disminuido"
-                        DaleApp.Products.registrar_movimiento_stock(%{
-                          brand_id: brand.id,
-                          user_id: user_id,
-                          tipo_accion: tipo_cambio,
-                          descripcion: "Ha #{tipo_cambio} el stock de \"#{nombre}\" de #{item.cantidad} a #{cantidad}",
-                          producto_id: actualizado.id,
-                          producto_nombre: nombre
-                        })
-                        DaleApp.Products.NotificacionesSeguridad.revisar(%{
-                          brand_id: brand.id,
-                          user_id: user_id,
-                          tipo_accion: tipo_cambio,
-                          nombre_producto: nombre,
-                          precio_anterior: nil,
-                          precio_nuevo: nil
-                        })
-                        DaleApp.Products.NotificacionesStock.revisar(%{
-                          brand_id: brand.id,
-                          user_id: user_id,
-                          stock_item: item,
-                          cantidad_anterior: item.cantidad,
-                          cantidad_nueva: cantidad,
-                          nombre_producto: nombre,
-                          product_id: actualizado.id
-                        })
-                      end
-                      item |> StockItem.changeset(%{cantidad: cantidad}) |> Repo.update()
-                  end
+                      item ->
+                        if item.cantidad != cantidad do
+                          tipo_cambio = if cantidad > item.cantidad, do: "aumentado", else: "disminuido"
+
+                          DaleApp.Products.registrar_movimiento_stock(%{
+                            brand_id: brand.id,
+                            user_id: user_id,
+                            tipo_accion: tipo_cambio,
+                            descripcion: "Ha #{tipo_cambio} el stock de \"#{nombre}\" de #{item.cantidad} a #{cantidad}",
+                            producto_id: actualizado.id,
+                            producto_nombre: nombre,
+                            brand_location_id: item.brand_location_id
+                          })
+                          DaleApp.Products.NotificacionesSeguridad.revisar(%{
+                            brand_id: brand.id,
+                            user_id: user_id,
+                            tipo_accion: tipo_cambio,
+                            nombre_producto: nombre,
+                            precio_anterior: nil,
+                            precio_nuevo: nil
+                          })
+                          DaleApp.Products.NotificacionesStock.revisar(%{
+                            brand_id: brand.id,
+                            user_id: user_id,
+                            stock_item: item,
+                            cantidad_anterior: item.cantidad,
+                            cantidad_nueva: cantidad,
+                            nombre_producto: nombre,
+                            product_id: actualizado.id
+                          })
+                        end
+
+                        item |> StockItem.changeset(%{cantidad: cantidad}) |> Repo.update()
+                    end
+                  end)
                 end)
 
                 items_actuales
-                |> Map.reject(fn {codigo_talle, _item} -> codigo_talle in talles_nuevos end)
-                |> Enum.each(fn {_codigo_talle, item} -> Repo.delete(item) end)
+                |> Map.reject(fn {combo, _item} -> combo in combos_nuevos end)
+                |> Enum.each(fn {_combo, item} -> Repo.delete(item) end)
 
                 actualizado
               else
@@ -314,30 +405,69 @@ defmodule DaleAppWeb.StockController do
                     active: false,
                     codigo_tipo: codigo_tipo,
                     codigo_numero: codigo_numero,
-                    creado_por_user_id: user_id
+                    creado_por_user_id: user_id,
+                    material: material,
+                    temporada: temporada
                   })
+
+                sedes_para_crear = if sedes_ids == [], do: [nil], else: sedes_ids
 
                 Enum.each(filas, fn {codigo_color, codigo_talle, cantidad} ->
                   codigo = StockItem.armar_codigo(codigo_tipo, codigo_color, codigo_numero, codigo_talle)
 
-                  %StockItem{}
-                  |> StockItem.changeset(%{
-                    codigo: codigo,
-                    cantidad: cantidad,
-                    codigo_color: codigo_color,
-                    codigo_talle: codigo_talle,
-                    product_id: nuevo.id
-                  })
-                  |> Repo.insert()
+                  Enum.each(sedes_para_crear, fn sede_id ->
+                    %StockItem{}
+                    |> StockItem.changeset(%{
+                      codigo: codigo,
+                      cantidad: cantidad,
+                      codigo_color: codigo_color,
+                      codigo_talle: codigo_talle,
+                      product_id: nuevo.id,
+                      brand_location_id: sede_id
+                    })
+                    |> Repo.insert()
+                  end)
                 end)
 
                 nuevo
               end
 
-            producto.id
+            DaleApp.Products.guardar_oferta_producto(producto, %{
+              "activa" => oferta_activa,
+              "tipo" => Map.get(oferta_attrs, "tipo"),
+              "valor" => Map.get(oferta_attrs, "valor")
+            })
+
+            {codigo_color, producto.id}
           end)
 
-        json(conn, %{ok: true, ids: ids_finales})
+        if cambio_nombre do
+          DaleApp.Products.NotificacionesSeguridad.revisar(%{
+            brand_id: brand.id,
+            user_id: user_id,
+            tipo_accion: "editado",
+            nombre_producto: nombre,
+            precio_anterior: nil,
+            precio_nuevo: nil
+          })
+        end
+
+        if cambio_precio do
+          DaleApp.Products.NotificacionesSeguridad.revisar(%{
+            brand_id: brand.id,
+            user_id: user_id,
+            tipo_accion: "editado",
+            nombre_producto: nombre,
+            precio_anterior: producto_referencia.price,
+            precio_nuevo: precio_final
+          })
+        end
+
+        json(conn, %{
+          ok: true,
+          ids: Enum.map(ids_finales, fn {_c, id} -> id end),
+          colores_ids: Map.new(ids_finales)
+        })
     end
   end
 

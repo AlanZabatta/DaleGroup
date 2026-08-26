@@ -28,7 +28,7 @@
     </div>
     <div style="background: white; padding: 8px 16px 100px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
       <%= for %{producto: producto, marca: marca} <- @productos do %>
-        <a href={"/marcas/#{marca.id}"} data-precio={producto.price} class="home-producto-card" onclick={"event.preventDefault(); abrirProductoSheet(#{producto.id})"} style="text-decoration: none; border-radius: 12px; overflow: hidden; border: 0.5px solid #eee; display: block;">
+        <a href={"/productos/#{producto.id}"} data-precio={producto.price} class="home-producto-card" style="text-decoration: none; border-radius: 12px; overflow: hidden; border: 0.5px solid #eee; display: block;">
           <div style="position: relative; aspect-ratio: 3/4; background: #f0f0f0; overflow: hidden;">
             <img src={producto.image} style="width: 100%; height: 100%; object-fit: cover; display: block;"/>
             <button onclick={"event.preventDefault(); event.stopPropagation(); toggleFavorito(this, #{producto.id})"} style="position: absolute; top: 6px; right: 6px; z-index: 10; background: white; border: 1.5px solid #ddd; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px;">&#129293;</button>

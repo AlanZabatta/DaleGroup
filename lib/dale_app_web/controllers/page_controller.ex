@@ -56,7 +56,7 @@ defmodule DaleAppWeb.PageController do
   def perfil(conn, _params) do
     user_id = get_session(conn, :user_id)
     if is_nil(user_id) do
-      redirect(conn, to: "/auth/google")
+      redirect(conn, to: "/registro")
     else
       current_user = Accounts.get_user(user_id)
       amigos = DaleApp.Friends.friends_list(user_id)
@@ -254,14 +254,9 @@ defmodule DaleAppWeb.PageController do
     user_id = get_session(conn, :user_id)
     user = Accounts.get_user(user_id)
 
-    # Borrar foto anterior de Cloudinary si no es de Google
+    # Borrar foto anterior si no es de Google
     if user.avatar && !String.contains?(user.avatar, "googleusercontent") do
-      public_id = user.avatar
-        |> String.split("/")
-        |> List.last()
-        |> String.split(".")
-        |> List.first()
-      DaleApp.Storage.delete_image(public_id)
+      DaleApp.Storage.delete_image(user.avatar)
     end
 
     case DaleApp.Storage.upload_image(foto.path, foto.filename) do

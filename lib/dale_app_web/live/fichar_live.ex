@@ -70,7 +70,7 @@ defmodule DaleAppWeb.FicharLive do
       nil ->
         {:fuera_de_rango, "No estás cerca de ninguna de tus sedes. Acercate al local para fichar."}
 
-      {_sede, _dist} ->
+      {sede, _dist} ->
         hoy = Date.utc_today()
         ya_fichado = from(a in Asistencia, where: a.user_id == ^user.id and a.brand_id == ^brand.id and a.fecha == ^hoy) |> Repo.exists?()
 
@@ -85,7 +85,8 @@ defmodule DaleAppWeb.FicharLive do
             brand_id: brand.id,
             fecha: hoy,
             hora_marcada: Time.utc_now() |> Time.truncate(:second),
-            puntos: puntos
+            puntos: puntos,
+            brand_location_id: sede.id
           })
           |> Repo.insert()
 

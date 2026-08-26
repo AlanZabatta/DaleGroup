@@ -10,16 +10,61 @@ defmodule DaleAppWeb.VentasLive do
   alias DaleApp.Products.StockItem
   alias Phoenix.LiveView.JS
 
-  def mount(_params, session, socket) do
+  def mount(params, session, socket) do
     user_id = session["user_id"]
     brand = if user_id, do: Repo.get_by(Brand, user_id: user_id), else: nil
+    sede_actual = parse_sede_param(params["sede"])
+    nombre_sede_badge = nombre_badge_sede(sede_actual)
 
     socket =
       socket
-      |> assign(brand: brand, periodo: "mensual", filtro_fecha_ventas: nil, expandido_venta_id: nil)
+      |> assign(
+        brand: brand,
+        periodo: "mensual",
+        filtro_fecha_ventas: nil,
+        expandido_venta_id: nil,
+        sede_actual: sede_actual,
+        nombre_sede_badge: nombre_sede_badge
+      )
       |> cargar_datos()
 
     {:ok, socket}
+  end
+
+  defp parse_sede_param(nil), do: nil
+  defp parse_sede_param(""), do: nil
+  defp parse_sede_param(str) do
+    case Integer.parse(str) do
+      {n, _} -> n
+      :error -> nil
+    end
+  end
+
+  defp nombre_badge_sede(nil), do: "Todas"
+
+  defp nombre_badge_sede(sede_id) do
+    case Repo.get(DaleApp.Brands.BrandLocation, sede_id) do
+      nil -> "Todas"
+      sede -> truncar_nombre_sede(if sede.nombre && sede.nombre != "", do: sede.nombre, else: "Sede ##{sede.id}")
+    end
+  end
+
+  defp truncar_nombre_sede(nombre) when byte_size(nombre) > 12, do: String.slice(nombre, 0, 12) <> "..."
+  defp truncar_nombre_sede(nombre), do: nombre
+
+  defp usuarios_en_sede(sede_id) do
+    from(es in DaleApp.Accounts.EmpleadoSede, where: es.brand_location_id == ^sede_id, select: es.user_id)
+    |> Repo.all()
+  end
+
+  defp filtrar_por_sede(query, nil), do: query
+
+  defp filtrar_por_sede(query, sede_id) do
+    ids_empleados = usuarios_en_sede(sede_id)
+
+    from(v in query,
+      where: v.user_id in ^ids_empleados and (is_nil(v.brand_location_id) or v.brand_location_id == ^sede_id)
+    )
   end
 
   def handle_event("cambiar_periodo", %{"periodo" => periodo}, socket) do
@@ -47,6 +92,7 @@ defmodule DaleAppWeb.VentasLive do
           where: v.brand_id == ^brand.id and v.inserted_at >= ^desde,
           order_by: [desc: v.inserted_at]
         )
+        |> filtrar_por_sede(socket.assigns.sede_actual)
         |> Repo.all()
       cajeros = Accounts.list_cajeros(brand.id) |> Map.new(fn c -> {c.id, c} end)
       ranking_completo = calcular_ranking_completo(cajeros, ventas)
@@ -241,7 +287,13 @@ defmodule DaleAppWeb.VentasLive do
   def render(assigns) do
     ~H"""
     <div style="padding: 24px 18px 40px; font-family: Poppins, sans-serif; max-width: 600px; margin: 0 auto; background-color: white; min-height: 100vh;">
-      <.link navigate="/mi-tienda/cajeros" style="display: inline-flex; background: none; border: none; color: #186904; font-size: 22px; font-weight: 700; cursor: pointer; line-height: 1; text-decoration: none; margin-bottom: 16px;">&#x2715;</.link>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+        <.link navigate="/mi-tienda/cajeros" style="display: inline-flex; background: none; border: none; color: #186904; font-size: 22px; font-weight: 700; cursor: pointer; line-height: 1; text-decoration: none;">&#x2715;</.link>
+        <div style="display: inline-flex; align-items: center; gap: 6px; background: #eef4ec; border: 1.5px solid #186904; border-radius: 20px; padding: 6px 12px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="#186904" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+          <span style="font-size: 12px; font-weight: 700; color: #186904; font-family: Poppins, sans-serif;">Visualizando: <%= @nombre_sede_badge %></span>
+        </div>
+      </div>
       <p style="font-size: 26px; font-weight: 800; color: #186904; margin: 0 0 20px;">Ventas</p>
 
       <div style="display: flex; gap: 8px; margin-bottom: 20px;">

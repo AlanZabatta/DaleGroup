@@ -13,6 +13,40 @@ defmodule DaleAppWeb.MiTiendaLive do
     brand = if user_id, do: Repo.get_by(Brand, user_id: user_id), else: nil
     cajeros = if brand, do: Accounts.list_cajeros(brand.id), else: []
     ubicaciones = if brand, do: Repo.all(from(l in BrandLocation, where: l.brand_id == ^brand.id)), else: []
+
+    {total_productos, productos_dale, limite_dale, hay_sin_stock_normal, hay_sin_stock_dale} =
+      if brand do
+        productos_brand = DaleApp.Products.list_brand_products(brand.id)
+        productos_activos = Enum.filter(productos_brand, & &1.active)
+
+        total = productos_activos |> Enum.map(& &1.name) |> Enum.uniq() |> length()
+
+        dale =
+          productos_activos
+          |> Enum.filter(&(&1.codigo_tipo == "99"))
+          |> Enum.map(& &1.name)
+          |> Enum.uniq()
+          |> length()
+
+        limite = brand.image_limit || 12
+
+        tipos_sin_stock =
+          from(s in DaleApp.Products.StockItem,
+            join: p in DaleApp.Products.Product, on: p.id == s.product_id,
+            where: p.brand_id == ^brand.id,
+            group_by: [p.id, p.codigo_tipo],
+            having: sum(s.cantidad) <= 0,
+            select: p.codigo_tipo
+          )
+          |> Repo.all()
+
+        sin_stock_normal = Enum.any?(tipos_sin_stock, &(&1 != "99"))
+        sin_stock_dale = Enum.any?(tipos_sin_stock, &(&1 == "99"))
+
+        {total, dale, limite, sin_stock_normal, sin_stock_dale}
+      else
+        {0, 0, 12, false, false}
+      end
  
     curva_cupon =
       if brand do
@@ -42,10 +76,20 @@ defmodule DaleAppWeb.MiTiendaLive do
        cajeros: cajeros,
        ubicaciones: ubicaciones,
        curva_cupon: curva_cupon,
-       interes_cupon: Enum.sum(curva_cupon)
+       interes_cupon: Enum.sum(curva_cupon),
+       total_productos: total_productos,
+       productos_dale: productos_dale,
+       limite_dale: limite_dale,
+       hay_sin_stock_normal: hay_sin_stock_normal,
+       hay_sin_stock_dale: hay_sin_stock_dale
      )}
   end
- 
+
+  def handle_event("volver_mi_stand", _params, socket) do
+    brand = socket.assigns.brand
+    {:noreply, push_navigate(socket, to: ~p"/marcas/#{brand.id}")}
+  end
+
   def handle_event("guardar_gestion", %{"brand" => brand_params}, socket) do
     brand = socket.assigns.brand
  
@@ -194,248 +238,129 @@ defmodule DaleAppWeb.MiTiendaLive do
       <a href="#" onclick="intentarVolver(event)" style="display: inline-flex; background: none; border: none; color: #186904; font-size: 22px; font-weight: 700; cursor: pointer; line-height: 1; text-decoration: none; margin-bottom: 16px;">&#x2715;</a>
       <p style="font-size: 26px; font-weight: 800; color: #186904; margin: 0 0 20px;">Mi Tienda</p>
       <%= if @brand do %>
-        <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Gestión</p>
-        <form id="form-gestion" onsubmit="return validarAntesDeGuardar(event)">
-          <div style="margin-bottom: 22px;">
-            <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Nombre de la tienda</p>
-            <input type="text" name="brand[name]" id="input-nombre-tienda" value={@brand.name} oninput="gestionModificado = true" style="width: 100%; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; color: #333; outline: none; box-sizing: border-box;"/>
-          </div>
-          <div style="margin-bottom: 22px;">
-            <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Direcciones</p>
-            <div id="direcciones-container" phx-update="ignore"></div>
-            <button type="button" onclick="agregarDireccion()" style="margin-top: 8px; background: none; border: 1.5px dashed #e0e0e0; border-radius: 16px; padding: 10px 16px; cursor: pointer; color: #888; font-size: 13px; font-family: Poppins, sans-serif;">+ Agregar dirección</button>
-            <input type="hidden" name="brand[address]" id="address-hidden" value={@brand.address}/>
-            <input type="hidden" name="brand[address_full]" id="address-full-hidden" value={@brand.address_full}/>
-          </div>
-          <div style="margin-bottom: 22px;">
-            <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Modalidad</p>
-            <select name="brand[modalidad]" id="select-modalidad-tienda" onchange="gestionModificado = true" style="width: 100%; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; color: #333; outline: none; box-sizing: border-box;">
-              <option value="presencial" selected={@brand.modalidad == "presencial"}>Presencial</option>
-              <option value="digital" selected={@brand.modalidad == "digital"}>Solo Digital</option>
-              <option value="ambos" selected={@brand.modalidad == "ambos"}>Presencial y Digital</option>
-            </select>
-          </div>
- 
-          <div style="margin-bottom: 16px;">
-            <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Horario de atención</p>
-            <input type="text" name="brand[horario_atencion]" id="input-horario-tienda" value={@brand.horario_atencion} placeholder="Ej: Lun a Sáb 10 a 20hs" oninput="gestionModificado = true"
-              style="width: 100%; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; color: #333; outline: none; box-sizing: border-box;"/>
-          </div>
- 
-          <!-- CATEGORÍAS -->
-          <div style="margin-bottom: 28px;">
-            <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Categorías</p>
-            <p style="font-size: 12px; color: #888; margin: 0 0 12px; font-family: Poppins, sans-serif;">Seleccioná las que mejor describen tu marca.</p>
-            <input type="hidden" name="brand[categorias]" id="categorias-hidden" value={Enum.join(@brand.categorias || [], ",")}/>
-            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-              <%= for cat <- ["Hombre", "Mujer", "Casual", "Elegante", "Street", "Sport", "Ropa", "Accesorios", "Calzado"] do %>
-                <% activa = cat in (@brand.categorias || []) %>
-                <button type="button"
-                  data-cat={cat}
-                  onclick="toggleCategoria(this)"
-                  style={"padding: 9px 16px; border-radius: 20px; cursor: pointer; font-size: 13px; font-family: Poppins, sans-serif; font-weight: 600; transition: all 0.2s; border: 1.5px solid #{if activa, do: "#186904", else: "#e0e0e0"}; background: #{if activa, do: "#186904", else: "white"}; color: #{if activa, do: "white", else: "#666"};"}>
-                  <%= cat %>
-                </button>
+        <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Stock</p>
+        <.link navigate="/mi-tienda/stock" style="display: block; text-decoration: none; background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 20px; padding: 18px 20px; margin-bottom: 12px; box-shadow: 0 4px 14px rgba(24,105,4,0.10);">
+          <p style="font-size: 11px; font-weight: 800; color: #186904; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 1.2px;">MiniParonama</p>
+          <div style="display: flex; align-items: flex-end; gap: 14px;">
+            <div style="position: relative; padding: 10px 16px; border-radius: 14px; background: #e6f2e3; border: 1.5px solid #186904;">
+              <%= if @hay_sin_stock_normal do %>
+                <span style="position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; border-radius: 50%; background: #c0392b; box-shadow: 0 0 0 2px white;"></span>
               <% end %>
+              <p style="font-size: 28px; font-weight: 800; color: #186904; margin: 0; line-height: 1; letter-spacing: -0.5px;"><%= @total_productos %></p>
+              <p style="font-size: 11px; color: #7a9a76; margin: 5px 0 0; font-weight: 600;">productos totales</p>
+            </div>
+            <div style="position: relative; padding: 10px 16px; border-radius: 14px; background: #e6f2e3; border: 1.5px solid #186904;">
+              <%= if @hay_sin_stock_dale do %>
+                <span style="position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; border-radius: 50%; background: #c0392b; box-shadow: 0 0 0 2px white;"></span>
+              <% end %>
+              <p style="font-size: 28px; font-weight: 800; color: #186904; margin: 0; line-height: 1; letter-spacing: -0.5px;"><%= @productos_dale %><span style="font-size: 16px; color: #aaa; font-weight: 700;">/<%= @limite_dale %></span></p>
+              <p style="font-size: 11px; color: #7a9a76; margin: 5px 0 0; font-weight: 600;">productos Dale</p>
             </div>
           </div>
- 
-          <button type="submit" style="width: 100%; background-color: #186904; color: white; padding: 14px 0; border: none; border-radius: 16px; cursor: pointer; font-size: 15px; font-weight: 700; font-family: Poppins, sans-serif; margin-bottom: 22px;">
-            Guardar cambios
-          </button>
-        </form>
- 
-        <div style="height: 1px; background: #eee; margin: 8px 0 24px;"></div>
-        <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 20px; text-transform: uppercase; letter-spacing: 1px;">Estética</p>
- 
-    <%
-      pv_principal = (@brand.colores && @brand.colores["principal"]) || "#186904"
-      pv_fondo = (@brand.colores && @brand.colores["fondo"]) || "#ffffff"
-      pv_letras = (@brand.colores && @brand.colores["letras"]) || "#1a1a1a"
-      pv_gestion = (@brand.colores && @brand.colores["gestion"]) || "#ffffff"
-    %>
-    <div style="margin-bottom: 24px;">
-      <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 12px;">Vista previa</p>
- 
-      <div style="max-width: 100%; overflow: hidden; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.12); border: 1px solid #f0f0f0;">
-        <div id="preview-tienda" style={"zoom: 0.72; width: 380px; margin: 0 auto; --c-principal:#{pv_principal}; --c-fondo:#{pv_fondo}; --c-letras:#{pv_letras}; --c-gestion:#{pv_gestion};"}>
- 
-          <div style={"position: relative; width: 100%; aspect-ratio: 16/9; overflow: hidden; border-radius: 0 0 28px 28px; background-color: var(--c-principal);#{if @brand.cover_image, do: " background-image: url('#{@brand.cover_image}'); background-size: cover; background-position: center;", else: ""}"}>
-            <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0) 35%, rgba(0,0,0,0.55) 100%);"></div>
-          </div>
- 
-          <div style="padding: 0 16px; margin-top: -70px; position: relative; z-index: 5;">
-            <div style="position: relative; display: inline-block;">
-              <div style="border: 1.5px solid #f0f0f0; border-radius: 16px; width: 220px; height: 140px; display: flex; align-items: center; justify-content: center; background: white; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.12);">
-                <%= if @brand.logo do %>
-                  <img src={@brand.logo} style="width: 100%; height: 100%; object-fit: contain; padding: 16px; box-sizing: border-box; display: block;"/>
-                <% else %>
-                  <span style="color: #ccc; font-size: 14px;">Logo</span>
-                <% end %>
-              </div>
-              <div style="position: absolute; bottom: -18px; right: -20px; background-color: var(--c-principal); color: var(--c-gestion); font-size: 34px; font-weight: 900; padding: 10px 16px; line-height: 1; font-family: 'Abril Fatface', cursive; border-radius: 16px; box-shadow: 0 6px 16px rgba(0,0,0,0.25);">
-                30%
-              </div>
-            </div>
-          </div>
- 
-          <div style="padding: 16px; margin-top: 16px;">
-            <div style="background: var(--c-fondo); border-radius: 20px; padding: 18px; box-shadow: 0 4px 18px rgba(0,0,0,0.07); border: 1px solid #f2f2f2;">
-              <h1 style="font-family: 'Abril Fatface', cursive; font-size: 26px; color: var(--c-letras); margin: 0; font-weight: 400; line-height: 1.1;"><%= @brand.name %></h1>
- 
-              <%= if @brand.categorias && @brand.categorias != [] do %>
-                <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px;">
-                  <%= for cat <- @brand.categorias do %>
-                    <span style="background: rgba(0,0,0,0.06); color: var(--c-principal); font-size: 11px; font-weight: 600; padding: 5px 11px; border-radius: 20px; font-family: 'Noto Sans', sans-serif;"><%= cat %></span>
-                  <% end %>
+          <%= if @hay_sin_stock_normal || @hay_sin_stock_dale do %>
+            <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 4px;">
+              <%= if @hay_sin_stock_normal do %>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span style="width: 6px; height: 6px; border-radius: 50%; background: #c0392b; flex-shrink: 0;"></span>
+                  <p style="font-size: 12px; color: #c0392b; margin: 0; font-weight: 600; font-family: Poppins, sans-serif;">Tenés productos sin unidades en tu stock</p>
                 </div>
               <% end %>
- 
-              <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid #f2f2f2; display: flex; align-items: stretch; gap: 12px;">
-                <div id="preview-direcciones-col" style="flex: 1; display: flex; flex-direction: column; justify-content: flex-start; gap: 6px;">
-                  <%= if @brand.address do %>
-                    <%= for dir <- String.split(@brand.address, "|") do %>
-                      <div style="display: flex; align-items: center; gap: 8px;">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--c-principal)" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                        <span style="font-size: 13px; color: var(--c-letras); font-family: 'Noto Sans', sans-serif; font-weight: 500;"><%= String.trim(dir) %></span>
-                      </div>
-                    <% end %>
-                  <% else %>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--c-principal)" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                      <span style="font-size: 13px; color: var(--c-letras); font-family: 'Noto Sans', sans-serif; font-weight: 500;">Tu dirección acá</span>
-                    </div>
-                  <% end %>
-                  <%= if @brand.horario_atencion && @brand.horario_atencion != "" do %>
-                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 2px;">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--c-principal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
-                      <span style="font-size: 13px; color: var(--c-letras); font-family: 'Noto Sans', sans-serif; font-weight: 500;"><%= @brand.horario_atencion %></span>
-                    </div>
-                  <% end %>
+              <%= if @hay_sin_stock_dale do %>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span style="width: 6px; height: 6px; border-radius: 50%; background: #c0392b; flex-shrink: 0;"></span>
+                  <p style="font-size: 12px; color: #c0392b; margin: 0; font-weight: 600; font-family: Poppins, sans-serif;">Tenés productos sin unidades en Dale</p>
                 </div>
-                <div id="preview-mapa-box" style="width: 140px; flex-shrink: 0; position: relative; border-radius: 16px; overflow: hidden; border: 1.5px solid #f0f0f0; background: linear-gradient(135deg, #cfe8d8 0%, #b8dcc4 40%, #a8d4b8 100%); display: flex; align-items: center; justify-content: center;">
-                  <svg width="140" height="140" viewBox="0 0 140 140" style="position:absolute; top:0; left:0; opacity:0.5;" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M0,40 Q40,20 70,45 T140,35" stroke="white" stroke-width="4" fill="none"/>
-                    <path d="M0,90 Q50,70 90,95 T140,80" stroke="white" stroke-width="5" fill="none"/>
-                    <path d="M25,0 Q40,60 20,140" stroke="white" stroke-width="3" fill="none"/>
-                    <path d="M110,0 Q95,70 115,140" stroke="white" stroke-width="3" fill="none"/>
-                  </svg>
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="var(--c-principal)" xmlns="http://www.w3.org/2000/svg" style="position:relative; z-index:2; filter:drop-shadow(0 2px 3px rgba(0,0,0,0.3));"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                </div>
-              </div>
+              <% end %>
             </div>
-          </div>
- 
-          <div style="padding: 0 16px 16px;">
-            <div style="background: var(--c-principal); border-radius: 18px; padding: 20px; box-shadow: 0 3px 12px rgba(0,0,0,0.08);">
-              <div style="width: 100%; background-color: white; color: var(--c-principal); padding: 15px; border-radius: 16px; font-size: 15px; font-weight: 800; text-align: center; font-family: 'Noto Sans', sans-serif; box-sizing: border-box;">
-                USAR BENEFICIO
-              </div>
-              <div style="margin-top: 10px; text-align: center;">
-                <span style="color: var(--c-gestion); opacity: 0.85; font-size: 12px; font-family: 'Noto Sans', sans-serif; font-style: italic;">Mostrar al vendedor</span>
-              </div>
-            </div>
-          </div>
- 
-          <div style="padding: 0 16px 16px; display: flex; gap: 10px;">
-            <div style="flex: 1; display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; box-shadow: 0 3px 12px rgba(0,0,0,0.06); background: var(--c-fondo);">
-              <div style="aspect-ratio: 3/4; background: #f5f5f5; display: flex; align-items: center; justify-content: center;">
-                <span style="font-size: 40px; color: #111; font-weight: 800;">?</span>
-              </div>
-              <div style="padding: 8px 10px;">
-                <p style="font-size: 12px; color: #888; margin: 0;">Producto</p>
-                <p style="font-size: 15px; font-weight: 700; color: var(--c-principal); margin: 0;">$0000</p>
-              </div>
-            </div>
-            <div style="flex: 1; display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; box-shadow: 0 3px 12px rgba(0,0,0,0.06); background: var(--c-fondo);">
-              <div style="aspect-ratio: 3/4; background: #f5f5f5; display: flex; align-items: center; justify-content: center;">
-                <span style="font-size: 40px; color: #111; font-weight: 800;">?</span>
-              </div>
-              <div style="padding: 8px 10px;">
-                <p style="font-size: 12px; color: #888; margin: 0;">Producto</p>
-                <p style="font-size: 15px; font-weight: 700; color: var(--c-principal); margin: 0;">$0000</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
- 
-    <div style="margin-bottom: 24px;">
-      <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 12px;">Colores de tu tienda</p>
- 
-      <div style="display:flex; flex-direction:column; gap:12px;">
-        <div style="display:flex; align-items:center; justify-content:space-between;">
-          <span style="font-size:13px; color:#333; font-family:Poppins,sans-serif;">Color principal</span>
-          <input type="color" id="color-input-principal" value={pv_principal} oninput="actualizarPreviewColor('principal', this.value)" style="width:40px; height:40px; border:none; border-radius:8px; cursor:pointer;"/>
-        </div>
-        <div style="display:flex; align-items:center; justify-content:space-between;">
-          <span style="font-size:13px; color:#333; font-family:Poppins,sans-serif;">Color de fondo</span>
-          <input type="color" id="color-input-fondo" value={pv_fondo} oninput="actualizarPreviewColor('fondo', this.value)" style="width:40px; height:40px; border:none; border-radius:8px; cursor:pointer;"/>
-        </div>
-        <div style="display:flex; align-items:center; justify-content:space-between;">
-          <span style="font-size:13px; color:#333; font-family:Poppins,sans-serif;">Color de letras</span>
-          <input type="color" id="color-input-letras" value={pv_letras} oninput="actualizarPreviewColor('letras', this.value)" style="width:40px; height:40px; border:none; border-radius:8px; cursor:pointer;"/>
-        </div>
-        <div style="display:flex; align-items:center; justify-content:space-between;">
-          <span style="font-size:13px; color:#333; font-family:Poppins,sans-serif;">Color de gestión</span>
-          <input type="color" id="color-input-gestion" value={pv_gestion} oninput="actualizarPreviewColor('gestion', this.value)" style="width:40px; height:40px; border:none; border-radius:8px; cursor:pointer;"/>
-        </div>
-      </div>
- 
-      <div style="display:flex; gap:8px; margin-top:16px;">
-        <button type="button" onclick="aplicarPaletaRapida('#186904','#ffffff','#1a1a1a','#ffffff')" style="flex:1; padding:10px; border-radius:12px; border:1.5px solid #e0e0e0; background:white; cursor:pointer; font-size:11px; font-family:Poppins,sans-serif;">🟢 Verde/Blanco</button>
-        <button type="button" onclick="aplicarPaletaRapida('#000000','#ffffff','#111111','#ffffff')" style="flex:1; padding:10px; border-radius:12px; border:1.5px solid #e0e0e0; background:white; cursor:pointer; font-size:11px; font-family:Poppins,sans-serif;">⚫ Negro/Blanco</button>
-        <button type="button" onclick="aplicarPaletaRapida('#E91E8C','#ffffff','#1a1a1a','#ffffff')" style="flex:1; padding:10px; border-radius:12px; border:1.5px solid #e0e0e0; background:white; cursor:pointer; font-size:11px; font-family:Poppins,sans-serif;">🌸 Rosa/Blanco</button>
-      </div>
- 
-      <p style="font-size:11px; color:#999; margin:12px 0 0; line-height:1.4;">Tené en cuenta que la estética de tu marca define tu convertibilidad de ventas. ¡Esforzate!</p>
- 
-    </div>
- 
-        <!-- LOGO -->
-        <div style="margin-bottom: 22px;">
-          <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Logo de la tienda</p>
-          <% logo_fondo = (@brand.colores && @brand.colores["logo_fondo"]) || "#f5f5f5" %>
-          <label style={"display: block; position: relative; width: 100%; height: 180px; border-radius: 16px; overflow: hidden; cursor: pointer; background: #{logo_fondo}; border: 1.5px solid #e0e0e0;"}>
-            <%= if @brand.logo do %>
-              <img src={@brand.logo} style="width: 100%; height: 100%; object-fit: contain; padding: 20px; box-sizing: border-box; display: block;"/>
-            <% else %>
-              <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-              </div>
-            <% end %>
-            <div style={"position: absolute; bottom: 10px; right: 10px; width: 40px; height: 40px; background: #{pv_principal}; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0,0,0,0.25);"}>
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-            </div>
-            <input type="file" accept="image/*" style="display:none;" data-brand-id={"#{@brand.id}"} data-tipo="logo" data-ax="2" data-ay="1" onchange="abrirCropperFromInput(this)" />
-          </label>
-        </div>
- 
-        <!-- FOTO DE PUBLICACIÓN -->
-        <div style="margin-bottom: 22px;">
-          <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Foto de publicación</p>
-          <p style="font-size: 12px; color: #888; margin: 0 0 10px; font-family: Poppins, sans-serif;">Esta foto aparece en la página principal como card de tu marca.</p>
-          <label style="display: block; position: relative; width: 100%; aspect-ratio: 16/7; border-radius: 16px; overflow: hidden; cursor: pointer; background: #f5f5f5; border: 1.5px solid #e0e0e0;">
-            <%= if @brand.cover_image do %>
-              <img src={@brand.cover_image} style="width: 100%; height: 100%; object-fit: cover; display: block;"/>
-            <% else %>
-              <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-              </div>
-            <% end %>
-            <div style={"position: absolute; bottom: 10px; right: 10px; width: 40px; height: 40px; background: #{pv_principal}; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0,0,0,0.25);"}>
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-            </div>
-            <input type="file" accept="image/*" style="display:none;" data-brand-id={"#{@brand.id}"} data-tipo="cover" data-ax="16" data-ay="7" onchange="abrirCropperFromInput(this)" />
-          </label>
-        </div>
- 
-        <button type="button" onclick="definirEstetica()" id="btn-definir-estetica" style="width:100%; margin-bottom: 22px; background:#186904; color:white; padding:14px 0; border:none; border-radius:16px; cursor:pointer; font-size:15px; font-weight:700; font-family:Poppins,sans-serif;">
-          Definir estética
-        </button>
- 
+          <% end %>
+        </.link>
+        <.link navigate="/mi-tienda/stock" style="display: block; text-align: center; background-color: white; color: #186904; padding: 12.5px; border-radius: 16px; border: 1.5px solid #186904; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
+          Gestionar Stock
+        </.link>
         <div style="height: 1px; background: #eee; margin: 8px 0 24px;"></div>
+ 
+        <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Mis Productos</p>
+ 
+        <style>
+          @keyframes blurCambioPrecio {
+            0% { filter: blur(0px); opacity: 1; }
+            45% { filter: blur(6px); opacity: 0.3; }
+            55% { filter: blur(6px); opacity: 0.3; }
+            100% { filter: blur(0px); opacity: 1; }
+          }
+          .precio-animado { animation: blurCambioPrecio 0.6s ease; }
+        </style>
+ 
+        <a href="/mi-tienda/productos" style="text-decoration: none; display: block; margin-bottom: 16px;">
+          <div style="display: flex; gap: 10px;">
+            <div style="flex: 1; display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; box-shadow: 0 3px 12px rgba(0,0,0,0.06); background: white;">
+              <div style="aspect-ratio: 3/4; background: white; display: flex; align-items: center; justify-content: center;">
+                <svg width="60%" height="60%" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M15 4l6 2v5h-3v8a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1v-8h-3v-5l6 -2a3 3 0 0 0 6 0"/>
+                </svg>
+              </div>
+              <div style="background: white; padding: 8px 10px;">
+                <p style="font-size: 12px; color: #888; margin: 0;">Remera</p>
+                <p id="precio-demo-1" class="precio-animado" style="font-size: 15px; font-weight: 700; color: #186904; margin: 0;">$99000</p>
+              </div>
+            </div>
+            <div style="flex: 1; display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; box-shadow: 0 3px 12px rgba(0,0,0,0.06); background: white;">
+              <div style="aspect-ratio: 3/4; background: white; display: flex; align-items: center; justify-content: center;">
+                <svg width="65%" height="65%" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 6h5.426a1 1 0 0 1 .863 .496l1.064 1.823a3 3 0 0 0 1.896 1.407l4.677 1.114a4 4 0 0 1 3.074 3.89v2.27a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-10a1 1 0 0 1 1 -1"/>
+                  <path d="M14 13l1 -2"/>
+                  <path d="M8 18v-1a4 4 0 0 0 -4 -4h-1"/>
+                  <path d="M10 12l1.5 -3"/>
+                </svg>
+              </div>
+              <div style="background: white; padding: 8px 10px;">
+                <p style="font-size: 12px; color: #888; margin: 0;">Zapatilla</p>
+                <p id="precio-demo-2" class="precio-animado" style="font-size: 15px; font-weight: 700; color: #186904; margin: 0;">$40000</p>
+              </div>
+            </div>
+          </div>
+        </a>
+ 
+        <script>
+          (function() {
+            const precios1 = [99000, 40000, 76000, 58000];
+            const precios2 = [40000, 76000, 99000, 58000];
+            let idx = 0;
+            setInterval(() => {
+              idx = (idx + 1) % precios1.length;
+              const el1 = document.getElementById('precio-demo-1');
+              const el2 = document.getElementById('precio-demo-2');
+              if (el1 && el2) {
+                el1.classList.remove('precio-animado'); void el1.offsetWidth; el1.classList.add('precio-animado');
+                el2.classList.remove('precio-animado'); void el2.offsetWidth; el2.classList.add('precio-animado');
+                setTimeout(() => {
+                  el1.textContent = '$' + precios1[idx].toLocaleString('es-AR');
+                  el2.textContent = '$' + precios2[idx].toLocaleString('es-AR');
+                }, 270);
+              }
+            }, 2600);
+          })();
+        </script>
+ 
+        <a href="/mi-tienda/productos" style="display: block; text-align: center; background-color: white; color: #186904; padding: 12.5px; border-radius: 16px; border: 1.5px solid #186904; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
+          Gestionar ProductosDale
+        </a>
+        <div style="height: 1px; background: #eee; margin: 8px 0 24px;"></div>
+ 
+        <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Mis Empleados</p>
+        <.link navigate="/mi-tienda/cajeros" style="text-decoration: none; background: white; border: 1.5px solid #186904; border-radius: 18px; padding: 20px 16px; box-shadow: 0 3px 12px rgba(24,105,4,0.08); display: flex; flex-direction: column; align-items: center; margin-bottom: 12px;">
+          <div style="position: relative; margin-bottom: 4px;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="#f5b301" stroke="#f5b301" style="position: absolute; top: -18px; left: 50%; transform: translateX(-50%); filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));"><path d="M2 18h20l-2-9-5 4-3-7-3 7-5-4-2 9z"/></svg>
+            <div style="width: 60px; height: 60px; border-radius: 50%; background: white; border: 2px solid #f0f0f0; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0,0,0,0.08);">
+              <span style="font-size: 26px; color: #111; font-weight: 800;">?</span>
+            </div>
+          </div>
+          <p style="font-size: 11px; color: #999; margin: 6px 0 0; font-family: Poppins, sans-serif; text-align: center;">Empleado del mes</p>
+        </.link>
+        <.link navigate="/mi-tienda/cajeros" style="display: block; text-align: center; background-color: white; color: #186904; padding: 12.5px; border-radius: 16px; border: 1.5px solid #186904; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
+          Gestionar empleados (<%= length(@cajeros) %>)
+        </.link>
+ 
         <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Mi Cupón</p>
  
     <%
@@ -526,102 +451,22 @@ defmodule DaleAppWeb.MiTiendaLive do
           </div>
         </div>
  
-        <a href="/mi-tienda/cupon" style="display: block; text-align: center; background-color: #186904; color: white; padding: 14px; border-radius: 16px; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
+        <a href="/mi-tienda/cupon" style="display: block; text-align: center; background-color: white; color: #186904; padding: 12.5px; border-radius: 16px; border: 1.5px solid #186904; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
           Gestionar cupón
         </a>
         <div style="height: 1px; background: #eee; margin: 8px 0 24px;"></div>
-        <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Mis Productos</p>
- 
-        <style>
-          @keyframes blurCambioPrecio {
-            0% { filter: blur(0px); opacity: 1; }
-            45% { filter: blur(6px); opacity: 0.3; }
-            55% { filter: blur(6px); opacity: 0.3; }
-            100% { filter: blur(0px); opacity: 1; }
-          }
-          .precio-animado { animation: blurCambioPrecio 0.6s ease; }
-        </style>
- 
-        <a href="/mi-tienda/productos" style="text-decoration: none; display: block; margin-bottom: 16px;">
-          <div style="display: flex; gap: 10px;">
-            <div style="flex: 1; display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; box-shadow: 0 3px 12px rgba(0,0,0,0.06); background: white;">
-              <div style="aspect-ratio: 3/4; background: white; display: flex; align-items: center; justify-content: center;">
-                <svg width="60%" height="60%" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M15 4l6 2v5h-3v8a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1v-8h-3v-5l6 -2a3 3 0 0 0 6 0"/>
-                </svg>
-              </div>
-              <div style="background: white; padding: 8px 10px;">
-                <p style="font-size: 12px; color: #888; margin: 0;">Remera</p>
-                <p id="precio-demo-1" class="precio-animado" style="font-size: 15px; font-weight: 700; color: #186904; margin: 0;">$99000</p>
-              </div>
-            </div>
-            <div style="flex: 1; display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; box-shadow: 0 3px 12px rgba(0,0,0,0.06); background: white;">
-              <div style="aspect-ratio: 3/4; background: white; display: flex; align-items: center; justify-content: center;">
-                <svg width="65%" height="65%" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M4 6h5.426a1 1 0 0 1 .863 .496l1.064 1.823a3 3 0 0 0 1.896 1.407l4.677 1.114a4 4 0 0 1 3.074 3.89v2.27a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-10a1 1 0 0 1 1 -1"/>
-                  <path d="M14 13l1 -2"/>
-                  <path d="M8 18v-1a4 4 0 0 0 -4 -4h-1"/>
-                  <path d="M10 12l1.5 -3"/>
-                </svg>
-              </div>
-              <div style="background: white; padding: 8px 10px;">
-                <p style="font-size: 12px; color: #888; margin: 0;">Zapatilla</p>
-                <p id="precio-demo-2" class="precio-animado" style="font-size: 15px; font-weight: 700; color: #186904; margin: 0;">$40000</p>
-              </div>
-            </div>
-          </div>
-        </a>
- 
-        <script>
-          (function() {
-            const precios1 = [99000, 40000, 76000, 58000];
-            const precios2 = [40000, 76000, 99000, 58000];
-            let idx = 0;
-            setInterval(() => {
-              idx = (idx + 1) % precios1.length;
-              const el1 = document.getElementById('precio-demo-1');
-              const el2 = document.getElementById('precio-demo-2');
-              if (el1 && el2) {
-                el1.classList.remove('precio-animado'); void el1.offsetWidth; el1.classList.add('precio-animado');
-                el2.classList.remove('precio-animado'); void el2.offsetWidth; el2.classList.add('precio-animado');
-                setTimeout(() => {
-                  el1.textContent = '$' + precios1[idx].toLocaleString('es-AR');
-                  el2.textContent = '$' + precios2[idx].toLocaleString('es-AR');
-                }, 270);
-              }
-            }, 2600);
-          })();
-        </script>
- 
-        <a href="/mi-tienda/productos" style="display: block; text-align: center; background-color: #186904; color: white; padding: 14px; border-radius: 16px; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
-          Gestionar productos
-        </a>
-        <div style="height: 1px; background: #eee; margin: 8px 0 24px;"></div>
- 
-        <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Stock</p>
-        <.link navigate="/mi-tienda/stock" style="display: block; text-align: center; background-color: #186904; color: white; padding: 14px; border-radius: 16px; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
-          Gestionar Stock
-        </.link>
-        <div style="height: 1px; background: #eee; margin: 8px 0 24px;"></div>
- 
-        <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Mis Empleados</p>
- 
-        <.link navigate="/mi-tienda/cajeros" style="display: block; text-align: center; background-color: #186904; color: white; padding: 14px; border-radius: 16px; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
-          Gestionar empleados (<%= length(@cajeros) %>)
-        </.link>
- 
         <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 28px 0 16px; text-transform: uppercase; letter-spacing: 1px;">Mis Sedes</p>
         <%= if @ubicaciones != [] do %>
-          <div style="background: white; border-radius: 18px; margin-bottom: 14px; border: 1.5px solid #186904; box-shadow: 0 3px 14px rgba(24,105,4,0.08); overflow: hidden;">
+          <.link navigate="/mi-tienda/sedes" style="display: block; text-decoration: none; background: white; border-radius: 18px; margin-bottom: 14px; border: 1.5px solid #186904; box-shadow: 0 3px 14px rgba(24,105,4,0.08); overflow: hidden;">
             <style>
               #mini-mapa-sedes .leaflet-tile-pane { filter: none; }
             </style>
-            <div id="mini-mapa-sedes" phx-update="ignore" style="width: 100%; height: 150px;"></div>
-          </div>
+            <div id="mini-mapa-sedes" phx-update="ignore" style="width: 100%; height: 150px; pointer-events: none;"></div>
+          </.link>
         <% else %>
-          <div style="background: #f2f9f2; border-radius: 18px; margin-bottom: 14px; border: 1.5px dashed #b8d4b3; padding: 24px 16px; text-align: center;">
+          <.link navigate="/mi-tienda/sedes" style="display: block; text-decoration: none; background: #f2f9f2; border-radius: 18px; margin-bottom: 14px; border: 1.5px dashed #b8d4b3; padding: 24px 16px; text-align: center;">
             <p style="font-size: 13px; color: #888; margin: 0; font-family: Poppins, sans-serif;">Todavía no agregaste ninguna sede.</p>
-          </div>
+          </.link>
         <% end %>
 
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -658,10 +503,28 @@ defmodule DaleAppWeb.MiTiendaLive do
             }
           })();
         </script>
-        <.link navigate="/mi-tienda/sedes" style="display: block; text-align: center; background-color: #186904; color: white; padding: 14px; border-radius: 16px; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
+        <.link navigate="/mi-tienda/sedes" style="display: block; text-align: center; background-color: white; color: #186904; padding: 12.5px; border-radius: 16px; border: 1.5px solid #186904; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
           Gestionar mis sedes
         </.link>
- 
+
+        <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Gestión</p>
+        <.link navigate="/mi-tienda/informacion" style="display: block; text-align: center; background-color: white; color: #186904; padding: 12.5px; border-radius: 16px; border: 1.5px solid #186904; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
+          Gestionar información
+        </.link>
+        <div style="height: 1px; background: #eee; margin: 8px 0 24px;"></div>
+
+        <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Estética</p>
+        <.link navigate="/mi-tienda/estetica" style="display: block; text-align: center; background-color: white; color: #186904; padding: 12.5px; border-radius: 16px; border: 1.5px solid #186904; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
+          Estética de marca
+        </.link>
+        <div style="height: 1px; background: #eee; margin: 8px 0 24px;"></div>
+
+        <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Suscripción</p>
+        <a href="#" style="display: block; text-align: center; background-color: white; color: #186904; padding: 12.5px; border-radius: 16px; border: 1.5px solid #186904; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
+          Mis Suscripciones
+        </a>
+        <div style="height: 1px; background: #eee; margin: 8px 0 24px;"></div>
+
         <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 28px 0 16px; text-transform: uppercase; letter-spacing: 1px;">Seguridad</p>
         <%= if @brand.pin_hash do %>
           <div style="width: 100%; text-align: center; background-color: #f0f0f0; color: #888; padding: 14px; border-radius: 16px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px; box-sizing: border-box;">
@@ -669,12 +532,12 @@ defmodule DaleAppWeb.MiTiendaLive do
           </div>
           <p style="font-size: 11px; color: #999; margin: 8px 4px 0; font-family: Poppins, sans-serif; line-height: 1.4;">Si lo olvidaste, contactá a soporte para restablecerlo.</p>
         <% else %>
-          <button type="button" onclick="document.getElementById('modal-crear-pin').style.display='flex'" style="width: 100%; text-align: center; background-color: #186904; color: white; padding: 14px; border-radius: 16px; border: none; cursor: pointer; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
+          <button type="button" onclick="document.getElementById('modal-crear-pin').style.display='flex'" style="width: 100%; text-align: center; background-color: white; color: #186904; padding: 12.5px; border-radius: 16px; border: 1.5px solid #186904; border: none; cursor: pointer; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
             Mi PIN
           </button>
           <p style="font-size: 11px; color: #999; margin: 8px 4px 0; font-family: Poppins, sans-serif; line-height: 1.4;">Te va a servir para autorizar cambios manuales, como corregir un día de asistencia.</p>
         <% end %>
- 
+
         <div id="modal-crear-pin" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.45); z-index:9999; align-items:center; justify-content:center;">
           <div style="background:#fff; border-radius:28px; width:300px; max-width:85%; padding:28px 24px; box-shadow:0 12px 40px rgba(0,0,0,0.25); text-align:center;">
             <div id="pin-paso-inicial">
@@ -692,7 +555,7 @@ defmodule DaleAppWeb.MiTiendaLive do
             <p id="pin-error" style="display:none; color:#c0392b; font-size:12px; margin-top:12px; font-family:Poppins,sans-serif;"></p>
           </div>
         </div>
- 
+
         <script>
           const csrfTokenPin = document.querySelector("meta[name='csrf-token']")?.getAttribute("content");
           async function crearPinAhora() {
@@ -713,10 +576,10 @@ defmodule DaleAppWeb.MiTiendaLive do
             }
           }
         </script>
+
       <% else %>
         <p style="font-family: Poppins, sans-serif; color: #666;">No tenés una tienda asignada todavía.</p>
       <% end %>
-      <a href="/" style="display: inline-block; margin-top: 24px; color: #186904; font-family: Poppins, sans-serif; font-size: 13px; text-decoration: none;">← Volver al inicio</a>
     </div>
  
     <!-- MODAL CROPPER -->
@@ -741,14 +604,10 @@ defmodule DaleAppWeb.MiTiendaLive do
       export default {
         mounted() {
           window.__miTiendaHook = this;
-        }
-      }
-    </script>
- 
-    <script>
+
       let gestionModificado = false;
       let esteticaModificado = false;
- 
+
       function igualarAlturaPreview() {
         const col = document.getElementById('preview-direcciones-col');
         const mapa = document.getElementById('preview-mapa-box');
@@ -758,13 +617,13 @@ defmodule DaleAppWeb.MiTiendaLive do
       }
       window.addEventListener('load', igualarAlturaPreview);
       setTimeout(igualarAlturaPreview, 300);
- 
-      function actualizarPreviewColor(variable, valor) {
+
+      window.actualizarPreviewColor = function(variable, valor) {
         esteticaModificado = true;
         document.getElementById('preview-tienda').style.setProperty('--c-' + variable, valor);
       }
- 
-      function aplicarPaletaRapida(principal, fondo, letras, gestion) {
+
+      window.aplicarPaletaRapida = function(principal, fondo, letras, gestion) {
         document.getElementById('color-input-principal').value = principal;
         document.getElementById('color-input-fondo').value = fondo;
         document.getElementById('color-input-letras').value = letras;
@@ -774,7 +633,7 @@ defmodule DaleAppWeb.MiTiendaLive do
         actualizarPreviewColor('letras', letras);
         actualizarPreviewColor('gestion', gestion);
       }
- 
+
       async function definirEstetica() {
         const btn = document.getElementById('btn-definir-estetica');
         btn.textContent = 'Guardando...'; btn.disabled = true;
@@ -796,7 +655,7 @@ defmodule DaleAppWeb.MiTiendaLive do
           btn.disabled = false;
         }
       }
- 
+
       // DIRECCIONES
       const addressHidden = document.getElementById('address-hidden');
       const addressFullHidden = document.getElementById('address-full-hidden');
@@ -807,11 +666,11 @@ defmodule DaleAppWeb.MiTiendaLive do
         if (dirs.length === 0) dirs.push('');
         dirs.forEach(dir => crearInput(dir, true));
       }
- 
+
       function crearInput(valor, esOriginal) {
         const fila = document.createElement('div');
         fila.style = 'margin-bottom: 8px; position: relative;';
- 
+
         const wrapper = document.createElement('div');
         wrapper.style = 'display: flex; gap: 8px; align-items: center;';
         const input = document.createElement('input');
@@ -821,10 +680,10 @@ defmodule DaleAppWeb.MiTiendaLive do
         input.placeholder = 'Ej: Av. Corrientes 1234';
         input.autocomplete = 'off';
         input.style = 'flex: 1; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box;';
- 
+
         const sugerenciasBox = document.createElement('div');
         sugerenciasBox.style = 'display:none; position:absolute; top:100%; left:0; right:0; background:white; border:1.5px solid #e0e0e0; border-radius:14px; margin-top:4px; z-index:50; box-shadow:0 6px 16px rgba(0,0,0,0.1); max-height:220px; overflow-y:auto;';
- 
+
         let debounceTimer = null;
         input.oninput = () => {
           delete input.dataset.corto;
@@ -835,20 +694,20 @@ defmodule DaleAppWeb.MiTiendaLive do
           debounceTimer = setTimeout(() => buscarSugerencias(q, sugerenciasBox, input), 400);
         };
         input.onblur = () => { setTimeout(() => { sugerenciasBox.style.display = 'none'; }, 150); };
- 
+
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.textContent = '✕';
         btn.style = 'background: none; border: none; cursor: pointer; color: #ccc; font-size: 18px;';
         btn.onclick = () => { fila.remove(); actualizarHidden(); };
- 
+
         wrapper.appendChild(input);
         wrapper.appendChild(btn);
         fila.appendChild(wrapper);
         fila.appendChild(sugerenciasBox);
         container.appendChild(fila);
       }
- 
+
       function buscarSugerencias(q, box, input) {
         box.innerHTML = '<div style="padding:12px 16px; font-size:13px; color:#999; font-family:Poppins,sans-serif;">Buscando...</div>';
         box.style.display = 'block';
@@ -880,9 +739,9 @@ defmodule DaleAppWeb.MiTiendaLive do
             box.innerHTML = '<div style="padding:12px 16px; font-size:13px; color:#c0392b; font-family:Poppins,sans-serif;">No se encontró esa dirección</div>';
           });
       }
- 
-      function agregarDireccion() { crearInput(''); }
- 
+
+      window.agregarDireccion = function() { crearInput(''); }
+
       function actualizarHidden() {
         gestionModificado = true;
         const inputs = container.querySelectorAll('input');
@@ -891,12 +750,12 @@ defmodule DaleAppWeb.MiTiendaLive do
         addressHidden.value = cortos.join('|');
         addressFullHidden.value = largos.join('|');
       }
- 
+
       // CATEGORÍAS
       const categoriasHiddenEl = document.getElementById('categorias-hidden');
       let seleccionadas = categoriasHiddenEl && categoriasHiddenEl.value ? categoriasHiddenEl.value.split(',').filter(c => c !== '') : [];
- 
-      function toggleCategoria(btn) {
+
+      window.toggleCategoria = function(btn) {
         gestionModificado = true;
         const cat = btn.getAttribute('data-cat');
         if (seleccionadas.includes(cat)) {
@@ -912,22 +771,22 @@ defmodule DaleAppWeb.MiTiendaLive do
         }
         categoriasHiddenEl.value = seleccionadas.join(',');
       }
- 
+
       // CROPPER
       let cropperInstance = null;
       let cropTipo = null;
       let cropBrandId = null;
       let cropOriginalFile = null;
       let cropOriginalImage = null;
- 
-      function abrirCropperFromInput(input) {
+
+      window.abrirCropperFromInput = function(input) {
         const brandId = input.dataset.brandId;
         const tipo = input.dataset.tipo;
         const ax = parseInt(input.dataset.ax);
         const ay = parseInt(input.dataset.ay);
         abrirCropper(input, tipo, ax, ay, brandId);
       }
- 
+
       function abrirCropper(input, tipo, ax, ay, brandId) {
         const file = input.files[0];
         if (!file) return;
@@ -959,7 +818,7 @@ defmodule DaleAppWeb.MiTiendaLive do
         reader.readAsDataURL(file);
         input.value = '';
       }
- 
+
       window.dale_cerrarCropper = function() {
         const modal = document.getElementById('cropper-modal');
         modal.style.display = 'none';
@@ -967,7 +826,7 @@ defmodule DaleAppWeb.MiTiendaLive do
         cropOriginalImage = null;
         cropOriginalFile = null;
       };
- 
+
       window.dale_confirmarCrop = function() {
         if (!cropperInstance || !cropOriginalImage) return;
         const cropData = cropperInstance.getData(true);
@@ -976,7 +835,7 @@ defmodule DaleAppWeb.MiTiendaLive do
         canvas.height = Math.round(cropData.height);
         const ctx = canvas.getContext('2d');
         ctx.drawImage(cropOriginalImage, Math.round(cropData.x), Math.round(cropData.y), Math.round(cropData.width), Math.round(cropData.height), 0, 0, Math.round(cropData.width), Math.round(cropData.height));
- 
+
         let logoBg = null;
         if (cropTipo === 'logo') {
           try {
@@ -993,7 +852,7 @@ defmodule DaleAppWeb.MiTiendaLive do
             logoBg = '#' + hex(r) + hex(g) + hex(b);
           } catch (e) { logoBg = null; }
         }
- 
+
         canvas.toBlob(function(blob) {
           const endpoint = cropTipo === 'logo' ? 'logo' : 'cover';
           const fieldName = cropTipo === 'logo' ? 'logo' : 'cover';
@@ -1012,7 +871,7 @@ defmodule DaleAppWeb.MiTiendaLive do
             });
         }, 'image/png');
       };
- 
+
       function direccionesInvalidas() {
         const inputs = document.querySelectorAll('#direcciones-container input[type="text"]');
         for (const input of inputs) {
@@ -1023,7 +882,7 @@ defmodule DaleAppWeb.MiTiendaLive do
         }
         return false;
       }
- 
+
       function recolectarDatosGestion() {
         return {
           name: document.getElementById('input-nombre-tienda').value,
@@ -1034,32 +893,32 @@ defmodule DaleAppWeb.MiTiendaLive do
           categorias: document.getElementById('categorias-hidden').value
         };
       }
- 
+
       function guardarGestion() {
         if (window.__miTiendaHook) {
           window.__miTiendaHook.pushEvent('guardar_gestion', { brand: recolectarDatosGestion() });
         }
       }
- 
-      function validarAntesDeGuardar(event) {
+
+      window.validarAntesDeGuardar = function(event) {
         event.preventDefault();
- 
+
         if (direccionesInvalidas()) {
           document.getElementById('aviso-error-gestion').style.display = 'flex';
           return false;
         }
- 
+
         const nombre = document.getElementById('input-nombre-tienda').value.trim();
         const horario = document.getElementById('input-horario-tienda').value.trim();
         const direccionesHidden = document.getElementById('address-hidden').value.trim();
         const categoriasHiddenVal = document.getElementById('categorias-hidden').value.trim();
- 
+
         const faltantes = [];
         if (!nombre) faltantes.push('No pusiste nombre a tu marca');
         if (!direccionesHidden) faltantes.push('No pusiste ninguna dirección');
         if (!categoriasHiddenVal) faltantes.push('No elegiste ninguna categoría');
         if (!horario) faltantes.push('No pusiste horario de atención');
- 
+
         if (faltantes.length > 0) {
           let html = '';
           faltantes.forEach(f => { html += f + '<br>'; });
@@ -1068,19 +927,27 @@ defmodule DaleAppWeb.MiTiendaLive do
           document.getElementById('aviso-confirmar-vacios').style.display = 'flex';
           return false;
         }
- 
+
         gestionModificado = false;
         guardarGestion();
         return false;
       }
- 
-      function continuarGuardadoGestion() {
+
+      window.continuarGuardadoGestion = function() {
         document.getElementById('aviso-confirmar-vacios').style.display = 'none';
         gestionModificado = false;
         guardarGestion();
       }
- 
-      function intentarVolver(event) {
+
+      // TODO (pendiente, sesión 23/08/26): la navegación Editor -> Vidriera (esta función,
+      // vía push_navigate 'volver_mi_stand') sigue haciendo recarga completa del navegador
+      // en vez de navegación fluida de LiveView. Hipótesis de Alan a revisar primero: puede
+      // tener que ver con cómo el botón flotante de root.html.heex verifica la URL actual
+      // (ver actualizarBotonMiTiendaFlotante, listener de 'phx:page-loading-stop' en
+      // root.html.heex) interfiriendo con esta navegación. Vidriera -> Editor (vía
+      // <.link navigate>) sí es instantánea. No se pudo diagnosticar más sin ver la consola
+      // del navegador en vivo.
+      window.intentarVolver = function(event) {
         event.preventDefault();
         if (esteticaModificado) {
           document.getElementById('aviso-salir-texto').textContent = 'Hiciste cambios sin guardar en Estética. ¿Querés guardarlos antes de salir?';
@@ -1091,11 +958,15 @@ defmodule DaleAppWeb.MiTiendaLive do
           document.getElementById('aviso-salir-sin-guardar').dataset.seccion = 'gestion';
           document.getElementById('aviso-salir-sin-guardar').style.display = 'flex';
         } else {
-          window.location.href = '/mi-stand';
+          if (window.__miTiendaHook) {
+            window.__miTiendaHook.pushEvent('volver_mi_stand', {});
+          } else {
+            window.location.href = '/mi-stand';
+          }
         }
       }
- 
-      async function guardarYSalir() {
+
+      window.guardarYSalir = async function() {
         const seccion = document.getElementById('aviso-salir-sin-guardar').dataset.seccion;
         document.getElementById('aviso-salir-sin-guardar').style.display = 'none';
         if (seccion === 'estetica') {
@@ -1106,10 +977,29 @@ defmodule DaleAppWeb.MiTiendaLive do
           guardarGestion();
         }
       }
- 
-      function salirSinGuardar() {
+
+      window.salirSinGuardar = function() {
         document.getElementById('aviso-salir-sin-guardar').style.display = 'none';
         window.location.href = '/mi-stand';
+      }
+        },
+        destroyed() {
+          if (window.__miTiendaHook === this) {
+            window.__miTiendaHook = null;
+          }
+          window.intentarVolver = undefined;
+          window.actualizarPreviewColor = undefined;
+          window.aplicarPaletaRapida = undefined;
+          window.agregarDireccion = undefined;
+          window.toggleCategoria = undefined;
+          window.abrirCropperFromInput = undefined;
+          window.dale_cerrarCropper = undefined;
+          window.dale_confirmarCrop = undefined;
+          window.validarAntesDeGuardar = undefined;
+          window.continuarGuardadoGestion = undefined;
+          window.guardarYSalir = undefined;
+          window.salirSinGuardar = undefined;
+        }
       }
     </script>
     """
