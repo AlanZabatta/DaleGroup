@@ -290,29 +290,30 @@ defmodule DaleAppWeb.CajerosLive do
         base
       end
 
-    from(v in query, group_by: [v.user_id, v.grupo_venta], select: {v.user_id, count(v.id)})
+    from(v in query,
+      group_by: [v.user_id, v.grupo_venta],
+      select: {v.user_id, count(v.id), min(v.inserted_at)}
+    )
     |> Repo.all()
-    |> Enum.group_by(fn {user_id, _cantidad} -> user_id end, fn {_user_id, cantidad} -> cantidad end)
-    |> Enum.map(fn {user_id, cantidades_por_grupo} ->
-      puntos = cantidades_por_grupo |> Enum.map(&puntos_venta/1) |> Enum.sum()
+    |> Enum.group_by(
+      fn {user_id, _cantidad, _fecha} -> user_id end,
+      fn {_user_id, cantidad, fecha} -> {NaiveDateTime.to_date(fecha), cantidad} end
+    )
+    |> Enum.map(fn {user_id, grupos_con_fecha} ->
+      puntos =
+        grupos_con_fecha
+        |> Enum.group_by(fn {dia, _cantidad} -> dia end, fn {_dia, cantidad} -> cantidad end)
+        |> Enum.map(fn {_dia, cantidades_del_dia} ->
+          DaleApp.Products.Puntos.aplicar_tope_diario_ventas(cantidades_del_dia)
+        end)
+        |> Enum.sum()
+
       {user_id, puntos}
     end)
     |> Enum.sort_by(fn {_user_id, puntos} -> puntos end, :desc)
     |> Enum.take(4)
     |> Enum.map(fn {user_id, puntos} -> {Accounts.get_user(user_id), puntos} end)
     |> Enum.reject(fn {cajero, _puntos} -> is_nil(cajero) end)
-  end
-
-  defp puntos_venta(cantidad_items) do
-    multiplicador =
-      cond do
-        cantidad_items <= 1 -> 1.0
-        cantidad_items == 2 -> 1.5
-        cantidad_items == 3 -> 2.0
-        true -> 3.0
-      end
-
-    round(10 * cantidad_items * multiplicador)
   end
 
   defp calcular_ranking_gestores(nil, _sede_id), do: []

@@ -1,13 +1,10 @@
 defmodule DaleAppWeb.MercadoPuntosLive do
   use DaleAppWeb, :live_view
 
-  import Ecto.Query
   alias DaleApp.Repo
   alias DaleApp.Accounts
-  alias DaleApp.Accounts.Asistencia
   alias DaleApp.Brands.Brand
   alias DaleApp.Products
-  alias DaleApp.Products.{Venta, MovimientoStock, IncidenciaStock}
 
   def mount(_params, session, socket) do
     user_id = session["user_id"]
@@ -226,22 +223,23 @@ defmodule DaleAppWeb.MercadoPuntosLive do
          )}
 
       true ->
+        usuario = Accounts.get_user(current_user_id)
+        costo_real = DaleApp.Products.Puntos.costo_para_usuario(brand, usuario, premio.puntos_costo)
         saldo_total = puntos_totales_de_usuario(brand, current_user_id)
         ya_canjeado = Products.total_canjeado_por_usuario(brand.id, current_user_id)
         saldo_disponible = saldo_total - ya_canjeado
 
-        if saldo_disponible < premio.puntos_costo do
+        if saldo_disponible < costo_real do
           {:noreply, assign(socket, error_canje: "No tenés puntos suficientes para este premio.")}
         else
-          usuario = Accounts.get_user(current_user_id)
-          puntos_despues = saldo_disponible - premio.puntos_costo
+          puntos_despues = saldo_disponible - costo_real
 
           Products.crear_canje(%{
             brand_id: brand.id,
             user_id: current_user_id,
             premio_id: premio.id,
             premio_nombre: premio.nombre,
-            puntos_costo: premio.puntos_costo,
+            puntos_costo: costo_real,
             puntos_antes: saldo_disponible,
             puntos_despues: puntos_despues,
             es_dueño: false
@@ -257,7 +255,7 @@ defmodule DaleAppWeb.MercadoPuntosLive do
              error_canje: nil,
              canje_resultado: %{
                usuario: usuario,
-               premio: premio,
+               premio: %{premio | puntos_costo: costo_real},
                puntos_antes: saldo_disponible,
                puntos_despues: puntos_despues,
                es_dueño: false,
@@ -268,79 +266,36 @@ defmodule DaleAppWeb.MercadoPuntosLive do
     end
   end
 
-  defp puntos_totales_de_usuario(brand, user_id) do
-    calcular_saldo_puntos(brand)
-    |> Enum.find(fn {cajero, _total} -> cajero.id == user_id end)
-    |> case do
-      {_cajero, total} -> total
-      nil -> 0
+  defp costo_mostrado(brand, es_dueño, current_user_id, precio_original) do
+    if es_dueño do
+      precio_original
+    else
+      usuario = Accounts.get_user(current_user_id)
+      DaleApp.Products.Puntos.costo_para_usuario(brand, usuario, precio_original)
     end
+  end
+
+  defp puntos_totales_de_usuario(brand, user_id) do
+    usuario = Accounts.get_user(user_id)
+    DaleApp.Products.Puntos.saldo_del_usuario(brand, usuario)
   end
 
   defp calcular_saldo_puntos(brand) do
     cajeros = Accounts.list_cajeros(brand.id)
-
-    puntos_asistencia =
-      from(a in Asistencia,
-        where: a.brand_id == ^brand.id,
-        group_by: a.user_id,
-        select: {a.user_id, sum(a.puntos)}
-      )
-      |> Repo.all()
-      |> Map.new()
-
-    puntos_ventas =
-      from(v in Venta,
-        where: v.brand_id == ^brand.id and not is_nil(v.user_id),
-        group_by: [v.user_id, v.grupo_venta],
-        select: {v.user_id, count(v.id)}
-      )
-      |> Repo.all()
-      |> Enum.group_by(fn {user_id, _cantidad} -> user_id end, fn {_user_id, cantidad} -> cantidad end)
-      |> Enum.map(fn {user_id, cantidades} -> {user_id, cantidades |> Enum.map(&puntos_venta/1) |> Enum.sum()} end)
-      |> Map.new()
-
-    puntos_creaciones =
-      from(m in MovimientoStock,
-        where: m.brand_id == ^brand.id and m.tipo_accion == "creado" and not is_nil(m.user_id),
-        group_by: m.user_id,
-        select: {m.user_id, count(m.id) * 10}
-      )
-      |> Repo.all()
-      |> Map.new()
-
-    puntos_incidencias =
-      from(i in IncidenciaStock,
-        where: i.brand_id == ^brand.id and i.resuelta == true and not is_nil(i.resuelto_por_user_id),
-        group_by: i.resuelto_por_user_id,
-        select: {i.resuelto_por_user_id, sum(i.puntos_otorgados)}
-      )
-      |> Repo.all()
-      |> Map.new()
+    saldos_ventas = DaleApp.Products.Puntos.saldo_ventas_por_usuario(brand)
+    saldos_gestores = DaleApp.Products.Puntos.saldo_gestores_por_usuario(brand)
 
     cajeros
     |> Enum.map(fn cajero ->
       total =
-        Map.get(puntos_asistencia, cajero.id, 0) +
-          Map.get(puntos_ventas, cajero.id, 0) +
-          Map.get(puntos_creaciones, cajero.id, 0) +
-          Map.get(puntos_incidencias, cajero.id, 0)
+        case DaleApp.Products.Puntos.categoria_del_usuario(cajero) do
+          "gestores" -> Map.get(saldos_gestores, cajero.id, 0)
+          _ -> Map.get(saldos_ventas, cajero.id, 0)
+        end
 
       {cajero, total}
     end)
     |> Enum.sort_by(fn {_cajero, total} -> total end, :desc)
-  end
-
-  defp puntos_venta(cantidad_items) do
-    multiplicador =
-      cond do
-        cantidad_items <= 1 -> 1.0
-        cantidad_items == 2 -> 1.5
-        cantidad_items == 3 -> 2.0
-        true -> 3.0
-      end
-
-    round(10 * cantidad_items * multiplicador)
   end
 
   defp nombre_corto(cajero) do
@@ -411,7 +366,7 @@ defmodule DaleAppWeb.MercadoPuntosLive do
                 <% end %>
               </div>
               <p style="font-size: 13px; font-weight: 700; color: #111; margin: 0; font-family: Poppins, sans-serif;"><%= premio.nombre %></p>
-              <p style="font-size: 11px; color: #186904; font-weight: 700; margin: 2px 0 0; font-family: Poppins, sans-serif;"><%= premio.puntos_costo %> pts</p>
+              <p style="font-size: 11px; color: #186904; font-weight: 700; margin: 2px 0 0; font-family: Poppins, sans-serif;"><%= costo_mostrado(@brand, @es_dueño, @current_user_id, premio.puntos_costo) %> pts</p>
               <p style="font-size: 10px; color: #999; margin: 2px 0 0; font-family: Poppins, sans-serif;">
                 <%= if premio.cantidad_disponible, do: "#{premio.cantidad_disponible} disponibles", else: "Ilimitado" %>
               </p>
@@ -603,7 +558,7 @@ defmodule DaleAppWeb.MercadoPuntosLive do
         <div id="overlay-confirmar-canje" phx-hook=".ModalSobreTodo" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.45); z-index: 9999; display: flex; align-items: center; justify-content: center; padding-top: 74px; padding-bottom: 115px; box-sizing: border-box;">
           <div style="background: #fff; border-radius: 24px; width: 300px; max-width: 88%; padding: 28px 22px; box-shadow: 0 12px 40px rgba(0,0,0,0.25); text-align: center;">
             <p style="font-size: 17px; font-weight: 700; color: #111; margin: 0 0 8px; font-family: Poppins, sans-serif;">¿Estás seguro que querés canjear "<%= @premio_a_canjear.nombre %>"?</p>
-            <p style="font-size: 14px; color: #186904; font-weight: 700; margin: 0 0 20px; font-family: Poppins, sans-serif;">Vale <%= @premio_a_canjear.puntos_costo %> pts</p>
+            <p style="font-size: 14px; color: #186904; font-weight: 700; margin: 0 0 20px; font-family: Poppins, sans-serif;">Vale <%= costo_mostrado(@brand, @es_dueño, @current_user_id, @premio_a_canjear.puntos_costo) %> pts</p>
 
             <%= if @error_canje do %>
               <p style="color: #c0392b; font-size: 13px; margin: 0 0 14px; font-family: Poppins, sans-serif;"><%= @error_canje %></p>
