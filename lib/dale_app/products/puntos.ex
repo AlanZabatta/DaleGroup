@@ -33,6 +33,16 @@ defmodule DaleApp.Products.Puntos do
   @peso_convergencia_incremento_por_ciclo 0.10
   @peso_convergencia_maximo 0.95
 
+  # Minimo de personas que generaron puntos en una categoria para confiar en
+  # el dato. Al medir por persona (y no por pool total), alcanza con una.
+  @minimo_activos_para_calibrar 1
+
+  # Factor de arranque cuando todavia no hay datos suficientes. NO es 1.0 a
+  # proposito: 1.0 significa que Gestores paga el precio completo, que es el
+  # peor caso posible para ellos. Sin informacion, el sistema falla hacia el
+  # lado generoso y despues el promedio movil lo acomoda contra la realidad.
+  @factor_inicial_sin_datos 3.0
+
   @bonus_podio_ventas %{1 => 200, 2 => 120, 3 => 80, 4 => 50}
   @bonus_podio_gestores %{1 => 400, 2 => 300, 3 => 250, 4 => 200}
   @bonus_podio_default_gestores 150
@@ -259,15 +269,27 @@ defmodule DaleApp.Products.Puntos do
     desde_date = Date.add(hasta_date, -@dias_ventana_circulacion)
     {desde_dt, hasta_dt} = rango_naive(desde_date, hasta_date)
 
-    generado_ventas = puntos_ventas_por_usuario(brand_id, desde_date, hasta_date) |> Map.values() |> Enum.sum()
-    generado_gestores = puntos_gestores_por_usuario(brand_id, desde_date, hasta_date) |> Map.values() |> Enum.sum()
+    puntos_ventas = puntos_ventas_por_usuario(brand_id, desde_date, hasta_date)
+    puntos_gestores = puntos_gestores_por_usuario(brand_id, desde_date, hasta_date)
+
+    generado_ventas = puntos_ventas |> Map.values() |> Enum.sum()
+    generado_gestores = puntos_gestores |> Map.values() |> Enum.sum()
+
     gastado_ventas = gastado_categoria(brand_id, "ventas", desde_dt, hasta_dt)
     gastado_gestores = gastado_categoria(brand_id, "gestores", desde_dt, hasta_dt)
 
     circulacion_ventas = max(generado_ventas - gastado_ventas, 0)
     circulacion_gestores = max(generado_gestores - gastado_gestores, 0)
 
-    {circulacion_ventas, circulacion_gestores}
+    {circulacion_ventas, circulacion_gestores, contar_activos(puntos_ventas),
+     contar_activos(puntos_gestores)}
+  end
+
+  # Cuenta empleados que REALMENTE generaron puntos en la ventana. No usamos la
+  # nomina: alguien cargado en el sistema que nunca trabajo bajaria el promedio
+  # y volveria a meter el mismo ruido que estamos sacando.
+  defp contar_activos(mapa_puntos) do
+    mapa_puntos |> Map.values() |> Enum.count(&(&1 > 0))
   end
 
   @doc """
@@ -292,16 +314,28 @@ defmodule DaleApp.Products.Puntos do
     end
   end
 
-  defp factor_objetivo(circulacion_ventas, circulacion_gestores, peso_convergencia, factor_resguardo)
-       when circulacion_gestores >= @minimo_pool_para_calibrar do
-    real = circulacion_ventas / circulacion_gestores
+  # El ratio se mide POR PERSONA, no por pool total. Un pool total escala con
+  # la cantidad de gente: 20 vendedores contra 2 gestores da un 10x que no
+  # tiene nada que ver con el esfuerzo, y si un gestor se va el ratio se
+  # duplica solo. Dividido por activos, un equipo de 2 y uno de 40 dan el
+  # mismo numero si trabajan al mismo ritmo.
+  defp factor_objetivo(
+         {circ_ventas, circ_gestores, activos_ventas, activos_gestores},
+         peso_convergencia,
+         _factor_resguardo
+       )
+       when activos_ventas >= @minimo_activos_para_calibrar and
+              activos_gestores >= @minimo_activos_para_calibrar and
+              circ_ventas > 0 and circ_gestores > 0 do
+    promedio_ventas = circ_ventas / activos_ventas
+    promedio_gestores = circ_gestores / activos_gestores
+    real = promedio_ventas / promedio_gestores
     real * (1 - peso_convergencia) + 1.0 * peso_convergencia
   end
 
-  # Circulación de Gestores insuficiente para confiar en el dato (muestra chica
-  # y ruidosa, típico de marcas con poco personal en esa categoría): el sistema
-  # NO se mueve ese día, mantiene el factor de ayer hasta tener data confiable.
-  defp factor_objetivo(_circulacion_ventas, _circulacion_gestores, _peso_convergencia, factor_resguardo),
+  # Sin nadie activo en alguna categoria (o sin circulacion): no hay dato que
+  # leer, el sistema mantiene el factor que traia.
+  defp factor_objetivo(_circulacion, _peso_convergencia, factor_resguardo),
     do: factor_resguardo
 
   @doc """
@@ -340,11 +374,12 @@ defmodule DaleApp.Products.Puntos do
         factor
 
       nil ->
-        {circulacion_ventas, circulacion_gestores} = circulacion_ventana(brand.id, hoy)
+        circulacion = circulacion_ventana(brand.id, hoy)
+        {circulacion_ventas, circulacion_gestores, _, _} = circulacion
         peso_convergencia = peso_convergencia_vigente(brand)
         anterior = factor_de_ayer(brand.id, hoy)
-        factor_resguardo = anterior || 1.0
-        objetivo = factor_objetivo(circulacion_ventas, circulacion_gestores, peso_convergencia, factor_resguardo)
+        factor_resguardo = anterior || @factor_inicial_sin_datos
+        objetivo = factor_objetivo(circulacion, peso_convergencia, factor_resguardo)
 
         dentro_del_periodo_regulatorio? =
           brand.empleado_puntos_activada_en &&
