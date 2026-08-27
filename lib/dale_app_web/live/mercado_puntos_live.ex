@@ -224,10 +224,11 @@ defmodule DaleAppWeb.MercadoPuntosLive do
 
       true ->
         usuario = Accounts.get_user(current_user_id)
-        costo_real = DaleApp.Products.Puntos.costo_para_usuario(brand, usuario, premio.puntos_costo)
-        saldo_total = puntos_totales_de_usuario(brand, current_user_id)
-        ya_canjeado = Products.total_canjeado_por_usuario(brand.id, current_user_id)
-        saldo_disponible = saldo_total - ya_canjeado
+        # El precio ya es el precio final en la moneda del premio. El saldo
+        # se mide en ESA categoria, no en la del rol del usuario: asi un
+        # multitask gasta del balde correcto segun que este comprando.
+        costo_real = premio.puntos_costo
+        saldo_disponible = DaleApp.Products.SaldoPuntos.saldo(brand.id, current_user_id, premio.categoria)
 
         if saldo_disponible < costo_real do
           {:noreply, assign(socket, error_canje: "No tenés puntos suficientes para este premio.")}
@@ -266,36 +267,25 @@ defmodule DaleAppWeb.MercadoPuntosLive do
     end
   end
 
-  defp costo_mostrado(brand, es_dueño, current_user_id, precio_original) do
-    if es_dueño do
-      precio_original
-    else
-      usuario = Accounts.get_user(current_user_id)
-      DaleApp.Products.Puntos.costo_para_usuario(brand, usuario, precio_original)
-    end
+  # Monedas separadas: el precio de un premio YA es el precio final en su
+  # categoria. No hay conversion — antes esto llamaba a costo_para_usuario,
+  # el tipo de cambio viejo, que quedo sin uso.
+  defp costo_mostrado(_brand, _es_dueño, _current_user_id, precio_original) do
+    precio_original
   end
 
-  defp puntos_totales_de_usuario(brand, user_id) do
-    usuario = Accounts.get_user(user_id)
-    DaleApp.Products.Puntos.saldo_del_usuario(brand, usuario)
-  end
-
+  # Un empleado multitask tiene DOS saldos, no uno: lo que gano vendiendo y
+  # lo que gano cargando stock son cosas distintas. Por eso esto ya no
+  # devuelve un total — devuelve los dos saldos, y el que sea 0 se puede
+  # ocultar en pantalla (cajero y gestor puros siempre tienen uno en 0).
   defp calcular_saldo_puntos(brand) do
     cajeros = Accounts.list_cajeros(brand.id)
-    saldos_ventas = DaleApp.Products.Puntos.saldo_ventas_por_usuario(brand)
-    saldos_gestores = DaleApp.Products.Puntos.saldo_gestores_por_usuario(brand)
 
     cajeros
     |> Enum.map(fn cajero ->
-      total =
-        case DaleApp.Products.Puntos.categoria_del_usuario(cajero) do
-          "gestores" -> Map.get(saldos_gestores, cajero.id, 0)
-          _ -> Map.get(saldos_ventas, cajero.id, 0)
-        end
-
-      {cajero, total}
+      {cajero, DaleApp.Products.SaldoPuntos.saldos(brand.id, cajero.id)}
     end)
-    |> Enum.sort_by(fn {_cajero, total} -> total end, :desc)
+    |> Enum.sort_by(fn {_cajero, saldos} -> saldos["ventas"] + saldos["gestores"] end, :desc)
   end
 
   defp nombre_corto(cajero) do
@@ -389,7 +379,7 @@ defmodule DaleAppWeb.MercadoPuntosLive do
         <%
           colores_saldo = ["#E91E8C", "#186904", "#2b2b2b", "#0066cc", "#e67e22", "#8e44ad", "#c0392b", "#16a085"]
         %>
-        <%= for {cajero, total} <- @saldo_empleados do %>
+        <%= for {cajero, saldos} <- @saldo_empleados do %>
           <div style="display: flex; align-items: center; justify-content: space-between; background: white; border: 1.5px solid #f0f0f0; border-radius: 14px; padding: 10px 14px; margin-bottom: 8px;">
             <div style="display: flex; align-items: center; gap: 10px;">
               <div style={"width: 36px; height: 36px; border-radius: 50%; background: #{Enum.at(colores_saldo, rem(cajero.id, length(colores_saldo)))}; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; flex-shrink: 0;"}>
@@ -400,7 +390,17 @@ defmodule DaleAppWeb.MercadoPuntosLive do
               </div>
               <p style="font-size: 13px; font-weight: 700; color: #111; margin: 0; font-family: Poppins, sans-serif;"><%= nombre_corto(cajero) %></p>
             </div>
-            <p style="font-size: 14px; font-weight: 800; color: #186904; margin: 0; font-family: Poppins, sans-serif;"><%= total %> pts</p>
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+              <%= if saldos["ventas"] > 0 do %>
+                <p style="font-size: 13px; font-weight: 800; color: #186904; margin: 0; font-family: Poppins, sans-serif;"><%= saldos["ventas"] %> pts <span style="font-size: 10px; font-weight: 600; color: #999;">Ventas</span></p>
+              <% end %>
+              <%= if saldos["gestores"] > 0 do %>
+                <p style="font-size: 13px; font-weight: 800; color: #186904; margin: 0; font-family: Poppins, sans-serif;"><%= saldos["gestores"] %> pts <span style="font-size: 10px; font-weight: 600; color: #999;">Gestores</span></p>
+              <% end %>
+              <%= if saldos["ventas"] == 0 and saldos["gestores"] == 0 do %>
+                <p style="font-size: 13px; font-weight: 800; color: #999; margin: 0; font-family: Poppins, sans-serif;">0 pts</p>
+              <% end %>
+            </div>
           </div>
         <% end %>
       <% end %>
