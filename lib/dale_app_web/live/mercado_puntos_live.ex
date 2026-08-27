@@ -483,8 +483,8 @@ defmodule DaleAppWeb.MercadoPuntosLive do
       </script>
 
       <%= if @mostrar_modal_premio do %>
-        <div id="overlay-modal-premio" phx-hook=".ModalSobreTodo" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #fff; z-index: 9999; overflow-y: auto; overflow-x: hidden; touch-action: pan-y;">
-          <div style="max-width: 480px; margin: 0 auto; padding: 24px 20px 100px; box-sizing: border-box;">
+        <div id="overlay-modal-premio" style="background: #fff; position: relative; z-index: 1;">
+          <div style="max-width: 480px; margin: 0 auto; padding: 8px 20px 100px; box-sizing: border-box;">
             <p style="font-size: 22px; font-weight: 800; color: #186904; margin: 0 0 4px; text-align: center;">
               <%= if @editando_premio, do: "Editar premio", else: "Nuevo premio" %>
             </p>
