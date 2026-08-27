@@ -9,6 +9,8 @@ defmodule DaleApp.Products.Premio do
     field :puntos_costo, :integer
     field :cantidad_disponible, :integer
     field :activo, :boolean, default: true
+    # "ventas" | "gestores" — a que economia pertenece este premio.
+    field :categoria, :string, default: "ventas"
 
     belongs_to :brand, DaleApp.Brands.Brand
 
@@ -17,8 +19,9 @@ defmodule DaleApp.Products.Premio do
 
   def changeset(premio, attrs) do
     premio
-    |> cast(attrs, [:brand_id, :nombre, :icono, :imagen_url, :puntos_costo, :activo, :cantidad_disponible])
-    |> validate_required([:brand_id, :nombre, :puntos_costo])
+    |> cast(attrs, [:brand_id, :nombre, :icono, :imagen_url, :puntos_costo, :activo, :cantidad_disponible, :categoria])
+    |> validate_required([:brand_id, :nombre, :puntos_costo, :categoria])
+    |> validate_inclusion(:categoria, ["ventas", "gestores"])
     |> validate_number(:puntos_costo, greater_than: 0)
     |> validate_number(:cantidad_disponible, greater_than_or_equal_to: 0)
   end
