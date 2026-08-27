@@ -133,45 +133,6 @@ defmodule DaleAppWeb.MercadoPuntosLive do
       limitar? && (is_nil(cantidad_num) || cantidad_num < 0) ->
         {:noreply, assign(socket, error_premio: "Te faltó poner cuántas unidades hay disponibles (0 o más).")}
 
-      # Multitask: dos premios, uno por categoria, en una sola transaccion —
-      # si uno falla no queda el otro creado a medias.
-      categoria == "multitask" and is_nil(socket.assigns.editando_premio) ->
-        puntos_ventas = parse_puntos.("puntos_ventas")
-        puntos_gestores = parse_puntos.("puntos_gestores")
-
-        cond do
-          is_nil(puntos_ventas) or is_nil(puntos_gestores) ->
-            {:noreply, assign(socket, error_premio: "Te faltó poner el precio en puntos para Vendedores y para Gestores.")}
-
-          true ->
-            resultado =
-              Repo.transaction(fn ->
-                with {:ok, p1} <- Products.crear_premio(base.("ventas", puntos_ventas)),
-                     {:ok, p2} <- Products.crear_premio(base.("gestores", puntos_gestores)) do
-                  {p1, p2}
-                else
-                  {:error, changeset} -> Repo.rollback(changeset)
-                end
-              end)
-
-            case resultado do
-              {:ok, _pares} ->
-                premios = Products.listar_premios(brand.id)
-
-                {:noreply,
-                 assign(socket,
-                   premios: premios,
-                   mostrar_modal_premio: false,
-                   editando_premio: nil,
-                   icono_elegido_premio: nil,
-                   error_premio: nil
-                 )}
-
-              {:error, _changeset} ->
-                {:noreply, assign(socket, error_premio: "No se pudo guardar el premio, revisá los datos.")}
-            end
-        end
-
       true ->
         puntos_num = parse_puntos.("puntos")
 
@@ -553,23 +514,10 @@ defmodule DaleAppWeb.MercadoPuntosLive do
             <form id="form-premio" phx-submit="guardar_premio">
               <input type="text" name="nombre" placeholder="Nombre del premio" autocomplete="off" oninput="window.premioModificado = true;" value={if @editando_premio, do: @editando_premio.nombre, else: ""} style="width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1.5px solid #e0e0e0; border-radius: 14px; font-family: Poppins, sans-serif; font-size: 14px; outline: none; margin-bottom: 8px;" />
 
-              <%= if is_nil(@editando_premio) and @categoria_elegida_premio == "multitask" do %>
-                <div style="border: 1.5px solid #eef0ea; border-radius: 14px; padding: 12px; margin-bottom: 8px;">
-                  <p style="font-size: 12px; font-weight: 700; color: #186904; margin: 0 0 6px; font-family: Poppins, sans-serif;">Precio para Vendedores</p>
-                  <input type="number" name="puntos_ventas" placeholder="Puntos" autocomplete="off" oninput="window.premioModificado = true;" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1.5px solid #e0e0e0; border-radius: 12px; font-family: Poppins, sans-serif; font-size: 14px; outline: none; margin-bottom: 4px;" />
-                  <p style="font-size: 11px; color: #999; margin: 0; font-family: Poppins, sans-serif;"><%= raw(horizontes_texto(@brand, "ventas")) %></p>
-                </div>
-                <div style="border: 1.5px solid #eef0ea; border-radius: 14px; padding: 12px; margin-bottom: 8px;">
-                  <p style="font-size: 12px; font-weight: 700; color: #186904; margin: 0 0 6px; font-family: Poppins, sans-serif;">Precio para Gestores</p>
-                  <input type="number" name="puntos_gestores" placeholder="Puntos" autocomplete="off" oninput="window.premioModificado = true;" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1.5px solid #e0e0e0; border-radius: 12px; font-family: Poppins, sans-serif; font-size: 14px; outline: none; margin-bottom: 4px;" />
-                  <p style="font-size: 11px; color: #999; margin: 0; font-family: Poppins, sans-serif;"><%= raw(horizontes_texto(@brand, "gestores")) %></p>
-                </div>
-              <% else %>
                 <input type="number" name="puntos" placeholder="Cuántos puntos cuesta" autocomplete="off" oninput="window.premioModificado = true;" value={if @editando_premio, do: @editando_premio.puntos_costo, else: ""} style="width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1.5px solid #e0e0e0; border-radius: 14px; font-family: Poppins, sans-serif; font-size: 14px; outline: none; margin-bottom: 4px;" />
                 <p style="font-size: 11px; color: #999; margin: 0 0 8px; font-family: Poppins, sans-serif;">
                   <%= raw(horizontes_texto(@brand, if(@editando_premio, do: @editando_premio.categoria, else: @categoria_elegida_premio))) %>
                 </p>
-              <% end %>
 
               <div style="display: flex; align-items: center; justify-content: space-between; padding: 4px 2px; margin-bottom: 8px;">
                 <p style="font-size: 13px; color: #333; margin: 0; font-family: Poppins, sans-serif;">¿Cantidad limitada?</p>
