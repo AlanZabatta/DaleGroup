@@ -176,10 +176,48 @@ defmodule DaleApp.Products do
   # --- Bitácora de Stock ---
 
   def registrar_movimiento_stock(attrs) do
-    %DaleApp.Products.MovimientoStock{}
-    |> DaleApp.Products.MovimientoStock.changeset(attrs)
-    |> Repo.insert()
+    resultado =
+      %DaleApp.Products.MovimientoStock{}
+      |> DaleApp.Products.MovimientoStock.changeset(attrs)
+      |> Repo.insert()
+
+    # Los puntos se registran DESPUES y aparte a proposito: si algo falla al
+    # calcularlos, el movimiento de stock ya quedo guardado. El trabajo del
+    # empleado nunca se pierde por un problema del sistema de puntos.
+    case resultado do
+      {:ok, movimiento} ->
+        otorgar_puntos_por_creacion(movimiento)
+        resultado
+
+      _ ->
+        resultado
+    end
   end
+
+  @puntos_por_item_creado 10
+
+  defp otorgar_puntos_por_creacion(%{tipo_accion: "creado", user_id: user_id, brand_id: brand_id} = mov)
+       when not is_nil(user_id) and not is_nil(brand_id) do
+    usuario = Repo.get(DaleApp.Accounts.User, user_id)
+    brand = Repo.get(DaleApp.Brands.Brand, brand_id)
+
+    DaleApp.Products.RegistroPuntos.registrar(
+      brand,
+      usuario,
+      "creacion_stock",
+      @puntos_por_item_creado,
+      origen_tipo: "movimiento_stock",
+      origen_id: mov.id
+    )
+  rescue
+    # Nunca dejar que un error de puntos tumbe la carga de stock.
+    e ->
+      require Logger
+      Logger.error("Fallo al otorgar puntos por creacion de stock: " <> Exception.message(e))
+      {:error, :excepcion}
+  end
+
+  defp otorgar_puntos_por_creacion(_movimiento), do: :ignorado
 
   def listar_movimientos_stock(brand_id, limite \\ 50, sede_id \\ nil) do
     query =
