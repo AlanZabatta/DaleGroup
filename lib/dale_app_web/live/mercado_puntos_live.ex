@@ -9,9 +9,22 @@ defmodule DaleAppWeb.MercadoPuntosLive do
   def mount(_params, session, socket) do
     user_id = session["user_id"]
     brand = if user_id, do: Repo.get_by(Brand, user_id: user_id), else: nil
-    premios = if brand, do: Products.listar_premios(brand.id), else: []
-    saldo_empleados = if brand, do: calcular_saldo_puntos(brand), else: []
     es_dueño = brand && brand.user_id == user_id
+
+    # El dueño administra el catalogo completo, ve todo. Un empleado solo ve
+    # (y puede comprar) los premios de SU categoria — un cajero no ve los
+    # premios de Gestores, y viceversa.
+    premios =
+      cond do
+        is_nil(brand) -> []
+        es_dueño -> Products.listar_premios(brand.id)
+        true ->
+          usuario = Accounts.get_user(user_id)
+          categoria = DaleApp.Products.RegistroPuntos.categoria_de_rol(usuario)
+          Products.listar_premios(brand.id) |> Enum.filter(&(&1.categoria == categoria))
+      end
+
+    saldo_empleados = if brand, do: calcular_saldo_puntos(brand), else: []
 
     {:ok,
      assign(socket,
