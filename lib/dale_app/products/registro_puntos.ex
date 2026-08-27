@@ -11,6 +11,7 @@ defmodule DaleApp.Products.RegistroPuntos do
   """
   alias DaleApp.Repo
   alias DaleApp.Products.{MovimientoPuntos, Puntos}
+  # Puntos se sigue usando para categoria_del_usuario/1.
 
   @doc """
   Registra puntos ganados. Devuelve {:ok, movimiento}, {:ok, :duplicado} si
@@ -66,15 +67,13 @@ defmodule DaleApp.Products.RegistroPuntos do
 
   def registrar(_brand, _usuario, _motivo, _puntos_crudos, _opciones), do: {:error, :faltan_datos}
 
-  # Ventas es la referencia: siempre 1.0. Gestores lleva el factor calculado
-  # de la marca. OJO: el factor se calcula sobre puntos CRUDOS (ver Puntos),
-  # nunca sobre los ya multiplicados, o el sistema se retroalimenta y oscila.
-  defp multiplicador_de(_brand, "ventas"), do: 1.0
-
-  defp multiplicador_de(brand, "gestores") do
-    case Puntos.factor_vigente(brand) do
-      factor when is_number(factor) and factor > 0 -> factor * 1.0
-      _ -> 1.0
-    end
-  end
+  # Monedas separadas: los puntos de Ventas y los de Gestores NO se convierten
+  # entre si. Cada categoria tiene sus propios premios con sus propios precios,
+  # que pone el dueno. No hay tipo de cambio porque no hay nada que cambiar:
+  # cargar un item y vender una campera no son la misma cosa medida distinto.
+  #
+  # El multiplicador queda en 1.0 para todos. Se conserva el campo en la tabla
+  # por si en el futuro se quiere ajustar algo, y para no perder el historial
+  # de las filas que ya se escribieron con otro valor.
+  defp multiplicador_de(_brand, _categoria), do: 1.0
 end
