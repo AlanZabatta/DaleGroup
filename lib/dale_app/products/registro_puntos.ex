@@ -10,8 +10,7 @@ defmodule DaleApp.Products.RegistroPuntos do
   siempre vale 1.0: sus puntos crudos y finales son el mismo numero.
   """
   alias DaleApp.Repo
-  alias DaleApp.Products.{MovimientoPuntos, Puntos}
-  # Puntos se sigue usando para categoria_del_usuario/1.
+  alias DaleApp.Products.MovimientoPuntos
 
   @doc """
   Registra puntos ganados. Devuelve {:ok, movimiento}, {:ok, :duplicado} si
@@ -31,7 +30,7 @@ defmodule DaleApp.Products.RegistroPuntos do
 
   def registrar(brand, usuario, motivo, puntos_crudos, opciones)
       when not is_nil(brand) and not is_nil(usuario) do
-    categoria = Puntos.categoria_del_usuario(usuario)
+    categoria = categoria_de(motivo)
     multiplicador = multiplicador_de(brand, categoria)
 
     attrs = %{
@@ -76,4 +75,16 @@ defmodule DaleApp.Products.RegistroPuntos do
   # por si en el futuro se quiere ajustar algo, y para no perder el historial
   # de las filas que ya se escribieron con otro valor.
   defp multiplicador_de(_brand, _categoria), do: 1.0
+
+  # La categoria sale de QUE HIZO la persona, no de su rol. Es lo que permite
+  # que un empleado multitask (vende Y carga stock) tenga los dos balances
+  # separados y correctos: cuando vende, entra a Ventas; cuando carga stock,
+  # entra a Gestores. Antes esto miraba el rol del usuario, y un multitask
+  # perdia todos sus puntos de Gestores porque su rol no mapeaba a ninguna
+  # categoria conocida.
+  defp categoria_de("venta"), do: "ventas"
+  defp categoria_de("creacion_stock"), do: "gestores"
+  defp categoria_de("incidencia"), do: "gestores"
+  defp categoria_de("asistencia"), do: "ventas"
+  defp categoria_de("podio"), do: "ventas"
 end
