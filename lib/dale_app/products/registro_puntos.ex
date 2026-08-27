@@ -28,9 +28,19 @@ defmodule DaleApp.Products.RegistroPuntos do
     {:error, :puntos_invalidos}
   end
 
+  def registrar(brand, usuario, motivo, _puntos_crudos, _opciones)
+      when not is_nil(brand) and not is_nil(usuario) and motivo != "asistencia" and
+             usuario.role == "gerente" do
+    # El gerente controla el ritmo de ventas y de carga de stock con su propio
+    # trabajo — dejarlo cobrar ahi abre la puerta a que se autoasigne puntos
+    # inflando numeros que el mismo genera. Asistencia si cobra: es un hecho
+    # binario que no puede manipular.
+    {:error, :rol_sin_puntos}
+  end
+
   def registrar(brand, usuario, motivo, puntos_crudos, opciones)
       when not is_nil(brand) and not is_nil(usuario) do
-    categoria = categoria_de(motivo)
+    categoria = categoria_de(usuario)
     multiplicador = multiplicador_de(brand, categoria)
 
     attrs = %{
@@ -76,15 +86,13 @@ defmodule DaleApp.Products.RegistroPuntos do
   # de las filas que ya se escribieron con otro valor.
   defp multiplicador_de(_brand, _categoria), do: 1.0
 
-  # La categoria sale de QUE HIZO la persona, no de su rol. Es lo que permite
-  # que un empleado multitask (vende Y carga stock) tenga los dos balances
-  # separados y correctos: cuando vende, entra a Ventas; cuando carga stock,
-  # entra a Gestores. Antes esto miraba el rol del usuario, y un multitask
-  # perdia todos sus puntos de Gestores porque su rol no mapeaba a ninguna
-  # categoria conocida.
-  defp categoria_de("venta"), do: "ventas"
-  defp categoria_de("creacion_stock"), do: "gestores"
-  defp categoria_de("incidencia"), do: "gestores"
-  defp categoria_de("asistencia"), do: "ventas"
-  defp categoria_de("podio"), do: "ventas"
+  # La categoria sale del ROL de la persona: cajero -> ventas, gestiones ->
+  # gestores, multitask -> multitask (UNA bolsa unica, sin importar si esa
+  # vez vendio o cargo stock — no se suman dos balances separados, es la
+  # misma bolsa). Gerente llega aca solo por asistencia (la clausula de
+  # arriba ya bloquea todo lo demas).
+  defp categoria_de(%{role: "cajero"}), do: "ventas"
+  defp categoria_de(%{role: "gestiones"}), do: "gestores"
+  defp categoria_de(%{role: "multitask"}), do: "multitask"
+  defp categoria_de(%{role: "gerente"}), do: "gerente"
 end
