@@ -37,10 +37,15 @@ defmodule DaleApp.Products.Puntos do
   # el dato. Al medir por persona (y no por pool total), alcanza con una.
   @minimo_activos_para_calibrar 1
 
-  # Factor de arranque cuando todavia no hay datos suficientes. NO es 1.0 a
-  # proposito: 1.0 significa que Gestores paga el precio completo, que es el
-  # peor caso posible para ellos. Sin informacion, el sistema falla hacia el
-  # lado generoso y despues el promedio movil lo acomoda contra la realidad.
+  # Factor de arranque cuando todavia no hay datos. No es un numero al azar:
+  # es la asimetria que crean las propias reglas. Una venta tipica (2 items)
+  # paga 30 puntos; cargar un item paga 10. Tres a uno. Mientras la marca no
+  # tenga historial, se asume esa relacion y despues el promedio movil la
+  # ajusta contra lo que realmente pase en ese local.
+  #
+  # NO poner 1.0: significa que Gestores paga el precio completo, el peor
+  # caso posible para ellos. Sin datos, el sistema falla hacia el lado
+  # generoso, no hacia el que castiga.
   @factor_inicial_sin_datos 3.0
 
   @bonus_podio_ventas %{1 => 200, 2 => 120, 3 => 80, 4 => 50}
