@@ -24,6 +24,7 @@ defmodule DaleAppWeb.MercadoPuntosLive do
        editando_premio: nil,
        icono_elegido_premio: nil,
        limitar_cantidad_premio: false,
+       categoria_elegida_premio: "ventas",
        error_premio: nil,
        premio_a_canjear: nil,
        error_canje: nil,
@@ -38,8 +39,13 @@ defmodule DaleAppWeb.MercadoPuntosLive do
        editando_premio: nil,
        icono_elegido_premio: nil,
        limitar_cantidad_premio: false,
+       categoria_elegida_premio: "ventas",
        error_premio: nil
      )}
+  end
+
+  def handle_event("elegir_categoria_premio", %{"categoria" => categoria}, socket) do
+    {:noreply, assign(socket, categoria_elegida_premio: categoria)}
   end
 
   def handle_event("toggle_limitar_cantidad_premio", _params, socket) do
@@ -56,6 +62,7 @@ defmodule DaleAppWeb.MercadoPuntosLive do
          editando_premio: premio,
          icono_elegido_premio: premio.icono,
          limitar_cantidad_premio: not is_nil(premio.cantidad_disponible),
+         categoria_elegida_premio: premio.categoria,
          error_premio: nil
        )}
     else
@@ -85,11 +92,7 @@ defmodule DaleAppWeb.MercadoPuntosLive do
   def handle_event("guardar_premio", params, socket) do
     brand = socket.assigns.brand
     nombre = String.trim(Map.get(params, "nombre", ""))
-    puntos_num = case Integer.parse(Map.get(params, "puntos", "")) do
-      {n, _} -> n
-      :error -> nil
-    end
-
+    categoria = socket.assigns.categoria_elegida_premio
     limitar? = socket.assigns.limitar_cantidad_premio
 
     cantidad_num =
@@ -102,6 +105,24 @@ defmodule DaleAppWeb.MercadoPuntosLive do
         nil
       end
 
+    parse_puntos = fn campo ->
+      case Integer.parse(Map.get(params, campo, "")) do
+        {n, _} when n > 0 -> n
+        _ -> nil
+      end
+    end
+
+    base = fn cat, puntos ->
+      %{
+        brand_id: brand.id,
+        nombre: nombre,
+        icono: socket.assigns.icono_elegido_premio,
+        categoria: cat,
+        puntos_costo: puntos,
+        cantidad_disponible: cantidad_num
+      }
+    end
+
     cond do
       is_nil(brand) ->
         {:noreply, assign(socket, error_premio: "No se encontró tu marca.")}
@@ -109,42 +130,78 @@ defmodule DaleAppWeb.MercadoPuntosLive do
       nombre == "" ->
         {:noreply, assign(socket, error_premio: "Te faltó ponerle un nombre al premio.")}
 
-      is_nil(puntos_num) || puntos_num <= 0 ->
-        {:noreply, assign(socket, error_premio: "Te faltó poner cuántos puntos cuesta (un número mayor a 0).")}
-
       limitar? && (is_nil(cantidad_num) || cantidad_num < 0) ->
         {:noreply, assign(socket, error_premio: "Te faltó poner cuántas unidades hay disponibles (0 o más).")}
 
+      # Multitask: dos premios, uno por categoria, en una sola transaccion —
+      # si uno falla no queda el otro creado a medias.
+      categoria == "multitask" and is_nil(socket.assigns.editando_premio) ->
+        puntos_ventas = parse_puntos.("puntos_ventas")
+        puntos_gestores = parse_puntos.("puntos_gestores")
+
+        cond do
+          is_nil(puntos_ventas) or is_nil(puntos_gestores) ->
+            {:noreply, assign(socket, error_premio: "Te faltó poner el precio en puntos para Vendedores y para Gestores.")}
+
+          true ->
+            resultado =
+              Repo.transaction(fn ->
+                with {:ok, p1} <- Products.crear_premio(base.("ventas", puntos_ventas)),
+                     {:ok, p2} <- Products.crear_premio(base.("gestores", puntos_gestores)) do
+                  {p1, p2}
+                else
+                  {:error, changeset} -> Repo.rollback(changeset)
+                end
+              end)
+
+            case resultado do
+              {:ok, _pares} ->
+                premios = Products.listar_premios(brand.id)
+
+                {:noreply,
+                 assign(socket,
+                   premios: premios,
+                   mostrar_modal_premio: false,
+                   editando_premio: nil,
+                   icono_elegido_premio: nil,
+                   error_premio: nil
+                 )}
+
+              {:error, _changeset} ->
+                {:noreply, assign(socket, error_premio: "No se pudo guardar el premio, revisá los datos.")}
+            end
+        end
+
       true ->
-        atributos = %{
-          brand_id: brand.id,
-          nombre: nombre,
-          icono: socket.assigns.icono_elegido_premio,
-          puntos_costo: puntos_num,
-          cantidad_disponible: cantidad_num
-        }
+        puntos_num = parse_puntos.("puntos")
 
-        resultado =
-          case socket.assigns.editando_premio do
-            nil -> Products.crear_premio(atributos)
-            premio -> Products.actualizar_premio(premio, atributos)
+        if is_nil(puntos_num) do
+          {:noreply, assign(socket, error_premio: "Te faltó poner cuántos puntos cuesta (un número mayor a 0).")}
+        else
+          atributos = base.(categoria, puntos_num)
+
+          resultado =
+            case socket.assigns.editando_premio do
+              nil -> Products.crear_premio(atributos)
+              premio -> Products.actualizar_premio(premio, atributos)
+            end
+
+          case resultado do
+            {:ok, _premio} ->
+              premios = Products.listar_premios(brand.id)
+
+              {:noreply,
+               assign(socket,
+                 premios: premios,
+                 mostrar_modal_premio: false,
+                 editando_premio: nil,
+                 icono_elegido_premio: nil,
+                 error_premio: nil
+               )}
+
+            {:error, _changeset} ->
+              {:noreply, assign(socket, error_premio: "No se pudo guardar el premio, revisá los datos.")}
           end
-
-        case resultado do
-          {:ok, _premio} ->
-            premios = Products.listar_premios(brand.id)
-
-            {:noreply,
-             assign(socket,
-               premios: premios,
-               mostrar_modal_premio: false,
-               editando_premio: nil,
-               icono_elegido_premio: nil,
-               error_premio: nil
-             )}
-
-          {:error, _changeset} ->
-            {:noreply, assign(socket, error_premio: "No se pudo guardar el premio, revisá los datos.")}
         end
     end
   end
@@ -273,6 +330,22 @@ defmodule DaleAppWeb.MercadoPuntosLive do
   defp costo_mostrado(_brand, _es_dueño, _current_user_id, precio_original) do
     precio_original
   end
+
+  defp categoria_nombre("ventas"), do: "Para vendedores"
+  defp categoria_nombre("gestores"), do: "Para gestores"
+  defp categoria_nombre(_), do: ""
+
+  # Referencia en dias para poner el precio: cuanto se alcanza en 30/60/90
+  # dias segun lo que genera esa categoria en ESTA marca. No calcula cuanto
+  # tarda el precio que el dueño esta escribiendo — es la tabla de referencia
+  # fija que el dueño mira antes de decidir el numero.
+  defp horizontes_texto(brand, categoria) when categoria in ["ventas", "gestores"] do
+    h = DaleApp.Products.ReferenciaPrecios.horizontes(brand, categoria)
+    aviso = if h.estimado?, do: " (estimado, sin datos aún)", else: ""
+    "Referencia: barato #{h.dias_30}pts · medio #{h.dias_60}pts · caro #{h.dias_90}pts#{aviso}"
+  end
+
+  defp horizontes_texto(_brand, _categoria), do: ""
 
   # Un empleado multitask tiene DOS saldos, no uno: lo que gano vendiendo y
   # lo que gano cargando stock son cosas distintas. Por eso esto ya no
@@ -430,11 +503,26 @@ defmodule DaleAppWeb.MercadoPuntosLive do
       </script>
 
       <%= if @mostrar_modal_premio do %>
-        <div id="overlay-modal-premio" phx-hook=".ModalSobreTodo" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.45); z-index: 9999; display: flex; align-items: center; justify-content: center; padding-top: 66px; padding-bottom: calc(11vh + 10px); box-sizing: border-box;">
-          <div style="background: #fff; border-radius: 24px; width: 320px; max-width: 88%; padding: 24px 20px; box-shadow: 0 12px 40px rgba(0,0,0,0.25); max-height: 100%; overflow-y: auto; overflow-x: hidden; touch-action: pan-y;">
-            <p style="font-size: 18px; font-weight: 700; color: #186904; margin: 0 0 6px; text-align: center;">
+        <div id="overlay-modal-premio" phx-hook=".ModalSobreTodo" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #fff; z-index: 9999; overflow-y: auto; overflow-x: hidden; touch-action: pan-y;">
+          <div style="max-width: 480px; margin: 0 auto; padding: 24px 20px 100px; box-sizing: border-box;">
+            <p style="font-size: 22px; font-weight: 800; color: #186904; margin: 0 0 4px; text-align: center;">
               <%= if @editando_premio, do: "Editar premio", else: "Nuevo premio" %>
             </p>
+
+            <%= if is_nil(@editando_premio) do %>
+              <p style="font-size: 13px; color: #999; text-align: center; margin: 0 0 14px; font-family: Poppins, sans-serif;">¿Para quién es el premio?</p>
+              <div style="display: flex; gap: 8px; margin-bottom: 20px;">
+                <%= for {valor, etiqueta} <- [{"ventas", "Vendedores"}, {"gestores", "Gestores"}, {"multitask", "Multitask"}] do %>
+                  <button type="button" phx-click="elegir_categoria_premio" phx-value-categoria={valor} onclick="window.premioModificado = true;" style={"flex: 1; padding: 10px 4px; border-radius: 14px; border: 1.5px solid #{if @categoria_elegida_premio == valor, do: "#186904", else: "#e0e0e0"}; background: #{if @categoria_elegida_premio == valor, do: "rgba(24,105,4,0.08)", else: "white"}; color: #{if @categoria_elegida_premio == valor, do: "#186904", else: "#666"}; font-family: Poppins, sans-serif; font-size: 12px; font-weight: 700; cursor: pointer;"}>
+                    <%= etiqueta %>
+                  </button>
+                <% end %>
+              </div>
+            <% else %>
+              <p style="font-size: 12px; color: #186904; font-weight: 700; text-align: center; margin: 0 0 20px; text-transform: uppercase; letter-spacing: 0.5px; font-family: Poppins, sans-serif;">
+                <%= categoria_nombre(@editando_premio.categoria) %>
+              </p>
+            <% end %>
 
             <div style="width: 100%; aspect-ratio: 3/4; max-height: 95px; border-radius: 18px; border: 1.5px solid #eef0ea; background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); display: flex; align-items: center; justify-content: center; margin: 10px 0; overflow: hidden;">
               <%= if @icono_elegido_premio do %>
@@ -464,7 +552,24 @@ defmodule DaleAppWeb.MercadoPuntosLive do
 
             <form id="form-premio" phx-submit="guardar_premio">
               <input type="text" name="nombre" placeholder="Nombre del premio" autocomplete="off" oninput="window.premioModificado = true;" value={if @editando_premio, do: @editando_premio.nombre, else: ""} style="width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1.5px solid #e0e0e0; border-radius: 14px; font-family: Poppins, sans-serif; font-size: 14px; outline: none; margin-bottom: 8px;" />
-              <input type="number" name="puntos" placeholder="Cuántos puntos cuesta" autocomplete="off" oninput="window.premioModificado = true;" value={if @editando_premio, do: @editando_premio.puntos_costo, else: ""} style="width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1.5px solid #e0e0e0; border-radius: 14px; font-family: Poppins, sans-serif; font-size: 14px; outline: none; margin-bottom: 8px;" />
+
+              <%= if is_nil(@editando_premio) and @categoria_elegida_premio == "multitask" do %>
+                <div style="border: 1.5px solid #eef0ea; border-radius: 14px; padding: 12px; margin-bottom: 8px;">
+                  <p style="font-size: 12px; font-weight: 700; color: #186904; margin: 0 0 6px; font-family: Poppins, sans-serif;">Precio para Vendedores</p>
+                  <input type="number" name="puntos_ventas" placeholder="Puntos" autocomplete="off" oninput="window.premioModificado = true;" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1.5px solid #e0e0e0; border-radius: 12px; font-family: Poppins, sans-serif; font-size: 14px; outline: none; margin-bottom: 4px;" />
+                  <p style="font-size: 11px; color: #999; margin: 0; font-family: Poppins, sans-serif;"><%= raw(horizontes_texto(@brand, "ventas")) %></p>
+                </div>
+                <div style="border: 1.5px solid #eef0ea; border-radius: 14px; padding: 12px; margin-bottom: 8px;">
+                  <p style="font-size: 12px; font-weight: 700; color: #186904; margin: 0 0 6px; font-family: Poppins, sans-serif;">Precio para Gestores</p>
+                  <input type="number" name="puntos_gestores" placeholder="Puntos" autocomplete="off" oninput="window.premioModificado = true;" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1.5px solid #e0e0e0; border-radius: 12px; font-family: Poppins, sans-serif; font-size: 14px; outline: none; margin-bottom: 4px;" />
+                  <p style="font-size: 11px; color: #999; margin: 0; font-family: Poppins, sans-serif;"><%= raw(horizontes_texto(@brand, "gestores")) %></p>
+                </div>
+              <% else %>
+                <input type="number" name="puntos" placeholder="Cuántos puntos cuesta" autocomplete="off" oninput="window.premioModificado = true;" value={if @editando_premio, do: @editando_premio.puntos_costo, else: ""} style="width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1.5px solid #e0e0e0; border-radius: 14px; font-family: Poppins, sans-serif; font-size: 14px; outline: none; margin-bottom: 4px;" />
+                <p style="font-size: 11px; color: #999; margin: 0 0 8px; font-family: Poppins, sans-serif;">
+                  <%= raw(horizontes_texto(@brand, if(@editando_premio, do: @editando_premio.categoria, else: @categoria_elegida_premio))) %>
+                </p>
+              <% end %>
 
               <div style="display: flex; align-items: center; justify-content: space-between; padding: 4px 2px; margin-bottom: 8px;">
                 <p style="font-size: 13px; color: #333; margin: 0; font-family: Poppins, sans-serif;">¿Cantidad limitada?</p>
