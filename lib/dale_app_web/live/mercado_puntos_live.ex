@@ -319,7 +319,7 @@ defmodule DaleAppWeb.MercadoPuntosLive do
     |> Enum.map(fn cajero ->
       {cajero, DaleApp.Products.SaldoPuntos.saldos(brand.id, cajero.id)}
     end)
-    |> Enum.sort_by(fn {_cajero, saldos} -> saldos["ventas"] + saldos["gestores"] end, :desc)
+    |> Enum.sort_by(fn {_cajero, saldos} -> saldos["ventas"] + saldos["gestores"] + saldos["multitask"] + saldos["gerente"] end, :desc)
   end
 
   defp nombre_corto(cajero) do
@@ -431,7 +431,13 @@ defmodule DaleAppWeb.MercadoPuntosLive do
               <%= if saldos["gestores"] > 0 do %>
                 <p style="font-size: 13px; font-weight: 800; color: #186904; margin: 0; font-family: Poppins, sans-serif;"><%= saldos["gestores"] %> pts <span style="font-size: 10px; font-weight: 600; color: #999;">Gestores</span></p>
               <% end %>
-              <%= if saldos["ventas"] == 0 and saldos["gestores"] == 0 do %>
+              <%= if saldos["multitask"] > 0 do %>
+                <p style="font-size: 13px; font-weight: 800; color: #186904; margin: 0; font-family: Poppins, sans-serif;"><%= saldos["multitask"] %> pts <span style="font-size: 10px; font-weight: 600; color: #999;">Multitask</span></p>
+              <% end %>
+              <%= if saldos["gerente"] > 0 do %>
+                <p style="font-size: 13px; font-weight: 800; color: #186904; margin: 0; font-family: Poppins, sans-serif;"><%= saldos["gerente"] %> pts <span style="font-size: 10px; font-weight: 600; color: #999;">Gerente</span></p>
+              <% end %>
+              <%= if saldos["ventas"] == 0 and saldos["gestores"] == 0 and saldos["multitask"] == 0 and saldos["gerente"] == 0 do %>
                 <p style="font-size: 13px; font-weight: 800; color: #999; margin: 0; font-family: Poppins, sans-serif;">0 pts</p>
               <% end %>
             </div>
