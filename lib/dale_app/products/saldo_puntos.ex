@@ -13,6 +13,10 @@ defmodule DaleApp.Products.SaldoPuntos do
   alias DaleApp.Repo
   alias DaleApp.Products.{MovimientoPuntos, Canje}
 
+  # Las 4 bolsas que existen hoy. Si se agrega una categoria nueva, alcanza
+  # con sumarla aca.
+  @categorias ["ventas", "gestores", "multitask", "gerente"]
+
   @doc "Saldo de un usuario en una categoria puntual: generado - gastado."
   def saldo(brand_id, user_id, categoria) do
     generado(brand_id, user_id, categoria) - gastado(brand_id, user_id, categoria)
@@ -20,10 +24,7 @@ defmodule DaleApp.Products.SaldoPuntos do
 
   @doc "Los dos saldos de un usuario a la vez: %{\"ventas\" => n, \"gestores\" => n}"
   def saldos(brand_id, user_id) do
-    %{
-      "ventas" => saldo(brand_id, user_id, "ventas"),
-      "gestores" => saldo(brand_id, user_id, "gestores")
-    }
+    Map.new(@categorias, fn cat -> {cat, saldo(brand_id, user_id, cat)} end)
   end
 
   @doc "Saldo de TODOS los empleados de una marca en una categoria, para listas y rankings."
