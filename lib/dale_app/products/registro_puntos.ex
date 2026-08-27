@@ -91,8 +91,16 @@ defmodule DaleApp.Products.RegistroPuntos do
   # vez vendio o cargo stock — no se suman dos balances separados, es la
   # misma bolsa). Gerente llega aca solo por asistencia (la clausula de
   # arriba ya bloquea todo lo demas).
-  defp categoria_de(%{role: "cajero"}), do: "ventas"
-  defp categoria_de(%{role: "gestiones"}), do: "gestores"
-  defp categoria_de(%{role: "multitask"}), do: "multitask"
-  defp categoria_de(%{role: "gerente"}), do: "gerente"
+  defp categoria_de(usuario), do: categoria_de_rol(usuario)
+
+  @doc """
+  Categoria de puntos que le corresponde al ROL de un usuario. Publica porque
+  otras pantallas (el mercado de premios) necesitan saber que categoria le
+  toca a alguien para filtrar que puede ver y comprar.
+  """
+  def categoria_de_rol(%{role: "cajero"}), do: "ventas"
+  def categoria_de_rol(%{role: "gestiones"}), do: "gestores"
+  def categoria_de_rol(%{role: "multitask"}), do: "multitask"
+  def categoria_de_rol(%{role: "gerente"}), do: "gerente"
+  def categoria_de_rol(_usuario), do: nil
 end
