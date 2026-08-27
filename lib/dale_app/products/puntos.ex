@@ -321,7 +321,7 @@ defmodule DaleApp.Products.Puntos do
   # mismo numero si trabajan al mismo ritmo.
   defp factor_objetivo(
          {circ_ventas, circ_gestores, activos_ventas, activos_gestores},
-         peso_convergencia,
+         _peso_convergencia,
          _factor_resguardo
        )
        when activos_ventas >= @minimo_activos_para_calibrar and
@@ -329,8 +329,7 @@ defmodule DaleApp.Products.Puntos do
               circ_ventas > 0 and circ_gestores > 0 do
     promedio_ventas = circ_ventas / activos_ventas
     promedio_gestores = circ_gestores / activos_gestores
-    real = promedio_ventas / promedio_gestores
-    real * (1 - peso_convergencia) + 1.0 * peso_convergencia
+    promedio_ventas / promedio_gestores
   end
 
   # Sin nadie activo en alguna categoria (o sin circulacion): no hay dato que
