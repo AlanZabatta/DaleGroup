@@ -48,6 +48,18 @@ defmodule DaleApp.Products.Puntos do
   # generoso, no hacia el que castiga.
   @factor_inicial_sin_datos 3.0
 
+  # Techo y piso del multiplicador. El objetivo es que ambos roles lleguen a
+  # un premio en semanas PARECIDAS, no identicas. Sin estos limites, el
+  # multiplicador amplifica cualquier cosa que encuentre en los datos: con
+  # datos raros dio 19.5x, que es un premio en menos de un dia.
+  #
+  # Piso 1.0: el multiplicador compensa, nunca resta. Un gestor que genera
+  # mas rapido que un vendedor se queda con lo que genero.
+  # Techo 3.0: si un vendedor tarda 2 semanas en un premio, un gestor tarda
+  # como minimo unos 5 dias. Menos que eso ya no es "parecido".
+  @multiplicador_minimo 1.0
+  @multiplicador_maximo 3.0
+
   @bonus_podio_ventas %{1 => 200, 2 => 120, 3 => 80, 4 => 50}
   @bonus_podio_gestores %{1 => 400, 2 => 300, 3 => 250, 4 => 200}
   @bonus_podio_default_gestores 150
@@ -334,7 +346,10 @@ defmodule DaleApp.Products.Puntos do
               circ_ventas > 0 and circ_gestores > 0 do
     promedio_ventas = circ_ventas / activos_ventas
     promedio_gestores = circ_gestores / activos_gestores
-    promedio_ventas / promedio_gestores
+
+    (promedio_ventas / promedio_gestores)
+    |> max(@multiplicador_minimo)
+    |> min(@multiplicador_maximo)
   end
 
   # Sin nadie activo en alguna categoria (o sin circulacion): no hay dato que
