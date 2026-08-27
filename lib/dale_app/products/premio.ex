@@ -21,7 +21,7 @@ defmodule DaleApp.Products.Premio do
     premio
     |> cast(attrs, [:brand_id, :nombre, :icono, :imagen_url, :puntos_costo, :activo, :cantidad_disponible, :categoria])
     |> validate_required([:brand_id, :nombre, :puntos_costo, :categoria])
-    |> validate_inclusion(:categoria, ["ventas", "gestores"])
+    |> validate_inclusion(:categoria, ["ventas", "gestores", "multitask", "gerente"])
     |> validate_number(:puntos_costo, greater_than: 0)
     |> validate_number(:cantidad_disponible, greater_than_or_equal_to: 0)
   end
