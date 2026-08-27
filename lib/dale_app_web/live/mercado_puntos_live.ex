@@ -483,7 +483,14 @@ defmodule DaleAppWeb.MercadoPuntosLive do
       </script>
 
       <%= if @mostrar_modal_premio do %>
-        <div id="overlay-modal-premio" style="background: #fff; position: relative; z-index: 1;">
+        <div id="overlay-modal-premio" phx-hook=".ScrollAlAbrirPremio" style="background: #fff; position: relative; z-index: 1;">
+          <script :type={Phoenix.LiveView.ColocatedHook} name=".ScrollAlAbrirPremio">
+            export default {
+              mounted() {
+                this.el.scrollIntoView({ behavior: "smooth", block: "start" });
+              }
+            }
+          </script>
           <div style="max-width: 480px; margin: 0 auto; padding: 8px 20px 100px; box-sizing: border-box;">
             <p style="font-size: 22px; font-weight: 800; color: #186904; margin: 0 0 4px; text-align: center;">
               <%= if @editando_premio, do: "Editar premio", else: "Nuevo premio" %>
