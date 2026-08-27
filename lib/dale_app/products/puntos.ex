@@ -96,7 +96,7 @@ defmodule DaleApp.Products.Puntos do
 
   @doc "Categoría de competencia: 'ventas' o 'gestores', según el rol (campo zona)."
   def categoria_del_usuario(usuario) do
-    case usuario && RolEmpleado.categoria_ranking(usuario.zona) do
+    case usuario && RolEmpleado.categoria_ranking(usuario.role) do
       "gestiones" -> "gestores"
       _ -> "ventas"
     end
