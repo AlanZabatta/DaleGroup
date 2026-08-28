@@ -361,6 +361,8 @@ defmodule DaleAppWeb.MiTiendaLive do
           Gestionar empleados (<%= length(@cajeros) %>)
         </.link>
  
+        <div style="height: 1px; background: #eee; margin: 8px 0 24px;"></div>
+
         <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Mi Cupón</p>
  
     <%
@@ -455,7 +457,7 @@ defmodule DaleAppWeb.MiTiendaLive do
           Gestionar cupón
         </a>
         <div style="height: 1px; background: #eee; margin: 8px 0 24px;"></div>
-        <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 28px 0 16px; text-transform: uppercase; letter-spacing: 1px;">Mis Sedes</p>
+        <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Mis Sedes</p>
         <%= if @ubicaciones != [] do %>
           <.link navigate="/mi-tienda/sedes" style="display: block; text-decoration: none; background: white; border-radius: 18px; margin-bottom: 14px; border: 1.5px solid #186904; box-shadow: 0 3px 14px rgba(24,105,4,0.08); overflow: hidden;">
             <style>
@@ -525,7 +527,9 @@ defmodule DaleAppWeb.MiTiendaLive do
         </a>
         <div style="height: 1px; background: #eee; margin: 8px 0 24px;"></div>
 
-        <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 28px 0 16px; text-transform: uppercase; letter-spacing: 1px;">Seguridad</p>
+        <div style="height: 1px; background: #eee; margin: 8px 0 24px;"></div>
+
+        <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Seguridad</p>
         <%= if @brand.pin_hash do %>
           <div style="width: 100%; text-align: center; background-color: #f0f0f0; color: #888; padding: 14px; border-radius: 16px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px; box-sizing: border-box;">
             🔒 Mi PIN (ya configurado)
