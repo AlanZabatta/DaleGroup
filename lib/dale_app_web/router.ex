@@ -62,6 +62,8 @@ live "/registro", RegistroLive
     live "/mi-tienda/cajeros/ventas", VentasLive
     live "/mi-tienda/cajeros/gestores", GestoresLive
     live "/mi-tienda/cajeros/mercado", MercadoPuntosLive
+    live "/mi-tienda/cajeros/mercado/nuevo-premio", NuevoPremioLive
+    live "/mi-tienda/cajeros/mercado/premio/:id/editar", NuevoPremioLive
     live "/mi-tienda/sedes", SedesLive
     live "/mi-tienda/stock", StockPanoramicoLive
     live "/mi-tienda/stock/configuracion", ConfiguracionStockLive

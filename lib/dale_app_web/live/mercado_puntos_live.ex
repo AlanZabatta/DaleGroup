@@ -387,12 +387,12 @@ defmodule DaleAppWeb.MercadoPuntosLive do
         <div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between;">
           <%= for premio <- @premios do %>
             <div phx-click="abrir_confirmar_canje" phx-value-id={premio.id} style="cursor: pointer; position: relative; display: flex; width: 47%; flex-direction: column; align-items: center; text-align: center; background: white; border: 1.5px solid #f0f0f0; border-radius: 20px; padding: 18px 10px; box-shadow: 0 3px 12px rgba(0,0,0,0.06); box-sizing: border-box;">
-              <button type="button" phx-click="editar_premio" phx-value-id={premio.id} style="position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; border-radius: 50%; background: white; border: 1.5px solid #e0e0e0; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
+              <.link navigate={~p"/mi-tienda/cajeros/mercado/premio/#{premio.id}/editar"} style="position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; border-radius: 50%; background: white; border: 1.5px solid #e0e0e0; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; text-decoration: none;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M4 20h4L18.5 9.5a2.828 2.828 0 1 0 -4 -4L4 16v4"/>
                   <path d="M13.5 6.5l4 4"/>
                 </svg>
-              </button>
+              </.link>
               <div style="width: 64px; height: 64px; border-radius: 50%; background: #186904; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; overflow: hidden; flex-shrink: 0;">
                 <%= if premio.imagen_url do %>
                   <img src={premio.imagen_url} style="width: 100%; height: 100%; object-fit: cover;" />
@@ -412,9 +412,9 @@ defmodule DaleAppWeb.MercadoPuntosLive do
         </div>
       <% end %>
 
-      <button type="button" phx-click="abrir_modal_premio" style="width: 100%; text-align: center; background-color: white; color: #186904; padding: 11px; border-radius: 14px; margin-top: 16px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 13px; border: 1.5px solid #186904; cursor: pointer;">
+      <.link navigate={~p"/mi-tienda/cajeros/mercado/nuevo-premio"} style="display: block; width: 100%; text-align: center; background-color: white; color: #186904; padding: 11px; border-radius: 14px; margin-top: 16px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 13px; border: 1.5px solid #186904; cursor: pointer; text-decoration: none; box-sizing: border-box;">
         Crear un premio
-      </button>
+      </.link>
 
       <div style="height: 1px; background: #eee; margin: 24px 0 20px;"></div>
 
