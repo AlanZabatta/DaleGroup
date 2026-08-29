@@ -14,9 +14,9 @@ defmodule DaleAppWeb.MiTiendaLive do
     cajeros = if brand, do: Accounts.list_cajeros(brand.id), else: []
     ubicaciones = if brand, do: Repo.all(from(l in BrandLocation, where: l.brand_id == ^brand.id)), else: []
 
-    # Sede por default para el empleado del mes: primera sede si la marca
-    # tiene, o nil (toda la marca) si no tiene ninguna cargada.
-    sede_actual = List.first(ubicaciones)
+    # Sede activa: compartida con Stock y Cajeros via brand.sede_activa_id,
+    # no un estado local de esta pantalla. nil = todas las sedes.
+    sede_actual = brand && Enum.find(ubicaciones, &(&1.id == brand.sede_activa_id))
     empleados_del_mes = if brand, do: ganadores_ciclo_actual(brand, sede_actual && sede_actual.id), else: []
 
     {total_productos, productos_dale, limite_dale, hay_sin_stock_normal, hay_sin_stock_dale} =
@@ -114,25 +114,29 @@ defmodule DaleAppWeb.MiTiendaLive do
   def handle_event("elegir_sede", %{"id" => id_str}, socket) do
     id = String.to_integer(id_str)
     sede = Enum.find(socket.assigns.ubicaciones, fn s -> s.id == id end)
-    empleados_del_mes = ganadores_ciclo_actual(socket.assigns.brand, sede && sede.id)
-
-    {:noreply,
-     assign(socket,
-       sede_actual: sede,
-       mostrar_selector_sede: false,
-       empleados_del_mes: empleados_del_mes
-     )}
+    {:noreply, guardar_sede_activa(socket, sede)}
   end
 
   def handle_event("elegir_todas_sedes", _params, socket) do
-    empleados_del_mes = ganadores_ciclo_actual(socket.assigns.brand, nil)
+    {:noreply, guardar_sede_activa(socket, nil)}
+  end
 
-    {:noreply,
-     assign(socket,
-       sede_actual: nil,
-       mostrar_selector_sede: false,
-       empleados_del_mes: empleados_del_mes
-     )}
+  # Persiste la sede elegida en brand.sede_activa_id, para que Stock y
+  # Cajeros (que leen el mismo campo) vean el mismo cambio al navegar ahi.
+  defp guardar_sede_activa(socket, sede) do
+    {:ok, brand_actualizada} =
+      socket.assigns.brand
+      |> DaleApp.Brands.Brand.changeset(%{sede_activa_id: sede && sede.id})
+      |> Repo.update()
+
+    empleados_del_mes = ganadores_ciclo_actual(brand_actualizada, sede && sede.id)
+
+    assign(socket,
+      brand: brand_actualizada,
+      sede_actual: sede,
+      mostrar_selector_sede: false,
+      empleados_del_mes: empleados_del_mes
+    )
   end
 
   defp texto_sede_actual(sedes, sede_actual) do
