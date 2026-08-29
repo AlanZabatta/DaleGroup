@@ -79,21 +79,44 @@ defmodule DaleAppWeb.FicharLive do
         else
           puntos = calcular_puntos(user, hoy)
 
-          %Asistencia{}
-          |> Asistencia.changeset(%{
-            user_id: user.id,
-            brand_id: brand.id,
-            fecha: hoy,
-            hora_marcada: Time.utc_now() |> Time.truncate(:second),
-            puntos: puntos,
-            brand_location_id: sede.id
-          })
-          |> Repo.insert()
+          resultado =
+            %Asistencia{}
+            |> Asistencia.changeset(%{
+              user_id: user.id,
+              brand_id: brand.id,
+              fecha: hoy,
+              hora_marcada: Time.utc_now() |> Time.truncate(:second),
+              puntos: puntos,
+              brand_location_id: sede.id
+            })
+            |> Repo.insert()
+
+          otorgar_puntos_por_fichaje(resultado, brand, user, sede, puntos)
 
           {:exito, "¡Fichaje registrado! Sumaste #{puntos} puntos de puntualidad."}
         end
     end
   end
+
+  # Nunca debe poder tumbar el fichaje: si algo falla aca, el registro de
+  # asistencia real ya quedo guardado igual, solo se pierde el punto de logro.
+  defp otorgar_puntos_por_fichaje({:ok, asistencia}, brand, user, sede, puntos) do
+    DaleApp.Products.RegistroPuntos.registrar(
+      brand,
+      user,
+      "asistencia",
+      puntos,
+      origen_tipo: "asistencia",
+      origen_id: asistencia.id,
+      brand_location_id: sede.id
+    )
+  rescue
+    e ->
+      require Logger
+      Logger.error("Fallo al otorgar puntos por fichaje: " <> Exception.message(e))
+  end
+
+  defp otorgar_puntos_por_fichaje(_resultado, _brand, _user, _sede, _puntos), do: :ok
 
   defp calcular_puntos(user, hoy) do
     dia_semana = dia_en_espanol(hoy)

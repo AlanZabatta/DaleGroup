@@ -4,12 +4,8 @@ defmodule DaleAppWeb.CajerosLive do
   alias DaleApp.Repo
   alias DaleApp.Brands.Brand
   alias DaleApp.Accounts
-  alias DaleApp.Accounts.Asistencia
   alias DaleApp.Accounts.EmpleadoSede
   alias DaleApp.Brands.BrandLocation
-  alias DaleApp.Products.Venta
-  alias DaleApp.Products.MovimientoStock
-  alias DaleApp.Products.IncidenciaStock
 
   def mount(_params, session, socket) do
     user_id = session["user_id"]
@@ -220,167 +216,73 @@ defmodule DaleAppWeb.CajerosLive do
   defp calcular_ranking(nil, _sede_id), do: []
   defp calcular_ranking(%{asistencia_activada_en: nil}, _sede_id), do: []
 
-  defp calcular_ranking(brand, sede_id) do
-    dias_desde_activacion = DateTime.diff(DateTime.utc_now(), brand.asistencia_activada_en, :day)
+  defp calcular_ranking(brand, sede_id),
+    do: ranking_desde_movimientos(brand, brand.asistencia_activada_en, "asistencia", sede_id)
+
+  defp calcular_ranking_ventas(nil, _sede_id), do: []
+  defp calcular_ranking_ventas(%{ventas_activada_en: nil}, _sede_id), do: []
+
+  defp calcular_ranking_ventas(brand, sede_id),
+    do: ranking_desde_movimientos(brand, brand.ventas_activada_en, "venta", sede_id)
+
+  defp calcular_ranking_gestores(nil, _sede_id), do: []
+  defp calcular_ranking_gestores(%{gestiones_activada_en: nil}, _sede_id), do: []
+
+  defp calcular_ranking_gestores(brand, sede_id),
+    do: ranking_desde_movimientos(brand, brand.gestiones_activada_en, "gestores", sede_id)
+
+  # Ranking generico desde movimientos_puntos: agrupa por usuario, suma
+  # puntos_finales del ciclo EN VIVO (no el ultimo cerrado, ese es el de
+  # EmpleadoDelMes), respeta el filtro por sede si se pide, top 4.
+  #
+  # "criterio" es un motivo puntual ("venta", "asistencia") o una
+  # categoria entera ("gestores", que junta creacion_stock + incidencia).
+  defp ranking_desde_movimientos(brand, activada_en, criterio, sede_id) do
+    dias_desde_activacion = DateTime.diff(DateTime.utc_now(), activada_en, :day)
     ciclo_actual = div(dias_desde_activacion, 30)
 
     inicio_ciclo =
-      brand.asistencia_activada_en
+      activada_en
       |> DateTime.add(ciclo_actual * 30 * 86400, :second)
       |> DateTime.to_date()
 
     fin_ciclo = Date.add(inicio_ciclo, 30)
 
     base =
-      from(a in Asistencia,
-        where: a.brand_id == ^brand.id and a.fecha >= ^inicio_ciclo and a.fecha < ^fin_ciclo
-      )
+      if criterio == "gestores" do
+        from(m in DaleApp.Products.MovimientoPuntos,
+          where:
+            m.brand_id == ^brand.id and m.categoria == ^criterio and m.fecha >= ^inicio_ciclo and
+              m.fecha < ^fin_ciclo
+        )
+      else
+        from(m in DaleApp.Products.MovimientoPuntos,
+          where:
+            m.brand_id == ^brand.id and m.motivo == ^criterio and m.fecha >= ^inicio_ciclo and
+              m.fecha < ^fin_ciclo
+        )
+      end
 
     query =
       if sede_id do
         ids_empleados = usuarios_en_sede(sede_id)
 
-        from(a in base,
-          where: a.user_id in ^ids_empleados and (is_nil(a.brand_location_id) or a.brand_location_id == ^sede_id)
+        from(m in base,
+          where:
+            m.user_id in ^ids_empleados and
+              (is_nil(m.brand_location_id) or m.brand_location_id == ^sede_id)
         )
       else
         base
       end
 
-    from(a in query,
-      group_by: a.user_id,
-      select: {a.user_id, sum(a.puntos)},
-      order_by: [desc: sum(a.puntos)],
+    from(m in query,
+      group_by: m.user_id,
+      select: {m.user_id, sum(m.puntos_finales)},
+      order_by: [desc: sum(m.puntos_finales)],
       limit: 4
     )
     |> Repo.all()
-    |> Enum.map(fn {user_id, puntos} -> {Accounts.get_user(user_id), puntos} end)
-    |> Enum.reject(fn {cajero, _puntos} -> is_nil(cajero) end)
-  end
-
-  defp calcular_ranking_ventas(nil, _sede_id), do: []
-  defp calcular_ranking_ventas(%{ventas_activada_en: nil}, _sede_id), do: []
-
-  defp calcular_ranking_ventas(brand, sede_id) do
-    dias_desde_activacion = DateTime.diff(DateTime.utc_now(), brand.ventas_activada_en, :day)
-    ciclo_actual = div(dias_desde_activacion, 30)
-
-    inicio_ciclo_dt =
-      brand.ventas_activada_en
-      |> DateTime.add(ciclo_actual * 30 * 86400, :second)
-      |> DateTime.to_naive()
-
-    fin_ciclo_dt = NaiveDateTime.add(inicio_ciclo_dt, 30 * 86400, :second)
-
-    base =
-      from(v in Venta,
-        where:
-          v.brand_id == ^brand.id and not is_nil(v.user_id) and v.inserted_at >= ^inicio_ciclo_dt and
-            v.inserted_at < ^fin_ciclo_dt
-      )
-
-    query =
-      if sede_id do
-        ids_empleados = usuarios_en_sede(sede_id)
-
-        from(v in base,
-          where: v.user_id in ^ids_empleados and (is_nil(v.brand_location_id) or v.brand_location_id == ^sede_id)
-        )
-      else
-        base
-      end
-
-    from(v in query,
-      group_by: [v.user_id, v.grupo_venta],
-      select: {v.user_id, count(v.id), min(v.inserted_at)}
-    )
-    |> Repo.all()
-    |> Enum.group_by(
-      fn {user_id, _cantidad, _fecha} -> user_id end,
-      fn {_user_id, cantidad, fecha} -> {NaiveDateTime.to_date(fecha), cantidad} end
-    )
-    |> Enum.map(fn {user_id, grupos_con_fecha} ->
-      puntos =
-        grupos_con_fecha
-        |> Enum.group_by(fn {dia, _cantidad} -> dia end, fn {_dia, cantidad} -> cantidad end)
-        |> Enum.map(fn {_dia, cantidades_del_dia} ->
-          DaleApp.Products.Puntos.aplicar_tope_diario_ventas(cantidades_del_dia)
-        end)
-        |> Enum.sum()
-
-      {user_id, puntos}
-    end)
-    |> Enum.sort_by(fn {_user_id, puntos} -> puntos end, :desc)
-    |> Enum.take(4)
-    |> Enum.map(fn {user_id, puntos} -> {Accounts.get_user(user_id), puntos} end)
-    |> Enum.reject(fn {cajero, _puntos} -> is_nil(cajero) end)
-  end
-
-  defp calcular_ranking_gestores(nil, _sede_id), do: []
-  defp calcular_ranking_gestores(%{gestiones_activada_en: nil}, _sede_id), do: []
-
-  defp calcular_ranking_gestores(brand, sede_id) do
-    dias_desde_activacion = DateTime.diff(DateTime.utc_now(), brand.gestiones_activada_en, :day)
-    ciclo_actual = div(dias_desde_activacion, 30)
-
-    inicio_ciclo_dt =
-      brand.gestiones_activada_en
-      |> DateTime.add(ciclo_actual * 30 * 86400, :second)
-      |> DateTime.to_naive()
-
-    fin_ciclo_dt = NaiveDateTime.add(inicio_ciclo_dt, 30 * 86400, :second)
-
-    base_movs =
-      from(m in MovimientoStock,
-        where:
-          m.brand_id == ^brand.id and m.tipo_accion == "creado" and not is_nil(m.user_id) and
-            m.inserted_at >= ^inicio_ciclo_dt and m.inserted_at < ^fin_ciclo_dt
-      )
-
-    query_movs =
-      if sede_id do
-        ids_empleados = usuarios_en_sede(sede_id)
-
-        from(m in base_movs,
-          where: m.user_id in ^ids_empleados and (is_nil(m.brand_location_id) or m.brand_location_id == ^sede_id)
-        )
-      else
-        base_movs
-      end
-
-    puntos_creaciones =
-      from(m in query_movs, group_by: m.user_id, select: {m.user_id, count(m.id) * 10})
-      |> Repo.all()
-      |> Map.new()
-
-    base_inc =
-      from(i in IncidenciaStock,
-        where:
-          i.brand_id == ^brand.id and i.resuelta == true and not is_nil(i.resuelto_por_user_id) and
-            i.fecha_resolucion >= ^inicio_ciclo_dt and i.fecha_resolucion < ^fin_ciclo_dt
-      )
-
-    query_inc =
-      if sede_id do
-        ids_empleados = usuarios_en_sede(sede_id)
-
-        from(i in base_inc,
-          where:
-            i.resuelto_por_user_id in ^ids_empleados and
-              (is_nil(i.brand_location_id) or i.brand_location_id == ^sede_id)
-        )
-      else
-        base_inc
-      end
-
-    puntos_incidencias =
-      from(i in query_inc, group_by: i.resuelto_por_user_id, select: {i.resuelto_por_user_id, sum(i.puntos_otorgados)})
-      |> Repo.all()
-      |> Map.new()
-
-    Map.merge(puntos_creaciones, puntos_incidencias, fn _user_id, a, b -> a + b end)
-    |> Enum.sort_by(fn {_user_id, puntos} -> puntos end, :desc)
-    |> Enum.take(4)
     |> Enum.map(fn {user_id, puntos} -> {Accounts.get_user(user_id), puntos} end)
     |> Enum.reject(fn {cajero, _puntos} -> is_nil(cajero) end)
   end
