@@ -37,10 +37,7 @@ defmodule DaleAppWeb.CajerosLive do
     |> Repo.all()
   end
 
-  defp usuarios_en_sede(sede_id) do
-    from(es in EmpleadoSede, where: es.brand_location_id == ^sede_id, select: es.user_id)
-    |> Repo.all()
-  end
+  defp usuarios_en_sede(sede_id), do: DaleApp.Accounts.usuarios_en_sede(sede_id)
 
   defp nombre_sede_actual(nil, _sedes), do: "Todas"
 
