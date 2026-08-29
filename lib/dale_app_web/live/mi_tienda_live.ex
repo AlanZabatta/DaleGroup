@@ -12,9 +12,12 @@ defmodule DaleAppWeb.MiTiendaLive do
     user_id = session["user_id"]
     brand = if user_id, do: Repo.get_by(Brand, user_id: user_id), else: nil
     cajeros = if brand, do: Accounts.list_cajeros(brand.id), else: []
-
-    empleados_del_mes = if brand, do: ganadores_ciclo_actual(brand), else: []
     ubicaciones = if brand, do: Repo.all(from(l in BrandLocation, where: l.brand_id == ^brand.id)), else: []
+
+    # Sede por default para el empleado del mes: primera sede si la marca
+    # tiene, o nil (toda la marca) si no tiene ninguna cargada.
+    sede_actual = List.first(ubicaciones)
+    empleados_del_mes = if brand, do: ganadores_ciclo_actual(brand, sede_actual && sede_actual.id), else: []
 
     {total_productos, productos_dale, limite_dale, hay_sin_stock_normal, hay_sin_stock_dale} =
       if brand do
@@ -84,7 +87,9 @@ defmodule DaleAppWeb.MiTiendaLive do
        limite_dale: limite_dale,
        hay_sin_stock_normal: hay_sin_stock_normal,
        hay_sin_stock_dale: hay_sin_stock_dale,
-       empleados_del_mes: empleados_del_mes
+       empleados_del_mes: empleados_del_mes,
+       sede_actual: sede_actual,
+       mostrar_selector_sede: false
      )}
   end
 
@@ -102,7 +107,7 @@ defmodule DaleAppWeb.MiTiendaLive do
     end
   end
 
-  defp ganadores_ciclo_actual(brand) do
+  defp ganadores_ciclo_actual(brand, sede_id) do
     case brand.empleado_puntos_activada_en do
       nil ->
         []
@@ -119,7 +124,7 @@ defmodule DaleAppWeb.MiTiendaLive do
             []
 
           {inicio, fin} ->
-            DaleApp.Products.EmpleadoDelMes.calcular_ciclo(brand, inicio, fin)
+            DaleApp.Products.EmpleadoDelMes.calcular_ciclo(brand, inicio, fin, sede_id)
             |> Enum.filter(& &1.es_ganador)
         end
     end
