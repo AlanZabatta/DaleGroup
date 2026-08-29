@@ -142,7 +142,7 @@ defmodule DaleApp.Products.EmpleadoDelMes do
     ids = Enum.map(empleados, & &1.id)
 
     from(a in Asistencia,
-      where: a.user_id in ^ids and a.inserted_at >= ^ciclo_inicio and a.inserted_at < ^ciclo_fin,
+      where: a.user_id in ^ids and a.fecha >= ^ciclo_inicio and a.fecha < ^ciclo_fin,
       group_by: a.user_id,
       select: {a.user_id, sum(a.puntos)}
     )
