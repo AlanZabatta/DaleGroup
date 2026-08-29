@@ -53,6 +53,7 @@ defmodule DaleApp.Products.RegistroPuntos do
       puntos_finales: round(puntos_crudos * multiplicador),
       origen_tipo: Keyword.get(opciones, :origen_tipo),
       origen_id: Keyword.get(opciones, :origen_id),
+      brand_location_id: Keyword.get(opciones, :brand_location_id),
       fecha: Date.utc_today()
     }
 
