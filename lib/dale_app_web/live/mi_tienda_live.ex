@@ -12,6 +12,8 @@ defmodule DaleAppWeb.MiTiendaLive do
     user_id = session["user_id"]
     brand = if user_id, do: Repo.get_by(Brand, user_id: user_id), else: nil
     cajeros = if brand, do: Accounts.list_cajeros(brand.id), else: []
+
+    empleados_del_mes = if brand, do: ganadores_ciclo_actual(brand), else: []
     ubicaciones = if brand, do: Repo.all(from(l in BrandLocation, where: l.brand_id == ^brand.id)), else: []
 
     {total_productos, productos_dale, limite_dale, hay_sin_stock_normal, hay_sin_stock_dale} =
@@ -81,8 +83,46 @@ defmodule DaleAppWeb.MiTiendaLive do
        productos_dale: productos_dale,
        limite_dale: limite_dale,
        hay_sin_stock_normal: hay_sin_stock_normal,
-       hay_sin_stock_dale: hay_sin_stock_dale
+       hay_sin_stock_dale: hay_sin_stock_dale,
+       empleados_del_mes: empleados_del_mes
      )}
+  end
+
+  # El "empleado del mes" es el ganador (o los ganadores, si hay empate sin
+  # desempatar) del ciclo de 30 dias mas reciente que ya cerro. Si el
+  # sistema de puntos no esta activo, o todavia no cerro ningun ciclo, no
+  # hay nada que mostrar.
+  defp nombre_corto(usuario) do
+    cond do
+      usuario.apellido_visible && usuario.apellido_visible != "" ->
+        usuario.apellido_visible
+
+      true ->
+        (usuario.name || "?") |> String.split(" ", parts: 2) |> List.first() || "?"
+    end
+  end
+
+  defp ganadores_ciclo_actual(brand) do
+    case brand.empleado_puntos_activada_en do
+      nil ->
+        []
+
+      activada_en ->
+        ciclo_cerrado =
+          activada_en
+          |> DaleApp.Products.Puntos.ciclos_desde()
+          |> DaleApp.Products.Puntos.ciclos_cerrados()
+          |> List.last()
+
+        case ciclo_cerrado do
+          nil ->
+            []
+
+          {inicio, fin} ->
+            DaleApp.Products.EmpleadoDelMes.calcular_ciclo(brand, inicio, fin)
+            |> Enum.filter(& &1.es_ganador)
+        end
+    end
   end
 
   def handle_event("volver_mi_stand", _params, socket) do
@@ -351,11 +391,21 @@ defmodule DaleAppWeb.MiTiendaLive do
         <.link navigate="/mi-tienda/cajeros" style="text-decoration: none; background: white; border: 1.5px solid #186904; border-radius: 18px; padding: 20px 16px; box-shadow: 0 3px 12px rgba(24,105,4,0.08); display: flex; flex-direction: column; align-items: center; margin-bottom: 12px;">
           <div style="position: relative; margin-bottom: 4px;">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="#f5b301" stroke="#f5b301" style="position: absolute; top: -18px; left: 50%; transform: translateX(-50%); filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));"><path d="M2 18h20l-2-9-5 4-3-7-3 7-5-4-2 9z"/></svg>
-            <div style="width: 60px; height: 60px; border-radius: 50%; background: white; border: 2px solid #f0f0f0; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0,0,0,0.08);">
-              <span style="font-size: 26px; color: #111; font-weight: 800;">?</span>
+            <div style="width: 60px; height: 60px; border-radius: 50%; background: white; border: 2px solid #f0f0f0; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0,0,0,0.08); overflow: hidden;">
+              <% ganador = List.first(@empleados_del_mes) && @empleados_del_mes |> List.first() |> Map.get(:user) %>
+              <%= cond do %>
+                <% is_nil(ganador) -> %>
+                  <span style="font-size: 26px; color: #111; font-weight: 800;">?</span>
+                <% ganador.avatar -> %>
+                  <img src={ganador.avatar} style="width: 100%; height: 100%; object-fit: cover;" />
+                <% true -> %>
+                  <span style="font-size: 20px; color: #186904; font-weight: 800;"><%= nombre_corto(ganador) %></span>
+              <% end %>
             </div>
           </div>
-          <p style="font-size: 11px; color: #999; margin: 6px 0 0; font-family: Poppins, sans-serif; text-align: center;">Empleado del mes</p>
+          <p style="font-size: 11px; color: #999; margin: 6px 0 0; font-family: Poppins, sans-serif; text-align: center;">
+            <%= if length(@empleados_del_mes) > 1, do: "Empleados del mes (empate)", else: "Empleado del mes" %>
+          </p>
         </.link>
         <.link navigate="/mi-tienda/cajeros" style="display: block; text-align: center; background-color: white; color: #186904; padding: 12.5px; border-radius: 16px; border: 1.5px solid #186904; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
           Gestionar empleados (<%= length(@cajeros) %>)
