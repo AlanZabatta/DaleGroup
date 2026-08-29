@@ -372,9 +372,94 @@ defmodule DaleApp.Products do
   alias DaleApp.Products.Venta
 
   def registrar_venta(attrs) do
-    %Venta{}
-    |> Venta.changeset(attrs)
-    |> Repo.insert()
+    resultado =
+      %Venta{}
+      |> Venta.changeset(attrs)
+      |> Repo.insert()
+
+    # Los puntos se otorgan DESPUES, diferidos 11 segundos (uno mas que la
+    # ventana de deshacer de 10s en venta_live.ex). Si el cajero deshace la
+    # venta antes de que pase ese tiempo, deshacer_venta borra la fila de
+    # Venta, y este chequeo la va a ver desaparecida y no otorga nada.
+    # Nunca debe poder tumbar el registro de la venta: cualquier fallo aca
+    # se loguea y se ignora.
+    case resultado do
+      {:ok, venta} -> Task.start(fn -> otorgar_puntos_por_venta_diferido(venta) end)
+      _ -> :ok
+    end
+
+    resultado
+  end
+
+  # Aplica el tope diario de Ventas (@tope_diario_ventas en Puntos) al total
+  # ya otorgado ESE DIA para este usuario en esta marca, antes de sumar la
+  # venta actual. Sin esto, el saldo nuevo (via movimientos_puntos) y el
+  # ranking viejo de Cajeros medirian cosas distintas para el mismo dia.
+  defp puntos_venta_con_tope_diario(brand_id, user_id, cantidad_items) do
+    hoy = Date.utc_today()
+
+    ya_otorgado_hoy =
+      from(m in DaleApp.Products.MovimientoPuntos,
+        where:
+          m.brand_id == ^brand_id and m.user_id == ^user_id and m.motivo == "venta" and
+            m.fecha == ^hoy,
+        select: sum(m.puntos_crudos)
+      )
+      |> Repo.one()
+      |> case do
+        nil -> 0
+        n -> n
+      end
+
+    puntos_venta_actual = DaleApp.Products.Puntos.puntos_venta(cantidad_items)
+
+    if cantidad_items >= 3 do
+      # Ventas de 3+ items NUNCA topean (misma regla que
+      # aplicar_tope_diario_ventas en Puntos).
+      puntos_venta_actual
+    else
+      tope = DaleApp.Products.Puntos.tope_diario_ventas()
+
+      if ya_otorgado_hoy >= tope do
+        div(puntos_venta_actual, 2)
+      else
+        puntos_venta_actual
+      end
+    end
+  end
+
+  defp otorgar_puntos_por_venta_diferido(venta) do
+    Process.sleep(11_000)
+
+    if Repo.get(Venta, venta.id) do
+      grupo_venta = venta.grupo_venta
+
+      cantidad_items =
+        from(v in Venta, where: v.grupo_venta == ^grupo_venta and v.brand_id == ^venta.brand_id)
+        |> Repo.aggregate(:count)
+
+      usuario = Repo.get(DaleApp.Accounts.User, venta.user_id)
+      brand = Repo.get(DaleApp.Brands.Brand, venta.brand_id)
+
+      if usuario && brand do
+        puntos_crudos = puntos_venta_con_tope_diario(brand.id, usuario.id, cantidad_items)
+
+        if puntos_crudos > 0 do
+          DaleApp.Products.RegistroPuntos.registrar(
+            brand,
+            usuario,
+            "venta",
+            puntos_crudos,
+            origen_tipo: "venta",
+            origen_id: venta.id
+          )
+        end
+      end
+    end
+  rescue
+    e ->
+      require Logger
+      Logger.error("Fallo al otorgar puntos por venta: " <> Exception.message(e))
   end
 
   def deshacer_venta(venta_id) do

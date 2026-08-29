@@ -26,6 +26,9 @@ defmodule DaleApp.Products.Puntos do
 
   @dias_ciclo 30
   @tope_diario_ventas 200
+
+  @doc "Valor del tope diario de ventas chicas. Publico para que otros modulos lo usen sin duplicar el numero."
+  def tope_diario_ventas, do: @tope_diario_ventas
   @dias_ventana_circulacion 90
   @dias_retencion 100
   @tope_variacion_diaria 0.10
