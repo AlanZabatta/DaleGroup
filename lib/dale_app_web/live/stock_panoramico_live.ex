@@ -58,7 +58,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
     categorias = if brand, do: listar_categorias(brand.id), else: []
     talles_custom = if brand, do: listar_talles_custom(brand.id), else: []
     sedes = if brand, do: Repo.all(from(l in DaleApp.Brands.BrandLocation, where: l.brand_id == ^brand.id, order_by: l.id)), else: []
-    sede_actual = List.first(sedes)
+    sede_actual = brand && Enum.find(sedes, &(&1.id == brand.sede_activa_id))
     productos_todos = if brand, do: listar_productos_con_stock(brand.id, sede_actual && sede_actual.id), else: []
     panel = if brand, do: calcular_panel(brand, productos_todos, sede_actual && sede_actual.id), else: nil
     talles_totales = if brand, do: calcular_talles_totales(brand.id, talles_custom, sede_actual && sede_actual.id), else: []
@@ -942,6 +942,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
   defp cargar_datos_de_sede(socket, sede) do
     brand = socket.assigns.brand
     sede_id = sede && sede.id
+    {:ok, brand} = brand |> DaleApp.Brands.Brand.changeset(%{sede_activa_id: sede_id}) |> Repo.update()
     productos_todos = listar_productos_con_stock(brand.id, sede_id)
     panel = calcular_panel(brand, productos_todos, sede_id)
     movimientos_stock = DaleApp.Products.listar_movimientos_stock(brand.id, 50, sede_id)
@@ -973,6 +974,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
       end
 
     assign(socket,
+      brand: brand,
       sede_actual: sede,
       mostrar_selector_sede: false,
       productos_todos: productos_todos,
