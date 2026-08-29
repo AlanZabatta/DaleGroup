@@ -78,6 +78,11 @@ defmodule DaleApp.Accounts do
     |> Repo.update()
   end
 
+  def usuarios_en_sede(sede_id) do
+    from(es in DaleApp.Accounts.EmpleadoSede, where: es.brand_location_id == ^sede_id, select: es.user_id)
+    |> Repo.all()
+  end
+
   def list_cajeros(brand_id) do
     Repo.all(from u in User, where: u.cajero_brand_id == ^brand_id)
   end
