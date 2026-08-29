@@ -27,6 +27,7 @@ defmodule DaleApp.Products.MovimientoPuntos do
     field :fecha, :date
 
     belongs_to :brand, DaleApp.Brands.Brand
+    belongs_to :brand_location, DaleApp.Brands.BrandLocation
     belongs_to :user, DaleApp.Accounts.User
 
     timestamps()
@@ -36,6 +37,7 @@ defmodule DaleApp.Products.MovimientoPuntos do
     movimiento
     |> cast(attrs, [
       :brand_id,
+      :brand_location_id,
       :user_id,
       :motivo,
       :categoria,
