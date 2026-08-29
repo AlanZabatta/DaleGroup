@@ -389,22 +389,44 @@ defmodule DaleAppWeb.MiTiendaLive do
  
         <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Mis Empleados</p>
         <.link navigate="/mi-tienda/cajeros" style="text-decoration: none; background: white; border: 1.5px solid #186904; border-radius: 18px; padding: 20px 16px; box-shadow: 0 3px 12px rgba(24,105,4,0.08); display: flex; flex-direction: column; align-items: center; margin-bottom: 12px;">
-          <div style="position: relative; margin-bottom: 4px;">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="#f5b301" stroke="#f5b301" style="position: absolute; top: -18px; left: 50%; transform: translateX(-50%); filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));"><path d="M2 18h20l-2-9-5 4-3-7-3 7-5-4-2 9z"/></svg>
-            <div style="width: 60px; height: 60px; border-radius: 50%; background: white; border: 2px solid #f0f0f0; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0,0,0,0.08); overflow: hidden;">
-              <% ganador = List.first(@empleados_del_mes) && @empleados_del_mes |> List.first() |> Map.get(:user) %>
-              <%= cond do %>
-                <% is_nil(ganador) -> %>
-                  <span style="font-size: 26px; color: #111; font-weight: 800;">?</span>
-                <% ganador.avatar -> %>
-                  <img src={ganador.avatar} style="width: 100%; height: 100%; object-fit: cover;" />
-                <% true -> %>
-                  <span style="font-size: 20px; color: #186904; font-weight: 800;"><%= nombre_corto(ganador) %></span>
+          <%= if @empleados_del_mes == [] do %>
+            <div style="position: relative; margin-bottom: 4px;">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="#f5b301" stroke="#f5b301" style="position: absolute; top: -18px; left: 50%; transform: translateX(-50%); filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));"><path d="M2 18h20l-2-9-5 4-3-7-3 7-5-4-2 9z"/></svg>
+              <div style="width: 60px; height: 60px; border-radius: 50%; background: white; border: 2px solid #f0f0f0; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0,0,0,0.08);">
+                <span style="font-size: 26px; color: #111; font-weight: 800;">?</span>
+              </div>
+            </div>
+          <% else %>
+            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 4px;">
+              <%= for logro <- @empleados_del_mes do %>
+                <% ganador = logro.user %>
+                <div style="display: flex; flex-direction: column; align-items: center; width: 56px;">
+                  <div style="position: relative; margin-bottom: 4px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#f5b301" stroke="#f5b301" style="position: absolute; top: -14px; left: 50%; transform: translateX(-50%); filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));"><path d="M2 18h20l-2-9-5 4-3-7-3 7-5-4-2 9z"/></svg>
+                    <div style="width: 52px; height: 52px; border-radius: 50%; background: white; border: 2px solid #f0f0f0; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0,0,0,0.08); overflow: hidden;">
+                      <%= if ganador && ganador.avatar do %>
+                        <img src={ganador.avatar} style="width: 100%; height: 100%; object-fit: cover;" />
+                      <% else %>
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/>
+                          <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/>
+                        </svg>
+                      <% end %>
+                    </div>
+                  </div>
+                  <p style="font-size: 10px; font-weight: 700; color: #111; margin: 0; text-align: center; font-family: Poppins, sans-serif; max-width: 56px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    <%= ganador && nombre_corto(ganador) %>
+                  </p>
+                </div>
               <% end %>
             </div>
-          </div>
+          <% end %>
           <p style="font-size: 11px; color: #999; margin: 6px 0 0; font-family: Poppins, sans-serif; text-align: center;">
-            <%= if length(@empleados_del_mes) > 1, do: "Empleados del mes (empate)", else: "Empleado del mes" %>
+            <%= cond do %>
+              <% @empleados_del_mes == [] -> %>Todavía no hay empleado del mes
+              <% length(@empleados_del_mes) > 1 -> %>Empleados del mes (empate)
+              <% true -> %>Empleado del mes
+            <% end %>
           </p>
         </.link>
         <.link navigate="/mi-tienda/cajeros" style="display: block; text-align: center; background-color: white; color: #186904; padding: 12.5px; border-radius: 16px; border: 1.5px solid #186904; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
