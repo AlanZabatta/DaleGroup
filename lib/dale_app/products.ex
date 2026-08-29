@@ -207,7 +207,8 @@ defmodule DaleApp.Products do
       "creacion_stock",
       @puntos_por_item_creado,
       origen_tipo: "movimiento_stock",
-      origen_id: mov.id
+      origen_id: mov.id,
+      brand_location_id: mov.brand_location_id
     )
   rescue
     # Nunca dejar que un error de puntos tumbe la carga de stock.
@@ -451,7 +452,8 @@ defmodule DaleApp.Products do
             "venta",
             puntos_crudos,
             origen_tipo: "venta",
-            origen_id: venta.id
+            origen_id: venta.id,
+            brand_location_id: venta.brand_location_id
           )
         end
       end
