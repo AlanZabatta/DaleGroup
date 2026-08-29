@@ -37,13 +37,14 @@ defmodule DaleApp.Brands.Brand do
     field :tipo_marca, :string, default: "normal"
     field :ocultar_info_adicional_stock, :boolean, default: false
     belongs_to :user, DaleApp.Accounts.User
+    belongs_to :sede_activa, DaleApp.Brands.BrandLocation
 
     timestamps()
   end
 
   def changeset(brand, attrs) do
     brand
-    |> cast(attrs, [:name, :logo, :cover_image, :description, :address, :address_full, :horario_atencion, :colores, :latitude, :longitude, :image_limit, :active, :modalidad, :featured_slot, :user_id, :discount, :categorias, :asistencia_activa, :asistencia_activada_en, :ventas_activa, :ventas_activada_en, :gestiones_activa, :gestiones_activada_en, :empleado_puntos_activa, :empleado_puntos_activada_en, :notificaciones_seguridad_activas, :notificaciones_stock_activas, :umbral_poco_stock, :umbral_mucho_stock, :ocultar_sin_stock, :tipo_marca, :ocultar_info_adicional_stock])
+    |> cast(attrs, [:name, :logo, :cover_image, :description, :address, :address_full, :horario_atencion, :colores, :latitude, :longitude, :image_limit, :active, :modalidad, :featured_slot, :user_id, :discount, :categorias, :asistencia_activa, :asistencia_activada_en, :ventas_activa, :ventas_activada_en, :gestiones_activa, :gestiones_activada_en, :empleado_puntos_activa, :empleado_puntos_activada_en, :notificaciones_seguridad_activas, :notificaciones_stock_activas, :umbral_poco_stock, :umbral_mucho_stock, :ocultar_sin_stock, :tipo_marca, :ocultar_info_adicional_stock, :sede_activa_id])
     |> validate_required([:user_id])
     |> validate_inclusion(:modalidad, ["presencial", "digital", "ambos"])
     |> validate_number(:discount, greater_than_or_equal_to: 0, less_than_or_equal_to: 100)
