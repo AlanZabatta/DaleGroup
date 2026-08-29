@@ -537,11 +537,27 @@ defmodule DaleAppWeb.CajerosLive do
       <%= if @brand.asistencia_activa do %>
         <div style="background: white; border: 1.5px solid #186904; border-radius: 18px; padding: 18px 16px; box-shadow: 0 3px 12px rgba(24,105,4,0.08);">
           <%= if Enum.empty?(@ranking_puntualidad) do %>
-            <div style="display: flex; align-items: flex-end; justify-content: center; gap: 20px; height: 180px; margin-bottom: 8px;">
-              <div style="width: 24px; background: #186904; opacity: 0.15; height: 6px; border-radius: 5px 5px 0 0;"></div>
-              <div style="width: 24px; background: #186904; opacity: 0.15; height: 6px; border-radius: 5px 5px 0 0;"></div>
-              <div style="width: 24px; background: #186904; opacity: 0.15; height: 6px; border-radius: 5px 5px 0 0;"></div>
-              <div style="width: 24px; background: #186904; opacity: 0.15; height: 6px; border-radius: 5px 5px 0 0;"></div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; flex-shrink: 0;">
+                <%= for i <- 1..4 do %>
+                  <div style="position: relative; display: flex; flex-direction: column; align-items: center; background: white; border: 1.5px solid #f0f0f0; border-radius: 14px; padding: 8px 6px 6px; width: 74px; box-sizing: border-box; box-shadow: 0 2px 6px rgba(0,0,0,0.05); opacity: 0.55;">
+                    <div style="width: 44px; height: 44px; border-radius: 50%; background: #ccc; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; margin-bottom: 6px; flex-shrink: 0;">
+                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/>
+                        <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/>
+                      </svg>
+                    </div>
+                    <p style="font-size: 11px; font-weight: 700; color: #999; margin: 0; text-align: center; font-family: Poppins, sans-serif;">Empleado <%= i %></p>
+                  </div>
+                <% end %>
+              </div>
+              <div style="flex: 1; min-width: 0; position: relative; display: flex; align-items: flex-end; justify-content: flex-start; gap: 10px; height: 180px; padding: 0 8px; border-radius: 12px; background-color: #f7f5ef; background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 29px, #e6e0d2 29px, #e6e0d2 30px); background-position: bottom; overflow-x: auto; overflow-y: hidden;">
+                <%= for _i <- 1..4 do %>
+                  <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; width: 34px;">
+                    <div style="width: 20px; background: #186904; opacity: 0.15; height: 6px; border-radius: 5px 5px 0 0;"></div>
+                  </div>
+                <% end %>
+              </div>
             </div>
             <p style="font-size: 11px; color: #999; margin: 0; text-align: center; font-family: Poppins, sans-serif;">Todavía no hay registros de asistencia</p>
           <% else %>
