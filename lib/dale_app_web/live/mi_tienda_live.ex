@@ -318,18 +318,16 @@ defmodule DaleAppWeb.MiTiendaLive do
     <div id="mi-tienda-root" phx-hook=".MiTiendaHook" style="padding: 24px 18px 40px; font-family: Poppins, sans-serif; max-width: 600px; margin: 0 auto; background-color: white; min-height: 100vh;">
       <a href="#" onclick="intentarVolver(event)" style="display: inline-flex; background: none; border: none; color: #186904; font-size: 22px; font-weight: 700; cursor: pointer; line-height: 1; text-decoration: none; margin-bottom: 16px;">&#x2715;</a>
       <p style="font-size: 26px; font-weight: 800; color: #186904; margin: 0 0 20px;">Mi Tienda</p>
-        <div style="position: relative; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: linear-gradient(160deg, #ffffff 0%%, #f6faf3 100%%); border: 1.5px solid #d9ead9; border-radius: 14px; padding: 10px 14px; margin-bottom: 16px; box-shadow: 0 3px 10px rgba(24,105,4,0.08);">
-          <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0; font-family: Poppins, sans-serif;">
-            Sede: <span style="font-weight: 800;"><%= texto_sede_actual(@ubicaciones, @sede_actual) %></span>
-          </p>
-          <button type="button" phx-click="toggle_selector_sede" style="display: flex; align-items: center; gap: 6px; background: white; border: 1.5px solid #186904; border-radius: 20px; padding: 6px 12px; cursor: pointer; font-family: Poppins, sans-serif; font-size: 12px; font-weight: 700; color: #186904;">
+        <div style="position: relative; display: inline-block; margin-bottom: 20px;">
+          <button type="button" phx-click="toggle_selector_sede" style="display: flex; align-items: center; gap: 5px; background: #f6faf3; border: 1px solid #d9ead9; border-radius: 20px; padding: 5px 12px; cursor: pointer; font-family: Poppins, sans-serif; font-size: 12px; font-weight: 700; color: #186904;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
             <%= texto_sede_actual(@ubicaciones, @sede_actual) %>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style={"transition: transform 0.15s; transform: rotate(#{if @mostrar_selector_sede, do: "180deg", else: "0deg"});"}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style={"transition: transform 0.15s; transform: rotate(#{if @mostrar_selector_sede, do: "180deg", else: "0deg"});"}>
               <polyline points="6 9 12 15 18 9"/>
             </svg>
           </button>
           <%= if @mostrar_selector_sede do %>
-            <div style="position: absolute; top: calc(100% + 6px); right: 0; z-index: 20; background: white; border: 1.5px solid #eee; border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); min-width: 180px; overflow: hidden;">
+            <div style="position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; background: white; border: 1.5px solid #eee; border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); min-width: 180px; overflow: hidden;">
               <%= if Enum.empty?(@ubicaciones) do %>
                 <p style="font-size: 12.5px; color: #999; margin: 0; padding: 14px; font-family: Poppins, sans-serif; text-align: center;">Todavía no cargás sedes.</p>
               <% else %>
