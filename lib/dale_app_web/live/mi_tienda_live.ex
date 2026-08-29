@@ -107,6 +107,42 @@ defmodule DaleAppWeb.MiTiendaLive do
     end
   end
 
+  def handle_event("toggle_selector_sede", _params, socket) do
+    {:noreply, assign(socket, mostrar_selector_sede: !socket.assigns.mostrar_selector_sede)}
+  end
+
+  def handle_event("elegir_sede", %{"id" => id_str}, socket) do
+    id = String.to_integer(id_str)
+    sede = Enum.find(socket.assigns.ubicaciones, fn s -> s.id == id end)
+    empleados_del_mes = ganadores_ciclo_actual(socket.assigns.brand, sede && sede.id)
+
+    {:noreply,
+     assign(socket,
+       sede_actual: sede,
+       mostrar_selector_sede: false,
+       empleados_del_mes: empleados_del_mes
+     )}
+  end
+
+  def handle_event("elegir_todas_sedes", _params, socket) do
+    empleados_del_mes = ganadores_ciclo_actual(socket.assigns.brand, nil)
+
+    {:noreply,
+     assign(socket,
+       sede_actual: nil,
+       mostrar_selector_sede: false,
+       empleados_del_mes: empleados_del_mes
+     )}
+  end
+
+  defp texto_sede_actual(sedes, sede_actual) do
+    cond do
+      Enum.empty?(sedes) -> "Elegir sede"
+      sede_actual -> sede_actual.nombre
+      true -> "Todas"
+    end
+  end
+
   defp ganadores_ciclo_actual(brand, sede_id) do
     case brand.empleado_puntos_activada_en do
       nil ->
@@ -392,6 +428,35 @@ defmodule DaleAppWeb.MiTiendaLive do
         </a>
         <div style="height: 1px; background: #eee; margin: 8px 0 24px;"></div>
  
+        <div style="position: relative; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: linear-gradient(160deg, #ffffff 0%%, #f6faf3 100%%); border: 1.5px solid #d9ead9; border-radius: 14px; padding: 10px 14px; margin-bottom: 16px; box-shadow: 0 3px 10px rgba(24,105,4,0.08);">
+          <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0; font-family: Poppins, sans-serif;">
+            Sede del empleado del mes: <span style="font-weight: 800;"><%= texto_sede_actual(@ubicaciones, @sede_actual) %></span>
+          </p>
+          <button type="button" phx-click="toggle_selector_sede" style="display: flex; align-items: center; gap: 6px; background: white; border: 1.5px solid #186904; border-radius: 20px; padding: 6px 12px; cursor: pointer; font-family: Poppins, sans-serif; font-size: 12px; font-weight: 700; color: #186904;">
+            <%= texto_sede_actual(@ubicaciones, @sede_actual) %>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style={"transition: transform 0.15s; transform: rotate(#{if @mostrar_selector_sede, do: "180deg", else: "0deg"});"}>
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <%= if @mostrar_selector_sede do %>
+            <div style="position: absolute; top: calc(100% + 6px); right: 0; z-index: 20; background: white; border: 1.5px solid #eee; border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); min-width: 180px; overflow: hidden;">
+              <%= if Enum.empty?(@ubicaciones) do %>
+                <p style="font-size: 12.5px; color: #999; margin: 0; padding: 14px; font-family: Poppins, sans-serif; text-align: center;">Todavu00eda no cargu00e1s sedes.</p>
+              <% else %>
+                <%= if length(@ubicaciones) > 1 do %>
+                  <button type="button" phx-click="elegir_todas_sedes" style={"display: block; width: 100%; text-align: left; padding: 12px 16px; border: none; border-bottom: 1px solid #f2f2f2; cursor: pointer; font-family: Poppins, sans-serif; font-size: 13px; font-weight: 700; background: #{if is_nil(@sede_actual), do: "#eef4ec", else: "white"}; color: #{if is_nil(@sede_actual), do: "#186904", else: "#333"};"}>
+                    Todas las sedes
+                  </button>
+                <% end %>
+                <%= for sede <- @ubicaciones do %>
+                  <button type="button" phx-click="elegir_sede" phx-value-id={sede.id} style={"display: block; width: 100%; text-align: left; padding: 12px 16px; border: none; cursor: pointer; font-family: Poppins, sans-serif; font-size: 13px; font-weight: 600; background: #{if @sede_actual && @sede_actual.id == sede.id, do: "#eef4ec", else: "white"}; color: #{if @sede_actual && @sede_actual.id == sede.id, do: "#186904", else: "#333"};"}>
+                    <%= sede.nombre %>
+                  </button>
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
         <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Mis Empleados</p>
         <.link navigate="/mi-tienda/cajeros" style="text-decoration: none; background: white; border: 1.5px solid #186904; border-radius: 18px; padding: 20px 16px; box-shadow: 0 3px 12px rgba(24,105,4,0.08); display: flex; flex-direction: column; align-items: center; margin-bottom: 12px;">
           <%= if @empleados_del_mes == [] do %>
