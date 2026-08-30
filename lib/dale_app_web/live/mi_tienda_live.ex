@@ -505,6 +505,34 @@ defmodule DaleAppWeb.MiTiendaLive do
  
         <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Mis Empleados</p>
         <.link navigate="/mi-tienda/cajeros" style="text-decoration: none; display: block; background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #186904; border-radius: 22px; padding: 26px 20px 22px; box-shadow: 0 3px 14px rgba(24,105,4,0.08); margin-bottom: 12px; text-align: center;">
+          <%= if @empleados_del_mes != [] do %>
+            <style>
+              @keyframes confetiCae {
+                0%   { transform: translateY(-40px) translateX(0) rotate(0deg); opacity: 0; }
+                8%   { opacity: 1; }
+                85%  { opacity: 1; }
+                100% { transform: translateY(220px) translateX(var(--drift)) rotate(var(--rot-total)); opacity: 0; }
+              }
+            </style>
+            <div style="position: relative; height: 0; overflow: visible;">
+              <%= for {color, top, left, drift, rot, delay} <- [
+                {"#E91E8C", -10, 10, 30, 380, -0.1},
+                {"#186904", -10, 50, -20, 420, -0.6},
+                {"#0066cc", -10, 90, 15, 360, -1.1},
+                {"#e67e22", -10, 140, -30, 400, -0.3},
+                {"#8e44ad", -10, 180, 25, 440, -0.9},
+                {"#c0392b", -10, 220, -15, 370, -1.4},
+                {"#16a085", -10, 260, 10, 410, -0.5},
+                {"#f5b301", -10, 30, -25, 390, -1.6},
+                {"#E91E8C", -10, 200, 20, 430, -0.2},
+                {"#186904", -10, 110, -10, 380, -1.0},
+                {"#0066cc", -10, 250, -20, 400, -1.9},
+                {"#e67e22", -10, 70, 15, 420, -0.7}
+              ] do %>
+                <div style={"position: absolute; top: #{top}px; left: #{left}px; width: 7px; height: 12px; background: #{color}; border-radius: 2px; --drift: #{drift}px; --rot-total: #{rot}deg; animation: confetiCae 2.4s ease-in infinite; animation-delay: #{delay}s; pointer-events: none;"}></div>
+              <% end %>
+            </div>
+          <% end %>
           <%= if @empleados_del_mes == [] do %>
             <div style="position: relative; margin-bottom: 6px; display: inline-block;">
               <svg width="30" height="30" viewBox="0 0 24 24" fill="#f5b301" stroke="#f5b301" style="position: absolute; top: -20px; left: 50%; transform: translateX(-50%); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));"><path d="M2 18h20l-2-9-5 4-3-7-3 7-5-4-2 9z"/></svg>
@@ -514,13 +542,10 @@ defmodule DaleAppWeb.MiTiendaLive do
             </div>
             <p style="font-size: 12px; color: #999; margin: 10px 0 0; font-family: Poppins, sans-serif;">Todavu00eda no hay empleado del mes</p>
           <% else %>
-            <p style="font-size: 10.5px; font-weight: 800; color: #186904; margin: 0 0 14px; text-transform: uppercase; letter-spacing: 1.5px; font-family: Poppins, sans-serif;">
-              <%= if length(@empleados_del_mes) > 1, do: "Empatados - empleados del mes", else: "Empleado del mes" %>
-            </p>
             <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
               <%= for logro <- @empleados_del_mes do %>
                 <% ganador = logro.user %>
-                <div style="display: flex; flex-direction: column; align-items: center; width: 84px;">
+                <div style="display: flex; flex-direction: column; align-items: center; width: 110px;">
                   <div style="position: relative; margin-bottom: 8px;">
                     <svg width="26" height="26" viewBox="0 0 24 24" fill="#f5b301" stroke="#f5b301" style="position: absolute; top: -18px; left: 50%; transform: translateX(-50%); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));"><path d="M2 18h20l-2-9-5 4-3-7-3 7-5-4-2 9z"/></svg>
                     <% colores_avatar = ["#E91E8C", "#186904", "#2b2b2b", "#0066cc", "#e67e22", "#8e44ad", "#c0392b", "#16a085"] %>
@@ -528,18 +553,18 @@ defmodule DaleAppWeb.MiTiendaLive do
                       <%= if ganador && ganador.avatar do %>
                         <img src={ganador.avatar} style="width: 100%; height: 100%; object-fit: cover;" />
                       <% else %>
-                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/>
                           <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/>
                         </svg>
                       <% end %>
                     </div>
                   </div>
-                  <p style="font-size: 13px; font-weight: 800; color: #111; margin: 0; text-align: center; font-family: Poppins, sans-serif; max-width: 84px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  <p style="font-size: 13px; font-weight: 800; color: #111; margin: 0; text-align: center; font-family: Poppins, sans-serif; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                     <%= ganador && nombre_corto(ganador) %>
                   </p>
-                  <p style="font-size: 11px; font-weight: 700; color: #186904; margin: 2px 0 0; font-family: Poppins, sans-serif;">
-                    <%= logro.puntos_logro %> pts
+                  <p style="font-size: 11px; font-weight: 700; color: #186904; margin: 2px 0 0; font-family: Poppins, sans-serif; white-space: nowrap;">
+                    <%= if length(@empleados_del_mes) > 1, do: "Empleados del mes", else: "Empleado del mes" %>
                   </p>
                 </div>
               <% end %>
