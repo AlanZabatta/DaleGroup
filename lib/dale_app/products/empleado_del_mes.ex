@@ -15,6 +15,18 @@ defmodule DaleApp.Products.EmpleadoDelMes do
   separado de los puntos de canje. La suma de los dos bonus de un empleado
   es su puntaje de logro del ciclo, EN ESA SEDE. Gana quien mas sumo.
 
+  DESEMPATE AUTOMATICO: si dos o mas empatan en el puntaje maximo, se
+  desempata en cadena, sin comparar nada entre categorias distintas:
+  1. Suma de posiciones cruda mas baja (categoria + asistencia) — mas fino
+     que el bonus por escalon, que puede esconder diferencias reales.
+  2. Si sigue empatado: mejor posicion en SU PROPIA categoria — el trabajo
+     especifico del rol pesa mas que la asistencia, que es mas generica.
+  3. Si sigue empatado: mas puntos CRUDOS generados ESE CICLO (no
+     historicos, no el bonus por escalon) — practicamente nunca da empate.
+  Si ni con eso se rompe, es un empate genuino: quedan todos marcados como
+  ganadores, igual que antes. El dueño podra elegir a mano si quiere (fuera
+  de este modulo).
+
   Gerente no compite: no genera puntos por venta/stock (ver RegistroPuntos),
   asi que no tiene podio de categoria propio.
   """
@@ -54,6 +66,22 @@ defmodule DaleApp.Products.EmpleadoDelMes do
 
       maximo = totales |> Enum.map(fn {_uid, total} -> total end) |> Enum.max(fn -> 0 end)
 
+      candidatos =
+        totales
+        |> Enum.filter(fn {_uid, total} -> total == maximo and maximo > 0 end)
+        |> Enum.map(fn {uid, _total} -> uid end)
+
+      crudos_por_usuario =
+        if length(candidatos) > 1 do
+          puntos_crudos_por_usuario(brand, empleados, ciclo_inicio, ciclo_fin, sede_id)
+        else
+          %{}
+        end
+
+      ganadores_ids =
+        desempatar_ganadores(candidatos, bonus_categoria, bonus_asistencia, crudos_por_usuario)
+        |> MapSet.new()
+
       Enum.each(totales, fn {user_id, total} ->
         %LogroMensual{}
         |> LogroMensual.changeset(%{
@@ -65,7 +93,7 @@ defmodule DaleApp.Products.EmpleadoDelMes do
           puntos_logro: total,
           posicion_categoria: posicion_de(bonus_categoria, user_id),
           posicion_asistencia: posicion_de(bonus_asistencia, user_id),
-          es_ganador: total == maximo and maximo > 0
+          es_ganador: MapSet.member?(ganadores_ids, user_id)
         })
         |> Repo.insert()
       end)
@@ -87,7 +115,8 @@ defmodule DaleApp.Products.EmpleadoDelMes do
 
   @doc """
   El dueño desempata: entre los ganadores actuales de un ciclo+sede, deja a
-  UNO solo como es_ganador y marca la eleccion como manual.
+  UNO solo como es_ganador y marca la eleccion como manual. Queda para el
+  caso de empate genuino que el desempate automatico no pudo resolver.
   """
   def desempatar(brand_id, ciclo_inicio, user_id_elegido, sede_id \\ nil) do
     logros = logros_del_ciclo(brand_id, ciclo_inicio, sede_id)
@@ -109,6 +138,81 @@ defmodule DaleApp.Products.EmpleadoDelMes do
     else
       {:error, :no_estaba_empatado}
     end
+  end
+
+  # --- Desempate automatico ---
+
+  defp desempatar_ganadores([], _bonus_categoria, _bonus_asistencia, _crudos), do: []
+  defp desempatar_ganadores([unico], _bonus_categoria, _bonus_asistencia, _crudos), do: [unico]
+
+  defp desempatar_ganadores(candidatos, bonus_categoria, bonus_asistencia, crudos_por_usuario) do
+    con_datos =
+      Enum.map(candidatos, fn uid ->
+        pos_cat = posicion_de(bonus_categoria, uid) || 99
+        pos_asis = posicion_de(bonus_asistencia, uid) || 99
+
+        %{
+          uid: uid,
+          suma_posiciones: pos_cat + pos_asis,
+          pos_categoria: pos_cat,
+          crudos: Map.get(crudos_por_usuario, uid, 0)
+        }
+      end)
+
+    # Criterio 1: suma de posiciones mas baja.
+    minimo_suma = con_datos |> Enum.map(& &1.suma_posiciones) |> Enum.min()
+    paso1 = Enum.filter(con_datos, &(&1.suma_posiciones == minimo_suma))
+
+    resultado =
+      if length(paso1) == 1 do
+        paso1
+      else
+        # Criterio 2: mejor posicion en la propia categoria.
+        minima_pos_cat = paso1 |> Enum.map(& &1.pos_categoria) |> Enum.min()
+        paso2 = Enum.filter(paso1, &(&1.pos_categoria == minima_pos_cat))
+
+        if length(paso2) == 1 do
+          paso2
+        else
+          # Criterio 3: mas puntos crudos generados este ciclo.
+          maximo_crudos = paso2 |> Enum.map(& &1.crudos) |> Enum.max()
+          Enum.filter(paso2, &(&1.crudos == maximo_crudos))
+        end
+      end
+
+    Enum.map(resultado, & &1.uid)
+  end
+
+  # Suma de puntos CRUDOS (no el bonus por escalon, no el multiplicador) que
+  # cada candidato genero en ESTE ciclo puntual: movimientos_puntos +
+  # asistencia. Solo se calcula cuando hay empate a desempatar — no hace
+  # falta para el resto de los empleados.
+  defp puntos_crudos_por_usuario(brand, empleados, ciclo_inicio, ciclo_fin, sede_id) do
+    ids = Enum.map(empleados, & &1.id)
+
+    crudos_movimientos =
+      from(m in MovimientoPuntos,
+        where:
+          m.brand_id == ^brand.id and m.user_id in ^ids and m.fecha >= ^ciclo_inicio and
+            m.fecha < ^ciclo_fin,
+        group_by: m.user_id,
+        select: {m.user_id, sum(m.puntos_crudos)}
+      )
+      |> filtrar_movimiento_por_sede(sede_id)
+      |> Repo.all()
+      |> Map.new()
+
+    crudos_asistencia =
+      from(a in Asistencia,
+        where: a.user_id in ^ids and a.fecha >= ^ciclo_inicio and a.fecha < ^ciclo_fin,
+        group_by: a.user_id,
+        select: {a.user_id, sum(a.puntos)}
+      )
+      |> filtrar_asistencia_por_sede(sede_id)
+      |> Repo.all()
+      |> Map.new()
+
+    Map.merge(crudos_movimientos, crudos_asistencia, fn _uid, a, b -> a + b end)
   end
 
   # --- Internos ---
