@@ -321,6 +321,9 @@ defmodule DaleAppWeb.MiTiendaLive do
  
     <div id="mi-tienda-root" phx-hook=".MiTiendaHook" style="padding: 24px 18px 40px; font-family: Poppins, sans-serif; max-width: 600px; margin: 0 auto; background-color: white; min-height: 100vh;">
       <a href="#" onclick="intentarVolver(event)" style="display: inline-flex; background: none; border: none; color: #186904; font-size: 22px; font-weight: 700; cursor: pointer; line-height: 1; text-decoration: none; margin-bottom: 16px;">&#x2715;</a>
+      <%= if @brand do %>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+          <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0; text-transform: uppercase; letter-spacing: 1px;">Stock</p>
       <p style="font-size: 26px; font-weight: 800; color: #186904; margin: 0 0 20px;">Mi Tienda</p>
         <div style="position: relative; display: inline-block; margin-bottom: 20px;">
           <button type="button" phx-click="toggle_selector_sede" style="display: flex; align-items: center; gap: 5px; background: #f6faf3; border: 1px solid #d9ead9; border-radius: 20px; padding: 5px 12px; cursor: pointer; font-family: Poppins, sans-serif; font-size: 12px; font-weight: 700; color: #186904;">
@@ -349,8 +352,7 @@ defmodule DaleAppWeb.MiTiendaLive do
             </div>
           <% end %>
         </div>
-      <%= if @brand do %>
-        <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Stock</p>
+        </div>
         <.link navigate="/mi-tienda/stock" style="display: block; text-decoration: none; background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 20px; padding: 18px 20px; margin-bottom: 12px; box-shadow: 0 4px 14px rgba(24,105,4,0.10);">
           <p style="font-size: 11px; font-weight: 800; color: #186904; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 1.2px;">MiniParonama</p>
           <div style="display: flex; align-items: flex-end; gap: 14px;">
