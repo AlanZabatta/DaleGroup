@@ -12,7 +12,7 @@ defmodule DaleAppWeb.CajerosLive do
     brand = if user_id, do: Repo.get_by(Brand, user_id: user_id), else: nil
     cajeros = if brand, do: Accounts.list_cajeros(brand.id), else: []
     sedes = if brand, do: listar_sedes(brand.id), else: []
-    sede_actual = nil
+    sede_actual = brand && brand.sede_activa_id
     ranking_puntualidad = calcular_ranking(brand, sede_actual)
     ranking_ventas = calcular_ranking_ventas(brand, sede_actual)
     ranking_gestores = calcular_ranking_gestores(brand, sede_actual)
@@ -69,33 +69,29 @@ defmodule DaleAppWeb.CajerosLive do
 
   def handle_event("elegir_sede", %{"id" => id_str}, socket) do
     id = String.to_integer(id_str)
-    brand = socket.assigns.brand
-
-    socket =
-      assign(socket,
-        sede_actual: id,
-        selector_sede_abierto: false,
-        ranking_puntualidad: calcular_ranking(brand, id),
-        ranking_ventas: calcular_ranking_ventas(brand, id),
-        ranking_gestores: calcular_ranking_gestores(brand, id)
-      )
-
-    {:noreply, socket}
+    {:noreply, guardar_sede_activa(socket, id)}
   end
 
   def handle_event("elegir_todas_sedes", _params, socket) do
-    brand = socket.assigns.brand
+    {:noreply, guardar_sede_activa(socket, nil)}
+  end
 
-    socket =
-      assign(socket,
-        sede_actual: nil,
-        selector_sede_abierto: false,
-        ranking_puntualidad: calcular_ranking(brand, nil),
-        ranking_ventas: calcular_ranking_ventas(brand, nil),
-        ranking_gestores: calcular_ranking_gestores(brand, nil)
-      )
+  # Persiste la sede elegida en brand.sede_activa_id, compartida con Mi
+  # Tienda y Stock.
+  defp guardar_sede_activa(socket, sede_id) do
+    {:ok, brand_actualizada} =
+      socket.assigns.brand
+      |> DaleApp.Brands.Brand.changeset(%{sede_activa_id: sede_id})
+      |> Repo.update()
 
-    {:noreply, socket}
+    assign(socket,
+      brand: brand_actualizada,
+      sede_actual: sede_id,
+      selector_sede_abierto: false,
+      ranking_puntualidad: calcular_ranking(brand_actualizada, sede_id),
+      ranking_ventas: calcular_ranking_ventas(brand_actualizada, sede_id),
+      ranking_gestores: calcular_ranking_gestores(brand_actualizada, sede_id)
+    )
   end
 
   def handle_event("toggle_asistencia", _params, socket) do
