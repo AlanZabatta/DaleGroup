@@ -326,6 +326,7 @@ defmodule DaleAppWeb.MiTiendaLive do
       <%= if @brand do %>
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
           <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0; text-transform: uppercase; letter-spacing: 1px;">Stock</p>
+          <%= if length(@ubicaciones) > 1 do %>
           <div style="position: relative; display: inline-block;">
             <button type="button" phx-click="toggle_selector_sede" style="display: flex; align-items: center; gap: 5px; background: #f6faf3; border: 1px solid #d9ead9; border-radius: 20px; padding: 5px 12px; cursor: pointer; font-family: Poppins, sans-serif; font-size: 12px; font-weight: 700; color: #186904;">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
@@ -353,6 +354,7 @@ defmodule DaleAppWeb.MiTiendaLive do
               </div>
             <% end %>
           </div>
+          <% end %>
         </div>
 
         <.link navigate="/mi-tienda/stock" style="display: block; text-decoration: none; background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 20px; padding: 18px 20px; margin-bottom: 12px; box-shadow: 0 4px 14px rgba(24,105,4,0.10);">
