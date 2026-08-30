@@ -20,70 +20,7 @@ defmodule DaleAppWeb.MiTiendaLive do
     empleados_del_mes = if brand, do: ganadores_ciclo_actual(brand, sede_actual && sede_actual.id), else: []
 
     {total_productos, productos_dale, limite_dale, hay_sin_stock_normal, hay_sin_stock_dale} =
-      if brand do
-        # Un Product no tiene sede propia (el catalogo es de la marca
-        # entera) — lo que varia por sede es el StockItem. Con sede activa,
-        # "producto en esta sede" pasa a significar "tiene al menos una
-        # unidad de stock ahi", no "existe en el catalogo".
-        sede_id = brand.sede_activa_id
-
-        productos_brand = DaleApp.Products.list_brand_products(brand.id)
-        productos_activos = Enum.filter(productos_brand, & &1.active)
-
-        ids_con_stock_en_sede =
-          if sede_id do
-            from(s in DaleApp.Products.StockItem,
-              join: p in DaleApp.Products.Product, on: p.id == s.product_id,
-              where: p.brand_id == ^brand.id and s.brand_location_id == ^sede_id,
-              group_by: p.id,
-              having: sum(s.cantidad) > 0,
-              select: p.id
-            )
-            |> Repo.all()
-            |> MapSet.new()
-          else
-            nil
-          end
-
-        productos_en_sede =
-          if ids_con_stock_en_sede,
-            do: Enum.filter(productos_activos, &MapSet.member?(ids_con_stock_en_sede, &1.id)),
-            else: productos_activos
-
-        total = productos_en_sede |> Enum.map(& &1.name) |> Enum.uniq() |> length()
-
-        dale =
-          productos_en_sede
-          |> Enum.filter(&(&1.codigo_tipo == "99"))
-          |> Enum.map(& &1.name)
-          |> Enum.uniq()
-          |> length()
-
-        limite = brand.image_limit || 12
-
-        base_sin_stock =
-          from(s in DaleApp.Products.StockItem,
-            join: p in DaleApp.Products.Product, on: p.id == s.product_id,
-            where: p.brand_id == ^brand.id,
-            group_by: [p.id, p.codigo_tipo],
-            having: sum(s.cantidad) <= 0,
-            select: p.codigo_tipo
-          )
-
-        tipos_sin_stock =
-          if sede_id do
-            from([s, p] in base_sin_stock, where: s.brand_location_id == ^sede_id) |> Repo.all()
-          else
-            Repo.all(base_sin_stock)
-          end
-
-        sin_stock_normal = Enum.any?(tipos_sin_stock, &(&1 != "99"))
-        sin_stock_dale = Enum.any?(tipos_sin_stock, &(&1 == "99"))
-
-        {total, dale, limite, sin_stock_normal, sin_stock_dale}
-      else
-        {0, 0, 12, false, false}
-      end
+      calcular_miniparonama(brand)
  
     curva_cupon =
       if brand do
@@ -155,6 +92,68 @@ defmodule DaleAppWeb.MiTiendaLive do
 
   # Persiste la sede elegida en brand.sede_activa_id, para que Stock y
   # Cajeros (que leen el mismo campo) vean el mismo cambio al navegar ahi.
+  # Extraida para poder llamarla tanto desde mount como al cambiar de sede
+  # (guardar_sede_activa) — antes solo se calculaba una vez al entrar a la
+  # pantalla, y quedaba pegada aunque el usuario cambiara de sede despues.
+  defp calcular_miniparonama(nil), do: {0, 0, 12, false, false}
+
+  defp calcular_miniparonama(brand) do
+    sede_id = brand.sede_activa_id
+    productos_brand = DaleApp.Products.list_brand_products(brand.id)
+    productos_activos = Enum.filter(productos_brand, & &1.active)
+
+    ids_con_stock_en_sede =
+      if sede_id do
+        from(s in DaleApp.Products.StockItem,
+          join: p in DaleApp.Products.Product, on: p.id == s.product_id,
+          where: p.brand_id == ^brand.id and s.brand_location_id == ^sede_id,
+          group_by: p.id,
+          having: sum(s.cantidad) > 0,
+          select: p.id
+        )
+        |> Repo.all()
+        |> MapSet.new()
+      else
+        nil
+      end
+
+    productos_en_sede =
+      if ids_con_stock_en_sede,
+        do: Enum.filter(productos_activos, &MapSet.member?(ids_con_stock_en_sede, &1.id)),
+        else: productos_activos
+
+    total = productos_en_sede |> Enum.map(& &1.name) |> Enum.uniq() |> length()
+
+    dale =
+      productos_en_sede
+      |> Enum.filter(&(&1.codigo_tipo == "99"))
+      |> Enum.map(& &1.name)
+      |> Enum.uniq()
+      |> length()
+
+    limite = brand.image_limit || 12
+
+    base_sin_stock =
+      from(s in DaleApp.Products.StockItem,
+        join: p in DaleApp.Products.Product, on: p.id == s.product_id,
+        where: p.brand_id == ^brand.id,
+        group_by: [p.id, p.codigo_tipo],
+        having: sum(s.cantidad) <= 0,
+        select: p.codigo_tipo
+      )
+
+    tipos_sin_stock =
+      if sede_id do
+        from([s, p] in base_sin_stock, where: s.brand_location_id == ^sede_id) |> Repo.all()
+      else
+        Repo.all(base_sin_stock)
+      end
+
+    sin_stock_normal = Enum.any?(tipos_sin_stock, &(&1 != "99"))
+    sin_stock_dale = Enum.any?(tipos_sin_stock, &(&1 == "99"))
+    {total, dale, limite, sin_stock_normal, sin_stock_dale}
+  end
+
   defp guardar_sede_activa(socket, sede) do
     {:ok, brand_actualizada} =
       socket.assigns.brand
@@ -162,12 +161,19 @@ defmodule DaleAppWeb.MiTiendaLive do
       |> Repo.update()
 
     empleados_del_mes = ganadores_ciclo_actual(brand_actualizada, sede && sede.id)
+    {total_productos, productos_dale, limite_dale, hay_sin_stock_normal, hay_sin_stock_dale} =
+      calcular_miniparonama(brand_actualizada)
 
     assign(socket,
       brand: brand_actualizada,
       sede_actual: sede,
       mostrar_selector_sede: false,
-      empleados_del_mes: empleados_del_mes
+      empleados_del_mes: empleados_del_mes,
+      total_productos: total_productos,
+      productos_dale: productos_dale,
+      limite_dale: limite_dale,
+      hay_sin_stock_normal: hay_sin_stock_normal,
+      hay_sin_stock_dale: hay_sin_stock_dale
     )
   end
 
