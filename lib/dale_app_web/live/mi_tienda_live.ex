@@ -523,11 +523,12 @@ defmodule DaleAppWeb.MiTiendaLive do
                 <div style="display: flex; flex-direction: column; align-items: center; width: 84px;">
                   <div style="position: relative; margin-bottom: 8px;">
                     <svg width="26" height="26" viewBox="0 0 24 24" fill="#f5b301" stroke="#f5b301" style="position: absolute; top: -18px; left: 50%; transform: translateX(-50%); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));"><path d="M2 18h20l-2-9-5 4-3-7-3 7-5-4-2 9z"/></svg>
-                    <div style="width: 78px; height: 78px; border-radius: 50%; background: white; border: 3px solid #186904; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(24,105,4,0.20); overflow: hidden;">
+                    <% colores_avatar = ["#E91E8C", "#186904", "#2b2b2b", "#0066cc", "#e67e22", "#8e44ad", "#c0392b", "#16a085"] %>
+                    <div style={"width: 78px; height: 78px; border-radius: 50%; border: 3px solid #186904; box-shadow: 0 4px 14px rgba(24,105,4,0.20); overflow: hidden; background: #{if ganador && ganador.avatar, do: "white", else: Enum.at(colores_avatar, rem((ganador && ganador.id) || 0, length(colores_avatar)))}; display: flex; align-items: #{if ganador && ganador.avatar, do: "center", else: "flex-end"}; justify-content: center;"}>
                       <%= if ganador && ganador.avatar do %>
                         <img src={ganador.avatar} style="width: 100%; height: 100%; object-fit: cover;" />
                       <% else %>
-                        <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/>
                           <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/>
                         </svg>
