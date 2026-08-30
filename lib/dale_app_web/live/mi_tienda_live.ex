@@ -507,30 +507,34 @@ defmodule DaleAppWeb.MiTiendaLive do
         <.link navigate="/mi-tienda/cajeros" style="text-decoration: none; display: block; background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #186904; border-radius: 22px; padding: 26px 20px 22px; box-shadow: 0 3px 14px rgba(24,105,4,0.08); margin-bottom: 12px; text-align: center;">
           <%= if @empleados_del_mes != [] do %>
             <style>
-              @keyframes confetiCae {
-                0%   { transform: translateY(-40px) translateX(0) rotate(0deg); opacity: 0; }
-                8%   { opacity: 1; }
-                85%  { opacity: 1; }
-                100% { transform: translateY(220px) translateX(var(--drift)) rotate(var(--rot-total)); opacity: 0; }
+              @keyframes confetiEscopeta {
+                0%   { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+                4%   { opacity: 1; }
+                28%  { transform: translate(var(--dx-subida), var(--dy-subida)) rotate(var(--rot-subida)); opacity: 1; }
+                90%  { transform: translate(var(--dx-final), var(--dy-final)) rotate(var(--rot-final)); opacity: 1; }
+                100% { transform: translate(var(--dx-final), calc(var(--dy-final) + 20px)) rotate(var(--rot-final)); opacity: 0; }
               }
             </style>
-            <div style="position: relative; height: 0; overflow: visible;">
-              <%= for {color, top, left, drift, rot, delay} <- [
-                {"#E91E8C", -10, 10, 30, 380, -0.1},
-                {"#186904", -10, 50, -20, 420, -0.6},
-                {"#0066cc", -10, 90, 15, 360, -1.1},
-                {"#e67e22", -10, 140, -30, 400, -0.3},
-                {"#8e44ad", -10, 180, 25, 440, -0.9},
-                {"#c0392b", -10, 220, -15, 370, -1.4},
-                {"#16a085", -10, 260, 10, 410, -0.5},
-                {"#f5b301", -10, 30, -25, 390, -1.6},
-                {"#E91E8C", -10, 200, 20, 430, -0.2},
-                {"#186904", -10, 110, -10, 380, -1.0},
-                {"#0066cc", -10, 250, -20, 400, -1.9},
-                {"#e67e22", -10, 70, 15, 420, -0.7}
-              ] do %>
-                <div style={"position: absolute; top: #{top}px; left: #{left}px; width: 7px; height: 12px; background: #{color}; border-radius: 2px; --drift: #{drift}px; --rot-total: #{rot}deg; animation: confetiCae 2.4s ease-in infinite; animation-delay: #{delay}s; pointer-events: none;"}></div>
-              <% end %>
+            <div style="position: relative; height: 0;">
+              <div style="position: absolute; top: -230px; left: 0; right: 0; height: 260px; overflow: hidden; border-radius: 22px; pointer-events: none;">
+                <%= for {color, lado, dx_s, dy_s, rot_s, dx_f, dy_f, rot_f, delay} <- [
+                  {"#E91E8C", "left", 40, -170, 200, 70, -40, 380, -0.0},
+                  {"#186904", "left", 60, -190, -160, 110, -30, -320, -0.5},
+                  {"#0066cc", "left", 20, -150, 240, 40, -50, 420, -1.0},
+                  {"#e67e22", "left", 80, -200, -220, 130, -20, -400, -0.3},
+                  {"#8e44ad", "left", 50, -160, 180, 90, -45, 340, -0.8},
+                  {"#c0392b", "left", 30, -180, -190, 60, -35, -360, -1.3},
+                  {"#16a085", "right", -40, -170, -200, -70, -40, -380, -0.1},
+                  {"#f5b301", "right", -60, -190, 160, -110, -30, 320, -0.6},
+                  {"#E91E8C", "right", -20, -150, -240, -40, -50, -420, -1.1},
+                  {"#186904", "right", -80, -200, 220, -130, -20, 400, -0.4},
+                  {"#0066cc", "right", -50, -160, -180, -90, -45, -340, -0.9},
+                  {"#e67e22", "right", -30, -180, 190, -60, -35, 360, -1.4}
+                ] do %>
+                  <% base = if lado == "left", do: "left: 8px;", else: "right: 8px;" %>
+                  <div style={"position: absolute; bottom: 0; #{base} width: 7px; height: 12px; background: #{color}; border-radius: 2px; --dx-subida: #{dx_s}px; --dy-subida: #{dy_s}px; --rot-subida: #{rot_s}deg; --dx-final: #{dx_f}px; --dy-final: #{dy_f}px; --rot-final: #{rot_f}deg; animation: confetiEscopeta 2.6s ease-out infinite; animation-delay: #{delay}s; pointer-events: none;"}></div>
+                <% end %>
+              </div>
             </div>
           <% end %>
           <%= if @empleados_del_mes == [] do %>
