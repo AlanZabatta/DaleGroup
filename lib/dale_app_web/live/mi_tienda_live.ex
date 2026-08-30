@@ -321,38 +321,40 @@ defmodule DaleAppWeb.MiTiendaLive do
  
     <div id="mi-tienda-root" phx-hook=".MiTiendaHook" style="padding: 24px 18px 40px; font-family: Poppins, sans-serif; max-width: 600px; margin: 0 auto; background-color: white; min-height: 100vh;">
       <a href="#" onclick="intentarVolver(event)" style="display: inline-flex; background: none; border: none; color: #186904; font-size: 22px; font-weight: 700; cursor: pointer; line-height: 1; text-decoration: none; margin-bottom: 16px;">&#x2715;</a>
+      <p style="font-size: 26px; font-weight: 800; color: #186904; margin: 0 0 20px;">Mi Tienda</p>
+
       <%= if @brand do %>
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
           <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0; text-transform: uppercase; letter-spacing: 1px;">Stock</p>
-      <p style="font-size: 26px; font-weight: 800; color: #186904; margin: 0 0 20px;">Mi Tienda</p>
-        <div style="position: relative; display: inline-block; margin-bottom: 20px;">
-          <button type="button" phx-click="toggle_selector_sede" style="display: flex; align-items: center; gap: 5px; background: #f6faf3; border: 1px solid #d9ead9; border-radius: 20px; padding: 5px 12px; cursor: pointer; font-family: Poppins, sans-serif; font-size: 12px; font-weight: 700; color: #186904;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
-            <%= texto_sede_actual(@ubicaciones, @sede_actual) %>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style={"transition: transform 0.15s; transform: rotate(#{if @mostrar_selector_sede, do: "180deg", else: "0deg"});"}>
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </button>
-          <%= if @mostrar_selector_sede do %>
-            <div style="position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; background: white; border: 1.5px solid #eee; border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); min-width: 180px; overflow: hidden;">
-              <%= if Enum.empty?(@ubicaciones) do %>
-                <p style="font-size: 12.5px; color: #999; margin: 0; padding: 14px; font-family: Poppins, sans-serif; text-align: center;">Todavía no cargás sedes.</p>
-              <% else %>
-                <%= if length(@ubicaciones) > 1 do %>
-                  <button type="button" phx-click="elegir_todas_sedes" style={"display: block; width: 100%; text-align: left; padding: 12px 16px; border: none; border-bottom: 1px solid #f2f2f2; cursor: pointer; font-family: Poppins, sans-serif; font-size: 13px; font-weight: 700; background: #{if is_nil(@sede_actual), do: "#eef4ec", else: "white"}; color: #{if is_nil(@sede_actual), do: "#186904", else: "#333"};"}>
-                    Todas las sedes
-                  </button>
+          <div style="position: relative; display: inline-block;">
+            <button type="button" phx-click="toggle_selector_sede" style="display: flex; align-items: center; gap: 5px; background: #f6faf3; border: 1px solid #d9ead9; border-radius: 20px; padding: 5px 12px; cursor: pointer; font-family: Poppins, sans-serif; font-size: 12px; font-weight: 700; color: #186904;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+              <%= texto_sede_actual(@ubicaciones, @sede_actual) %>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style={"transition: transform 0.15s; transform: rotate(#{if @mostrar_selector_sede, do: "180deg", else: "0deg"});"}>
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            <%= if @mostrar_selector_sede do %>
+              <div style="position: absolute; top: calc(100% + 6px); right: 0; z-index: 20; background: white; border: 1.5px solid #eee; border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); min-width: 180px; overflow: hidden;">
+                <%= if Enum.empty?(@ubicaciones) do %>
+                  <p style="font-size: 12.5px; color: #999; margin: 0; padding: 14px; font-family: Poppins, sans-serif; text-align: center;">Todavía no cargás sedes.</p>
+                <% else %>
+                  <%= if length(@ubicaciones) > 1 do %>
+                    <button type="button" phx-click="elegir_todas_sedes" style={"display: block; width: 100%; text-align: left; padding: 12px 16px; border: none; border-bottom: 1px solid #f2f2f2; cursor: pointer; font-family: Poppins, sans-serif; font-size: 13px; font-weight: 700; background: #{if is_nil(@sede_actual), do: "#eef4ec", else: "white"}; color: #{if is_nil(@sede_actual), do: "#186904", else: "#333"};"}>
+                      Todas las sedes
+                    </button>
+                  <% end %>
+                  <%= for sede <- @ubicaciones do %>
+                    <button type="button" phx-click="elegir_sede" phx-value-id={sede.id} style={"display: block; width: 100%; text-align: left; padding: 12px 16px; border: none; cursor: pointer; font-family: Poppins, sans-serif; font-size: 13px; font-weight: 600; background: #{if @sede_actual && @sede_actual.id == sede.id, do: "#eef4ec", else: "white"}; color: #{if @sede_actual && @sede_actual.id == sede.id, do: "#186904", else: "#333"};"}>
+                      <%= sede.nombre %>
+                    </button>
+                  <% end %>
                 <% end %>
-                <%= for sede <- @ubicaciones do %>
-                  <button type="button" phx-click="elegir_sede" phx-value-id={sede.id} style={"display: block; width: 100%; text-align: left; padding: 12px 16px; border: none; cursor: pointer; font-family: Poppins, sans-serif; font-size: 13px; font-weight: 600; background: #{if @sede_actual && @sede_actual.id == sede.id, do: "#eef4ec", else: "white"}; color: #{if @sede_actual && @sede_actual.id == sede.id, do: "#186904", else: "#333"};"}>
-                    <%= sede.nombre %>
-                  </button>
-                <% end %>
-              <% end %>
-            </div>
-          <% end %>
+              </div>
+            <% end %>
+          </div>
         </div>
-        </div>
+
         <.link navigate="/mi-tienda/stock" style="display: block; text-decoration: none; background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 20px; padding: 18px 20px; margin-bottom: 12px; box-shadow: 0 4px 14px rgba(24,105,4,0.10);">
           <p style="font-size: 11px; font-weight: 800; color: #186904; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 1.2px;">MiniParonama</p>
           <div style="display: flex; align-items: flex-end; gap: 14px;">
