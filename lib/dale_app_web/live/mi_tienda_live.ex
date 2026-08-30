@@ -21,13 +21,39 @@ defmodule DaleAppWeb.MiTiendaLive do
 
     {total_productos, productos_dale, limite_dale, hay_sin_stock_normal, hay_sin_stock_dale} =
       if brand do
+        # Un Product no tiene sede propia (el catalogo es de la marca
+        # entera) — lo que varia por sede es el StockItem. Con sede activa,
+        # "producto en esta sede" pasa a significar "tiene al menos una
+        # unidad de stock ahi", no "existe en el catalogo".
+        sede_id = brand.sede_activa_id
+
         productos_brand = DaleApp.Products.list_brand_products(brand.id)
         productos_activos = Enum.filter(productos_brand, & &1.active)
 
-        total = productos_activos |> Enum.map(& &1.name) |> Enum.uniq() |> length()
+        ids_con_stock_en_sede =
+          if sede_id do
+            from(s in DaleApp.Products.StockItem,
+              join: p in DaleApp.Products.Product, on: p.id == s.product_id,
+              where: p.brand_id == ^brand.id and s.brand_location_id == ^sede_id,
+              group_by: p.id,
+              having: sum(s.cantidad) > 0,
+              select: p.id
+            )
+            |> Repo.all()
+            |> MapSet.new()
+          else
+            nil
+          end
+
+        productos_en_sede =
+          if ids_con_stock_en_sede,
+            do: Enum.filter(productos_activos, &MapSet.member?(ids_con_stock_en_sede, &1.id)),
+            else: productos_activos
+
+        total = productos_en_sede |> Enum.map(& &1.name) |> Enum.uniq() |> length()
 
         dale =
-          productos_activos
+          productos_en_sede
           |> Enum.filter(&(&1.codigo_tipo == "99"))
           |> Enum.map(& &1.name)
           |> Enum.uniq()
@@ -35,7 +61,7 @@ defmodule DaleAppWeb.MiTiendaLive do
 
         limite = brand.image_limit || 12
 
-        tipos_sin_stock =
+        base_sin_stock =
           from(s in DaleApp.Products.StockItem,
             join: p in DaleApp.Products.Product, on: p.id == s.product_id,
             where: p.brand_id == ^brand.id,
@@ -43,7 +69,13 @@ defmodule DaleAppWeb.MiTiendaLive do
             having: sum(s.cantidad) <= 0,
             select: p.codigo_tipo
           )
-          |> Repo.all()
+
+        tipos_sin_stock =
+          if sede_id do
+            from([s, p] in base_sin_stock, where: s.brand_location_id == ^sede_id) |> Repo.all()
+          else
+            Repo.all(base_sin_stock)
+          end
 
         sin_stock_normal = Enum.any?(tipos_sin_stock, &(&1 != "99"))
         sin_stock_dale = Enum.any?(tipos_sin_stock, &(&1 == "99"))
