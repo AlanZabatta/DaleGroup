@@ -1228,7 +1228,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
         </script>
       </form>
 
-      <%= if is_nil(@categoria_seleccionada) do %>
+      <%= if is_nil(@categoria_seleccionada) and length(@sedes) > 1 do %>
         <div style="position: relative; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 14px; padding: 10px 14px; margin-bottom: 16px; box-shadow: 0 3px 10px rgba(24,105,4,0.08);">
           <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0; font-family: Poppins, sans-serif;">
             Sede visualizando: <span style="font-weight: 800;"><%= texto_sede_actual(@sedes, @sede_actual) %></span>
