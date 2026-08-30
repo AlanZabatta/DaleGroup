@@ -504,46 +504,46 @@ defmodule DaleAppWeb.MiTiendaLive do
         <div style="height: 1px; background: #eee; margin: 8px 0 24px;"></div>
  
         <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Mis Empleados</p>
-        <.link navigate="/mi-tienda/cajeros" style="text-decoration: none; background: white; border: 1.5px solid #186904; border-radius: 18px; padding: 20px 16px; box-shadow: 0 3px 12px rgba(24,105,4,0.08); display: flex; flex-direction: column; align-items: center; margin-bottom: 12px;">
+        <.link navigate="/mi-tienda/cajeros" style="text-decoration: none; display: block; background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #186904; border-radius: 22px; padding: 26px 20px 22px; box-shadow: 0 3px 14px rgba(24,105,4,0.08); margin-bottom: 12px; text-align: center;">
           <%= if @empleados_del_mes == [] do %>
-            <div style="position: relative; margin-bottom: 4px;">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="#f5b301" stroke="#f5b301" style="position: absolute; top: -18px; left: 50%; transform: translateX(-50%); filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));"><path d="M2 18h20l-2-9-5 4-3-7-3 7-5-4-2 9z"/></svg>
-              <div style="width: 60px; height: 60px; border-radius: 50%; background: white; border: 2px solid #f0f0f0; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0,0,0,0.08);">
-                <span style="font-size: 26px; color: #111; font-weight: 800;">?</span>
+            <div style="position: relative; margin-bottom: 6px; display: inline-block;">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="#f5b301" stroke="#f5b301" style="position: absolute; top: -20px; left: 50%; transform: translateX(-50%); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));"><path d="M2 18h20l-2-9-5 4-3-7-3 7-5-4-2 9z"/></svg>
+              <div style="width: 76px; height: 76px; border-radius: 50%; background: white; border: 3px solid #f0f0f0; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0,0,0,0.08);">
+                <span style="font-size: 32px; color: #ccc; font-weight: 800;">?</span>
               </div>
             </div>
+            <p style="font-size: 12px; color: #999; margin: 10px 0 0; font-family: Poppins, sans-serif;">Todavu00eda no hay empleado del mes</p>
           <% else %>
-            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 4px;">
+            <p style="font-size: 10.5px; font-weight: 800; color: #186904; margin: 0 0 14px; text-transform: uppercase; letter-spacing: 1.5px; font-family: Poppins, sans-serif;">
+              <%= if length(@empleados_del_mes) > 1, do: "Empatados - empleados del mes", else: "Empleado del mes" %>
+            </p>
+            <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
               <%= for logro <- @empleados_del_mes do %>
                 <% ganador = logro.user %>
-                <div style="display: flex; flex-direction: column; align-items: center; width: 56px;">
-                  <div style="position: relative; margin-bottom: 4px;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#f5b301" stroke="#f5b301" style="position: absolute; top: -14px; left: 50%; transform: translateX(-50%); filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));"><path d="M2 18h20l-2-9-5 4-3-7-3 7-5-4-2 9z"/></svg>
-                    <div style="width: 52px; height: 52px; border-radius: 50%; background: white; border: 2px solid #f0f0f0; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0,0,0,0.08); overflow: hidden;">
+                <div style="display: flex; flex-direction: column; align-items: center; width: 84px;">
+                  <div style="position: relative; margin-bottom: 8px;">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="#f5b301" stroke="#f5b301" style="position: absolute; top: -18px; left: 50%; transform: translateX(-50%); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));"><path d="M2 18h20l-2-9-5 4-3-7-3 7-5-4-2 9z"/></svg>
+                    <div style="width: 78px; height: 78px; border-radius: 50%; background: white; border: 3px solid #186904; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(24,105,4,0.20); overflow: hidden;">
                       <%= if ganador && ganador.avatar do %>
                         <img src={ganador.avatar} style="width: 100%; height: 100%; object-fit: cover;" />
                       <% else %>
-                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/>
                           <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/>
                         </svg>
                       <% end %>
                     </div>
                   </div>
-                  <p style="font-size: 10px; font-weight: 700; color: #111; margin: 0; text-align: center; font-family: Poppins, sans-serif; max-width: 56px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  <p style="font-size: 13px; font-weight: 800; color: #111; margin: 0; text-align: center; font-family: Poppins, sans-serif; max-width: 84px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                     <%= ganador && nombre_corto(ganador) %>
+                  </p>
+                  <p style="font-size: 11px; font-weight: 700; color: #186904; margin: 2px 0 0; font-family: Poppins, sans-serif;">
+                    <%= logro.puntos_logro %> pts
                   </p>
                 </div>
               <% end %>
             </div>
           <% end %>
-          <p style="font-size: 11px; color: #999; margin: 6px 0 0; font-family: Poppins, sans-serif; text-align: center;">
-            <%= cond do %>
-              <% @empleados_del_mes == [] -> %>Todavía no hay empleado del mes
-              <% length(@empleados_del_mes) > 1 -> %>Empleados del mes (empate)
-              <% true -> %>Empleado del mes
-            <% end %>
-          </p>
         </.link>
         <.link navigate="/mi-tienda/cajeros" style="display: block; text-align: center; background-color: white; color: #186904; padding: 12.5px; border-radius: 16px; border: 1.5px solid #186904; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
           Gestionar empleados (<%= length(@cajeros) %>)
