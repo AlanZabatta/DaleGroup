@@ -681,7 +681,13 @@ defmodule DaleAppWeb.MiTiendaLive do
             <style>
               #mini-mapa-sedes .leaflet-tile-pane { filter: none; }
             </style>
-            <div id="mini-mapa-sedes" phx-update="ignore" style="width: 100%; height: 150px; pointer-events: none;"></div>
+            <div
+              id="mini-mapa-sedes"
+              phx-hook=".MapaSedesHook"
+              phx-update="ignore"
+              data-ubicaciones={Jason.encode!(for(u <- @ubicaciones, do: %{lat: u.latitude, lng: u.longitude}))}
+              style="width: 100%; height: 150px; pointer-events: none;"
+            ></div>
           </.link>
         <% else %>
           <.link navigate="/mi-tienda/sedes" style="display: block; text-decoration: none; background: #f2f9f2; border-radius: 18px; margin-bottom: 14px; border: 1.5px dashed #b8d4b3; padding: 24px 16px; text-align: center;">
@@ -691,44 +697,42 @@ defmodule DaleAppWeb.MiTiendaLive do
 
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-        <script>
-          const ubicacionesSedes = <%= raw(Jason.encode!(for u <- @ubicaciones, do: %{lat: u.latitude, lng: u.longitude})) %>;
-          (function() {
-            const el = document.getElementById('mini-mapa-sedes');
-            if (!el || ubicacionesSedes.length === 0) return;
-            if (el.dataset.mapaInit) return;
-            el.dataset.mapaInit = "1";
-            const miniMapaSedes = L.map('mini-mapa-sedes', {
-              zoomControl: false,
-              dragging: false,
-              scrollWheelZoom: false,
-              doubleClickZoom: false,
-              boxZoom: false,
-              touchZoom: false,
-              attributionControl: false
-            });
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19 }).addTo(miniMapaSedes);
-            const iconoCasita = L.divIcon({
-              className: '',
-              html: '<svg width="30" height="30" viewBox="0 0 40 44" xmlns="http://www.w3.org/2000/svg"><ellipse cx="20" cy="42" rx="14" ry="3" fill="rgba(0,0,0,0.15)"/><path d="M4 24 Q20 -6 36 24 L36 24 Q36 34 26 34 L14 34 Q4 34 4 24 Z" fill="#186904"/><rect x="8" y="20" width="24" height="18" rx="9" fill="white" stroke="#186904" stroke-width="3"/><rect x="15.5" y="26" width="9" height="12" rx="4.5" fill="#186904"/><circle cx="27" cy="27" r="2.4" fill="#186904"/></svg>',
-              iconSize: [38, 41.8],
-              iconAnchor: [19, 41.8]
-            });
-            const puntosSedes = ubicacionesSedes.map(u => [u.lat, u.lng]);
-            puntosSedes.forEach(p => L.marker(p, { icon: iconoCasita }).addTo(miniMapaSedes));
-            if (puntosSedes.length === 1) {
-              miniMapaSedes.setView(puntosSedes[0], 14);
-            } else {
-              miniMapaSedes.fitBounds(puntosSedes, { paddingTopLeft: [20, 45], paddingBottomRight: [20, 20] });
+        <script :type={Phoenix.LiveView.ColocatedHook} name=".MapaSedesHook">
+          export default {
+            mounted() {
+              const el = this.el;
+              const ubicacionesSedes = JSON.parse(el.dataset.ubicaciones || "[]");
+              if (ubicacionesSedes.length === 0) return;
+              const miniMapaSedes = L.map(el, {
+                zoomControl: false,
+                dragging: false,
+                scrollWheelZoom: false,
+                doubleClickZoom: false,
+                boxZoom: false,
+                touchZoom: false,
+                attributionControl: false
+              });
+              L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", { subdomains: "abcd", maxZoom: 19 }).addTo(miniMapaSedes);
+              const iconoCasita = L.divIcon({
+                className: "",
+                html: '<svg width="30" height="30" viewBox="0 0 40 44" xmlns="http://www.w3.org/2000/svg"><ellipse cx="20" cy="42" rx="14" ry="3" fill="rgba(0,0,0,0.15)"/><path d="M4 24 Q20 -6 36 24 L36 24 Q36 34 26 34 L14 34 Q4 34 4 24 Z" fill="#186904"/><rect x="8" y="20" width="24" height="18" rx="9" fill="white" stroke="#186904" stroke-width="3"/><rect x="15.5" y="26" width="9" height="12" rx="4.5" fill="#186904"/><circle cx="27" cy="27" r="2.4" fill="#186904"/></svg>',
+                iconSize: [38, 41.8],
+                iconAnchor: [19, 41.8]
+              });
+              const puntosSedes = ubicacionesSedes.map(u => [u.lat, u.lng]);
+              puntosSedes.forEach(p => L.marker(p, { icon: iconoCasita }).addTo(miniMapaSedes));
+              if (puntosSedes.length === 1) {
+                miniMapaSedes.setView(puntosSedes[0], 14);
+              } else {
+                miniMapaSedes.fitBounds(puntosSedes, { paddingTopLeft: [20, 45], paddingBottomRight: [20, 20] });
+              }
+              setTimeout(() => { miniMapaSedes.invalidateSize(); }, 150);
+              this.mapaSedes = miniMapaSedes;
+            },
+            destroyed() {
+              if (this.mapaSedes) this.mapaSedes.remove();
             }
-            // Leaflet mide el contenedor al crearse. Al navegar desde el
-            // boton "Mi tienda" (sin recarga de pagina completa), el layout
-            // a veces todavia no asento su tamano final en ese instante, y
-            // el mapa queda en blanco hasta que algo fuerza un recalculo
-            // (como pasa al recargar). invalidateSize() fuerza ese
-            // recalculo una vez que el layout ya se asento.
-            setTimeout(() => { miniMapaSedes.invalidateSize(); }, 150);
-          })();
+          }
         </script>
         <.link navigate="/mi-tienda/sedes" style="display: block; text-align: center; background-color: white; color: #186904; padding: 12.5px; border-radius: 16px; border: 1.5px solid #186904; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
           Gestionar mis sedes
