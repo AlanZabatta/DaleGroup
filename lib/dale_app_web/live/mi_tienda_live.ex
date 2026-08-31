@@ -721,6 +721,13 @@ defmodule DaleAppWeb.MiTiendaLive do
             } else {
               miniMapaSedes.fitBounds(puntosSedes, { paddingTopLeft: [20, 45], paddingBottomRight: [20, 20] });
             }
+            // Leaflet mide el contenedor al crearse. Al navegar desde el
+            // boton "Mi tienda" (sin recarga de pagina completa), el layout
+            // a veces todavia no asento su tamano final en ese instante, y
+            // el mapa queda en blanco hasta que algo fuerza un recalculo
+            // (como pasa al recargar). invalidateSize() fuerza ese
+            // recalculo una vez que el layout ya se asento.
+            setTimeout(() => { miniMapaSedes.invalidateSize(); }, 150);
           })();
         </script>
         <.link navigate="/mi-tienda/sedes" style="display: block; text-align: center; background-color: white; color: #186904; padding: 12.5px; border-radius: 16px; border: 1.5px solid #186904; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
