@@ -539,18 +539,18 @@ defmodule DaleAppWeb.MiTiendaLive do
                 <div style={"position: absolute; bottom: 8px; #{base_e} width: 7px; height: 12px; background: #{color}; border-radius: 2px; --dx-e: #{dx_e}px; --dy-e: #{dy_e}px; --rot-e: #{rot_e}deg; animation: confetiExplosion 1s ease-out forwards; animation-delay: #{delay_e}s;"}></div>
               <% end %>
               <%= for {color, left, drift, rot, delay} <- [
-                {"#E91E8C", 10, 30, 380, 1.1},
-                {"#186904", 50, -20, 420, 1.5},
-                {"#0066cc", 90, 15, 360, 1.9},
-                {"#e67e22", 140, -30, 400, 1.3},
-                {"#8e44ad", 180, 25, 440, 1.7},
-                {"#c0392b", 220, -15, 370, 2.1},
-                {"#16a085", 260, 10, 410, 1.6},
-                {"#f5b301", 30, -25, 390, 1.2},
-                {"#E91E8C", 200, 20, 430, 2.0},
-                {"#186904", 110, -10, 380, 1.4},
-                {"#0066cc", 250, -20, 400, 1.8},
-                {"#e67e22", 70, 15, 420, 1.15}
+                {"#E91E8C", 10, 30, 380, 2.2},
+                {"#186904", 50, -20, 420, 2.5},
+                {"#0066cc", 90, 15, 360, 2.8},
+                {"#e67e22", 140, -30, 400, 3.1},
+                {"#8e44ad", 180, 25, 440, 3.4},
+                {"#c0392b", 220, -15, 370, 3.7},
+                {"#16a085", 260, 10, 410, 4.0},
+                {"#f5b301", 30, -25, 390, 4.3},
+                {"#E91E8C", 200, 20, 430, 4.6},
+                {"#186904", 110, -10, 380, 4.9},
+                {"#0066cc", 250, -20, 400, 5.2},
+                {"#e67e22", 70, 15, 420, 5.5}
               ] do %>
                 <div style={"position: absolute; top: -10px; left: #{left}px; width: 7px; height: 12px; background: #{color}; border-radius: 2px; --drift: #{drift}px; --rot-final: #{rot}deg; animation: confetiLluvia 2.6s ease-in infinite; animation-delay: #{delay}s;"}></div>
               <% end %>
