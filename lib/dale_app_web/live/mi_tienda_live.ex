@@ -504,7 +504,58 @@ defmodule DaleAppWeb.MiTiendaLive do
         <div style="height: 1px; background: #eee; margin: 8px 0 24px;"></div>
  
         <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Mis Empleados</p>
-        <.link navigate="/mi-tienda/cajeros" style="text-decoration: none; display: block; background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #186904; border-radius: 22px; padding: 26px 20px 22px; box-shadow: 0 3px 14px rgba(24,105,4,0.08); margin-bottom: 12px; text-align: center;">
+        <.link navigate="/mi-tienda/cajeros" style="text-decoration: none; display: block; position: relative; overflow: hidden; background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #186904; border-radius: 22px; padding: 26px 20px 22px; box-shadow: 0 3px 14px rgba(24,105,4,0.08); margin-bottom: 12px; text-align: center;">
+          <%= if @empleados_del_mes != [] do %>
+            <style>
+              @keyframes confetiExplosion {
+                0%   { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+                6%   { opacity: 1; }
+                45%  { transform: translate(var(--dx-e), var(--dy-e)) rotate(var(--rot-e)); opacity: 1; }
+                100% { transform: translate(var(--dx-e), var(--dy-e)) rotate(var(--rot-e)); opacity: 0; }
+              }
+              @keyframes confetiLluvia {
+                0%   { transform: translateY(-20px) translateX(0) rotate(0deg); opacity: 0; }
+                8%   { opacity: 1; }
+                85%  { opacity: 1; }
+                100% { transform: translateY(300px) translateX(var(--drift)) rotate(var(--rot-final)); opacity: 0; }
+              }
+            </style>
+            <div id="confeti-empleado-mes" phx-update="ignore" style="position: absolute; inset: 0; pointer-events: none;">
+              <%= for {color, lado, dx_e, dy_e, rot_e, delay_e} <- [
+                {"#E91E8C", "left", 60, -140, 260, 0.0},
+                {"#186904", "left", 90, -170, -200, 0.05},
+                {"#0066cc", "left", 40, -110, 300, 0.1},
+                {"#e67e22", "left", 110, -190, -240, 0.15},
+                {"#8e44ad", "left", 70, -130, 220, 0.2},
+                {"#c0392b", "left", 50, -160, -260, 0.25},
+                {"#16a085", "right", -60, -140, -260, 0.0},
+                {"#f5b301", "right", -90, -170, 200, 0.05},
+                {"#E91E8C", "right", -40, -110, -300, 0.1},
+                {"#186904", "right", -110, -190, 240, 0.15},
+                {"#0066cc", "right", -70, -130, -220, 0.2},
+                {"#e67e22", "right", -50, -160, 260, 0.25}
+              ] do %>
+                <% base_e = if lado == "left", do: "left: 8px;", else: "right: 8px;" %>
+                <div style={"position: absolute; bottom: 8px; #{base_e} width: 7px; height: 12px; background: #{color}; border-radius: 2px; --dx-e: #{dx_e}px; --dy-e: #{dy_e}px; --rot-e: #{rot_e}deg; animation: confetiExplosion 1s ease-out forwards; animation-delay: #{delay_e}s;"}></div>
+              <% end %>
+              <%= for {color, left, drift, rot, delay} <- [
+                {"#E91E8C", 10, 30, 380, 1.1},
+                {"#186904", 50, -20, 420, 1.5},
+                {"#0066cc", 90, 15, 360, 1.9},
+                {"#e67e22", 140, -30, 400, 1.3},
+                {"#8e44ad", 180, 25, 440, 1.7},
+                {"#c0392b", 220, -15, 370, 2.1},
+                {"#16a085", 260, 10, 410, 1.6},
+                {"#f5b301", 30, -25, 390, 1.2},
+                {"#E91E8C", 200, 20, 430, 2.0},
+                {"#186904", 110, -10, 380, 1.4},
+                {"#0066cc", 250, -20, 400, 1.8},
+                {"#e67e22", 70, 15, 420, 1.15}
+              ] do %>
+                <div style={"position: absolute; top: -10px; left: #{left}px; width: 7px; height: 12px; background: #{color}; border-radius: 2px; --drift: #{drift}px; --rot-final: #{rot}deg; animation: confetiLluvia 2.6s ease-in infinite; animation-delay: #{delay}s;"}></div>
+              <% end %>
+            </div>
+          <% end %>
           <%= if @empleados_del_mes != [] do %>
             <style>
               @keyframes confetiEscopeta {
