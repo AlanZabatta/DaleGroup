@@ -128,7 +128,7 @@ defmodule DaleAppWeb.MarcasShowLive do
                 <% end %>
               </div>
               <%= if @ubicaciones && @ubicaciones != [] do %>
-                <div style="width: 170px; flex-shrink: 0; position: relative; border-radius: 16px; overflow: hidden; border: 1.5px solid #f0f0f0;">
+                <div style="width: 170px; flex-shrink: 0; position: relative; border-radius: 16px; overflow: hidden; border: 1.5px solid #f0f0f0; z-index: 1;">
                   <div id="mini-mapa-stand" style="width: 100%; height: 100%;"></div>
                   <div style="position: absolute; bottom: 6px; right: 6px; z-index: 1000; background: white; border-radius: 20px; padding: 4px 9px; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.25); pointer-events: none;">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill={@color_principal} xmlns="http://www.w3.org/2000/svg"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
