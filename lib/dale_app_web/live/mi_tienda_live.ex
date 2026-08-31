@@ -552,40 +552,8 @@ defmodule DaleAppWeb.MiTiendaLive do
                 {"#0066cc", 250, -20, 400, 5.2},
                 {"#e67e22", 70, 15, 420, 5.5}
               ] do %>
-                <div style={"position: absolute; top: -10px; left: #{left}px; width: 7px; height: 12px; background: #{color}; border-radius: 2px; --drift: #{drift}px; --rot-final: #{rot}deg; animation: confetiLluvia 2.6s ease-in infinite; animation-delay: #{delay}s;"}></div>
+                <div style={"position: absolute; top: -10px; left: #{left}px; width: 7px; height: 12px; background: #{color}; border-radius: 2px; opacity: 0; --drift: #{drift}px; --rot-final: #{rot}deg; animation: confetiLluvia 2.6s ease-in infinite; animation-delay: #{delay}s;"}></div>
               <% end %>
-            </div>
-          <% end %>
-          <%= if @empleados_del_mes != [] do %>
-            <style>
-              @keyframes confetiEscopeta {
-                0%   { transform: translate(0, 0) rotate(0deg); opacity: 0; }
-                4%   { opacity: 1; }
-                28%  { transform: translate(var(--dx-subida), var(--dy-subida)) rotate(var(--rot-subida)); opacity: 1; }
-                90%  { transform: translate(var(--dx-final), var(--dy-final)) rotate(var(--rot-final)); opacity: 1; }
-                100% { transform: translate(var(--dx-final), calc(var(--dy-final) + 20px)) rotate(var(--rot-final)); opacity: 0; }
-              }
-            </style>
-            <div style="position: relative; height: 0;">
-              <div style="position: absolute; top: -230px; left: 0; right: 0; height: 260px; overflow: hidden; border-radius: 22px; pointer-events: none;">
-                <%= for {color, lado, dx_s, dy_s, rot_s, dx_f, dy_f, rot_f, delay} <- [
-                  {"#E91E8C", "left", 40, -170, 200, 70, -40, 380, -0.0},
-                  {"#186904", "left", 60, -190, -160, 110, -30, -320, -0.5},
-                  {"#0066cc", "left", 20, -150, 240, 40, -50, 420, -1.0},
-                  {"#e67e22", "left", 80, -200, -220, 130, -20, -400, -0.3},
-                  {"#8e44ad", "left", 50, -160, 180, 90, -45, 340, -0.8},
-                  {"#c0392b", "left", 30, -180, -190, 60, -35, -360, -1.3},
-                  {"#16a085", "right", -40, -170, -200, -70, -40, -380, -0.1},
-                  {"#f5b301", "right", -60, -190, 160, -110, -30, 320, -0.6},
-                  {"#E91E8C", "right", -20, -150, -240, -40, -50, -420, -1.1},
-                  {"#186904", "right", -80, -200, 220, -130, -20, 400, -0.4},
-                  {"#0066cc", "right", -50, -160, -180, -90, -45, -340, -0.9},
-                  {"#e67e22", "right", -30, -180, 190, -60, -35, 360, -1.4}
-                ] do %>
-                  <% base = if lado == "left", do: "left: 8px;", else: "right: 8px;" %>
-                  <div style={"position: absolute; bottom: 0; #{base} width: 7px; height: 12px; background: #{color}; border-radius: 2px; --dx-subida: #{dx_s}px; --dy-subida: #{dy_s}px; --rot-subida: #{rot_s}deg; --dx-final: #{dx_f}px; --dy-final: #{dy_f}px; --rot-final: #{rot_f}deg; animation: confetiEscopeta 2.6s ease-out infinite; animation-delay: #{delay}s; pointer-events: none;"}></div>
-                <% end %>
-              </div>
             </div>
           <% end %>
           <%= if @empleados_del_mes == [] do %>
