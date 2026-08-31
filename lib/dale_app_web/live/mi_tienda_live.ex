@@ -677,7 +677,7 @@ defmodule DaleAppWeb.MiTiendaLive do
         <div style="height: 1px; background: #eee; margin: 8px 0 24px;"></div>
         <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Mis Sedes</p>
         <%= if @ubicaciones != [] do %>
-          <.link navigate="/mi-tienda/sedes" style="display: block; text-decoration: none; background: white; border-radius: 18px; margin-bottom: 14px; border: 1.5px solid #186904; box-shadow: 0 3px 14px rgba(24,105,4,0.08); overflow: hidden;">
+          <.link navigate="/mi-tienda/sedes" style="display: block; text-decoration: none; background: white; border-radius: 18px; margin-bottom: 14px; border: 1.5px solid #186904; box-shadow: 0 3px 14px rgba(24,105,4,0.08); overflow: hidden; position: relative; z-index: 1;">
             <style>
               #mini-mapa-sedes .leaflet-tile-pane { filter: none; }
             </style>
