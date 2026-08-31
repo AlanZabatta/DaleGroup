@@ -520,7 +520,7 @@ defmodule DaleAppWeb.MiTiendaLive do
                 100% { transform: translateY(300px) translateX(var(--drift)) rotate(var(--rot-final)); opacity: 0; }
               }
             </style>
-            <div id="confeti-empleado-mes" phx-update="ignore" style="position: absolute; inset: 0; pointer-events: none;">
+            <div id="confeti-empleado-mes" phx-update="ignore" style="position: absolute; inset: 0; pointer-events: none; z-index: 0;">
               <%= for {color, lado, dx_e, dy_e, rot_e, delay_e} <- [
                 {"#E91E8C", "left", 60, -140, 260, 0.0},
                 {"#186904", "left", 90, -170, -200, 0.05},
@@ -539,18 +539,18 @@ defmodule DaleAppWeb.MiTiendaLive do
                 <div style={"position: absolute; bottom: 8px; #{base_e} width: 7px; height: 12px; background: #{color}; border-radius: 2px; --dx-e: #{dx_e}px; --dy-e: #{dy_e}px; --rot-e: #{rot_e}deg; animation: confetiExplosion 1s ease-out forwards; animation-delay: #{delay_e}s;"}></div>
               <% end %>
               <%= for {color, left, drift, rot, delay} <- [
-                {"#E91E8C", 10, 30, 380, 2.2},
-                {"#186904", 50, -20, 420, 2.5},
-                {"#0066cc", 90, 15, 360, 2.8},
-                {"#e67e22", 140, -30, 400, 3.1},
-                {"#8e44ad", 180, 25, 440, 3.4},
-                {"#c0392b", 220, -15, 370, 3.7},
-                {"#16a085", 260, 10, 410, 4.0},
-                {"#f5b301", 30, -25, 390, 4.3},
-                {"#E91E8C", 200, 20, 430, 4.6},
-                {"#186904", 110, -10, 380, 4.9},
-                {"#0066cc", 250, -20, 400, 5.2},
-                {"#e67e22", 70, 15, 420, 5.5}
+                {"#E91E8C", 10, 30, 380, 1.3},
+                {"#186904", 50, -20, 420, 1.6},
+                {"#0066cc", 90, 15, 360, 1.9},
+                {"#e67e22", 140, -30, 400, 2.2},
+                {"#8e44ad", 180, 25, 440, 2.5},
+                {"#c0392b", 220, -15, 370, 2.8},
+                {"#16a085", 260, 10, 410, 3.1},
+                {"#f5b301", 30, -25, 390, 3.4},
+                {"#E91E8C", 200, 20, 430, 3.7},
+                {"#186904", 110, -10, 380, 4.0},
+                {"#0066cc", 250, -20, 400, 4.3},
+                {"#e67e22", 70, 15, 420, 4.6}
               ] do %>
                 <div style={"position: absolute; top: -10px; left: #{left}px; width: 7px; height: 12px; background: #{color}; border-radius: 2px; opacity: 0; --drift: #{drift}px; --rot-final: #{rot}deg; animation: confetiLluvia 2.6s ease-in infinite; animation-delay: #{delay}s;"}></div>
               <% end %>
@@ -565,7 +565,7 @@ defmodule DaleAppWeb.MiTiendaLive do
             </div>
             <p style="font-size: 12px; color: #999; margin: 10px 0 0; font-family: Poppins, sans-serif;">Todavu00eda no hay empleado del mes</p>
           <% else %>
-            <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+            <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; position: relative; z-index: 1;">
               <%= for logro <- @empleados_del_mes do %>
                 <% ganador = logro.user %>
                 <div style="display: flex; flex-direction: column; align-items: center; width: 110px;">
