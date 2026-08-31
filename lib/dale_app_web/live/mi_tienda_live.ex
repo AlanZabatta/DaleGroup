@@ -519,8 +519,11 @@ defmodule DaleAppWeb.MiTiendaLive do
                 85%  { opacity: 1; }
                 100% { transform: translateY(300px) translateX(var(--drift)) rotate(var(--rot-final)); opacity: 0; }
               }
+              #confeti-empleado-mes .pieza-e, #confeti-empleado-mes .pieza-l { animation: none; opacity: 0; }
+              #confeti-empleado-mes.disparado .pieza-e { animation: confetiExplosion 1s ease-out forwards; animation-delay: var(--delay-e); }
+              #confeti-empleado-mes.disparado .pieza-l { animation: confetiLluvia 2.6s ease-in infinite; animation-delay: var(--delay-l); }
             </style>
-            <div id="confeti-empleado-mes" phx-update="ignore" style="position: absolute; inset: 0; pointer-events: none; z-index: 0;">
+            <div id="confeti-empleado-mes" phx-hook=".ConfetiEmpleadoMesHook" phx-update="ignore" style="position: absolute; inset: 0; pointer-events: none; z-index: 0;">
               <%= for {color, lado, dx_e, dy_e, rot_e, delay_e} <- [
                 {"#E91E8C", "left", 60, -140, 260, 0.0},
                 {"#186904", "left", 90, -170, -200, 0.05},
@@ -536,7 +539,7 @@ defmodule DaleAppWeb.MiTiendaLive do
                 {"#e67e22", "right", -50, -160, 260, 0.25}
               ] do %>
                 <% base_e = if lado == "left", do: "left: 8px;", else: "right: 8px;" %>
-                <div style={"position: absolute; bottom: 8px; #{base_e} width: 7px; height: 12px; background: #{color}; border-radius: 2px; --dx-e: #{dx_e}px; --dy-e: #{dy_e}px; --rot-e: #{rot_e}deg; animation: confetiExplosion 1s ease-out forwards; animation-delay: #{delay_e}s;"}></div>
+                <div class="pieza-e" style={"position: absolute; bottom: 8px; #{base_e} width: 7px; height: 12px; background: #{color}; border-radius: 2px; --dx-e: #{dx_e}px; --dy-e: #{dy_e}px; --rot-e: #{rot_e}deg; --delay-e: #{delay_e}s;"}></div>
               <% end %>
               <%= for {color, left, drift, rot, delay} <- [
                 {"#E91E8C", 10, 30, 380, 1.3},
@@ -552,9 +555,29 @@ defmodule DaleAppWeb.MiTiendaLive do
                 {"#0066cc", 250, -20, 400, 4.3},
                 {"#e67e22", 70, 15, 420, 4.6}
               ] do %>
-                <div style={"position: absolute; top: -10px; left: #{left}px; width: 7px; height: 12px; background: #{color}; border-radius: 2px; opacity: 0; --drift: #{drift}px; --rot-final: #{rot}deg; animation: confetiLluvia 2.6s ease-in infinite; animation-delay: #{delay}s;"}></div>
+                <div class="pieza-l" style={"position: absolute; top: -10px; left: #{left}px; width: 7px; height: 12px; background: #{color}; border-radius: 2px; --drift: #{drift}px; --rot-final: #{rot}deg; --delay-l: #{delay}s;"}></div>
               <% end %>
             </div>
+            <script :type={Phoenix.LiveView.ColocatedHook} name=".ConfetiEmpleadoMesHook">
+              export default {
+                mounted() {
+                  const el = this.el;
+                  const observer = new IntersectionObserver((entries) => {
+                    entries.forEach((entry) => {
+                      if (entry.isIntersecting) {
+                        el.classList.add("disparado");
+                        observer.disconnect();
+                      }
+                    });
+                  }, { threshold: 0.5 });
+                  observer.observe(el);
+                  this.observer = observer;
+                },
+                destroyed() {
+                  if (this.observer) this.observer.disconnect();
+                }
+              }
+            </script>
           <% end %>
           <%= if @empleados_del_mes == [] do %>
             <div style="position: relative; margin-bottom: 6px; display: inline-block;">
@@ -583,10 +606,10 @@ defmodule DaleAppWeb.MiTiendaLive do
                       <% end %>
                     </div>
                   </div>
-                  <p style="font-size: 13px; font-weight: 800; color: #111; margin: 0; text-align: center; font-family: Poppins, sans-serif; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  <p style="font-size: 13px; font-weight: 800; color: #111; margin: 0; text-align: center; font-family: Poppins, sans-serif; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: white; padding: 2px 8px; border-radius: 8px;">
                     <%= ganador && nombre_corto(ganador) %>
                   </p>
-                  <p style="font-size: 11px; font-weight: 700; color: #186904; margin: 2px 0 0; font-family: Poppins, sans-serif; white-space: nowrap;">
+                  <p style="font-size: 11px; font-weight: 700; color: #186904; margin: 2px 0 0; font-family: Poppins, sans-serif; white-space: nowrap; background: white; padding: 2px 8px; border-radius: 8px;">
                     <%= if length(@empleados_del_mes) > 1, do: "Empleados del mes", else: "Empleado del mes" %>
                   </p>
                 </div>
