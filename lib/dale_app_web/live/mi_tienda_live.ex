@@ -568,7 +568,7 @@ defmodule DaleAppWeb.MiTiendaLive do
             <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; position: relative; z-index: 1;">
               <%= for logro <- @empleados_del_mes do %>
                 <% ganador = logro.user %>
-                <div style="display: flex; flex-direction: column; align-items: center; width: 110px;">
+                <div style="display: flex; flex-direction: column; align-items: center; width: 110px; position: relative; z-index: 1;">
                   <div style="position: relative; margin-bottom: 8px;">
                     <svg width="26" height="26" viewBox="0 0 24 24" fill="#f5b301" stroke="#f5b301" style="position: absolute; top: -18px; left: 50%; transform: translateX(-50%); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));"><path d="M2 18h20l-2-9-5 4-3-7-3 7-5-4-2 9z"/></svg>
                     <% colores_avatar = ["#E91E8C", "#186904", "#2b2b2b", "#0066cc", "#e67e22", "#8e44ad", "#c0392b", "#16a085"] %>
