@@ -553,7 +553,10 @@ defmodule DaleAppWeb.MiTiendaLive do
                 {"#E91E8C", 200, 20, 430, 3.3},
                 {"#186904", 110, -10, 380, 3.6},
                 {"#0066cc", 250, -20, 400, 3.9},
-                {"#e67e22", 70, 15, 420, 4.2}
+                {"#e67e22", 70, 15, 420, 4.2},
+                {"#8e44ad", 280, -15, 350, 4.5},
+                {"#16a085", 300, 20, 400, 4.8},
+                {"#c0392b", 320, -10, 360, 5.1}
               ] do %>
                 <div class="pieza-l" style={"position: absolute; top: -10px; left: #{left}px; width: 7px; height: 12px; background: #{color}; border-radius: 2px; --drift: #{drift}px; --rot-final: #{rot}deg; --delay-l: #{delay}s;"}></div>
               <% end %>

@@ -11,9 +11,11 @@ defmodule DaleApp.Products.EmpleadoDelMes do
      trabajar es lo unico que se puede comparar igual entre categorias
      distintas sin inventar ningun tipo de cambio.
 
-  Cada podio reparte bonus de LOGRO por posicion (10/8/6/4 para 1-4 lugar),
-  separado de los puntos de canje. La suma de los dos bonus de un empleado
-  es su puntaje de logro del ciclo, EN ESA SEDE. Gana quien mas sumo.
+  Cada podio calcula la POSICION REAL de cada empleado (1ro, 2do, ... N),
+  guardada siempre, sin importar cuan lejos quede del primer puesto — eso
+  es lo que se muestra al usuario ("llegaste 5to en Ventas"). Aparte, solo
+  el top 4 reparte BONUS DE LOGRO (10/8/6/4), que es lo que decide quien
+  gana el mes — dos cosas relacionadas pero no iguales.
 
   DESEMPATE AUTOMATICO: si dos o mas empatan en el puntaje maximo, se
   desempata en cadena, sin comparar nada entre categorias distintas:
@@ -54,8 +56,11 @@ defmodule DaleApp.Products.EmpleadoDelMes do
     else
       empleados = empleados_de_sede(brand, sede_id)
 
-      bonus_categoria = podio_por_categoria(brand, empleados, ciclo_inicio, ciclo_fin, sede_id)
-      bonus_asistencia = podio_asistencia(empleados, ciclo_inicio, ciclo_fin, sede_id)
+      {posiciones_categoria, bonus_categoria} =
+        podio_por_categoria(brand, empleados, ciclo_inicio, ciclo_fin, sede_id)
+
+      {posiciones_asistencia, bonus_asistencia} =
+        podio_asistencia(empleados, ciclo_inicio, ciclo_fin, sede_id)
 
       totales =
         Map.new(empleados, fn u ->
@@ -91,8 +96,8 @@ defmodule DaleApp.Products.EmpleadoDelMes do
           ciclo_inicio: ciclo_inicio,
           ciclo_fin: ciclo_fin,
           puntos_logro: total,
-          posicion_categoria: posicion_de(bonus_categoria, user_id),
-          posicion_asistencia: posicion_de(bonus_asistencia, user_id),
+          posicion_categoria: Map.get(posiciones_categoria, user_id),
+          posicion_asistencia: Map.get(posiciones_asistencia, user_id),
           es_ganador: MapSet.member?(ganadores_ids, user_id)
         })
         |> Repo.insert()
@@ -148,8 +153,8 @@ defmodule DaleApp.Products.EmpleadoDelMes do
   defp desempatar_ganadores(candidatos, bonus_categoria, bonus_asistencia, crudos_por_usuario) do
     con_datos =
       Enum.map(candidatos, fn uid ->
-        pos_cat = posicion_de(bonus_categoria, uid) || 99
-        pos_asis = posicion_de(bonus_asistencia, uid) || 99
+        pos_cat = posicion_desde_bonus(bonus_categoria, uid) || 99
+        pos_asis = posicion_desde_bonus(bonus_asistencia, uid) || 99
 
         %{
           uid: uid,
@@ -159,7 +164,6 @@ defmodule DaleApp.Products.EmpleadoDelMes do
         }
       end)
 
-    # Criterio 1: suma de posiciones mas baja.
     minimo_suma = con_datos |> Enum.map(& &1.suma_posiciones) |> Enum.min()
     paso1 = Enum.filter(con_datos, &(&1.suma_posiciones == minimo_suma))
 
@@ -167,14 +171,12 @@ defmodule DaleApp.Products.EmpleadoDelMes do
       if length(paso1) == 1 do
         paso1
       else
-        # Criterio 2: mejor posicion en la propia categoria.
         minima_pos_cat = paso1 |> Enum.map(& &1.pos_categoria) |> Enum.min()
         paso2 = Enum.filter(paso1, &(&1.pos_categoria == minima_pos_cat))
 
         if length(paso2) == 1 do
           paso2
         else
-          # Criterio 3: mas puntos crudos generados este ciclo.
           maximo_crudos = paso2 |> Enum.map(& &1.crudos) |> Enum.max()
           Enum.filter(paso2, &(&1.crudos == maximo_crudos))
         end
@@ -183,10 +185,6 @@ defmodule DaleApp.Products.EmpleadoDelMes do
     Enum.map(resultado, & &1.uid)
   end
 
-  # Suma de puntos CRUDOS (no el bonus por escalon, no el multiplicador) que
-  # cada candidato genero en ESTE ciclo puntual: movimientos_puntos +
-  # asistencia. Solo se calcula cuando hay empate a desempatar — no hace
-  # falta para el resto de los empleados.
   defp puntos_crudos_por_usuario(brand, empleados, ciclo_inicio, ciclo_fin, sede_id) do
     ids = Enum.map(empleados, & &1.id)
 
@@ -224,6 +222,10 @@ defmodule DaleApp.Products.EmpleadoDelMes do
     Accounts.list_cajeros(brand.id) |> Enum.filter(&MapSet.member?(ids_en_sede, &1.id))
   end
 
+  # Devuelve {posiciones_reales, bonus}. posiciones_reales tiene la posicion
+  # de TODOS los que generaron puntos (1ro, 2do, ... Nmo, sin tope). bonus
+  # solo tiene entradas para el top 4, que es lo unico que cuenta para
+  # decidir el ganador del mes.
   defp podio_por_categoria(brand, empleados, ciclo_inicio, ciclo_fin, sede_id) do
     puntos_por_usuario =
       from(m in MovimientoPuntos,
@@ -235,53 +237,64 @@ defmodule DaleApp.Products.EmpleadoDelMes do
       |> Repo.all()
       |> Map.new()
 
-    empleados
-    |> Enum.group_by(&RegistroPuntos.categoria_de_rol/1)
-    |> Enum.reject(fn {categoria, _lista} -> is_nil(categoria) end)
-    |> Enum.flat_map(fn {_categoria, lista} ->
-      lista
-      |> Enum.map(fn u -> {u.id, Map.get(puntos_por_usuario, u.id, 0)} end)
-      |> Enum.filter(fn {_uid, puntos} -> puntos > 0 end)
-      |> Enum.sort_by(fn {_uid, puntos} -> puntos end, :desc)
-      |> Enum.with_index(1)
-      |> Enum.map(fn {{uid, _puntos}, posicion} -> {uid, posicion} end)
-    end)
-    |> Map.new(fn {uid, posicion} -> {uid, {posicion, Map.get(@bonus_por_posicion, posicion, 0)}} end)
-    |> Map.new(fn {uid, {_pos, bonus}} -> {uid, bonus} end)
+    pares_posicion =
+      empleados
+      |> Enum.group_by(&RegistroPuntos.categoria_de_rol/1)
+      |> Enum.reject(fn {categoria, _lista} -> is_nil(categoria) end)
+      |> Enum.flat_map(fn {_categoria, lista} ->
+        lista
+        |> Enum.map(fn u -> {u.id, Map.get(puntos_por_usuario, u.id, 0)} end)
+        |> Enum.filter(fn {_uid, puntos} -> puntos > 0 end)
+        |> Enum.sort_by(fn {_uid, puntos} -> puntos end, :desc)
+        |> Enum.with_index(1)
+        |> Enum.map(fn {{uid, _puntos}, posicion} -> {uid, posicion} end)
+      end)
+
+    posiciones = Map.new(pares_posicion)
+
+    bonus =
+      pares_posicion
+      |> Enum.filter(fn {_uid, posicion} -> posicion <= 4 end)
+      |> Map.new(fn {uid, posicion} -> {uid, Map.get(@bonus_por_posicion, posicion, 0)} end)
+
+    {posiciones, bonus}
   end
 
   defp podio_asistencia(empleados, ciclo_inicio, ciclo_fin, sede_id) do
     ids = Enum.map(empleados, & &1.id)
 
-    from(a in Asistencia,
-      where: a.user_id in ^ids and a.fecha >= ^ciclo_inicio and a.fecha < ^ciclo_fin,
-      group_by: a.user_id,
-      select: {a.user_id, sum(a.puntos)}
-    )
-    |> filtrar_asistencia_por_sede(sede_id)
-    |> Repo.all()
-    |> Enum.sort_by(fn {_uid, puntos} -> puntos end, :desc)
-    |> Enum.with_index(1)
-    |> Map.new(fn {{uid, _puntos}, posicion} -> {uid, Map.get(@bonus_por_posicion, posicion, 0)} end)
+    pares_posicion =
+      from(a in Asistencia,
+        where: a.user_id in ^ids and a.fecha >= ^ciclo_inicio and a.fecha < ^ciclo_fin,
+        group_by: a.user_id,
+        select: {a.user_id, sum(a.puntos)}
+      )
+      |> filtrar_asistencia_por_sede(sede_id)
+      |> Repo.all()
+      |> Enum.sort_by(fn {_uid, puntos} -> puntos end, :desc)
+      |> Enum.with_index(1)
+      |> Enum.map(fn {{uid, _puntos}, posicion} -> {uid, posicion} end)
+
+    posiciones = Map.new(pares_posicion)
+
+    bonus =
+      pares_posicion
+      |> Enum.filter(fn {_uid, posicion} -> posicion <= 4 end)
+      |> Map.new(fn {uid, posicion} -> {uid, Map.get(@bonus_por_posicion, posicion, 0)} end)
+
+    {posiciones, bonus}
   end
 
-  # Para MovimientoPuntos/Asistencia: nil = agregar de TODAS las sedes (no
-  # discrimina), porque el podio de "toda la marca" suma el trabajo real de
-  # todos sin importar donde lo hicieron.
   defp filtrar_movimiento_por_sede(query, nil), do: query
   defp filtrar_movimiento_por_sede(query, sede_id), do: from(m in query, where: m.brand_location_id == ^sede_id)
 
   defp filtrar_asistencia_por_sede(query, nil), do: query
   defp filtrar_asistencia_por_sede(query, sede_id), do: from(a in query, where: a.brand_location_id == ^sede_id)
 
-  # Para LogroMensual: nil tiene un significado distinto — es un valor
-  # GUARDADO (la fila de "toda la marca" tiene brand_location_id NULL), no
-  # "no filtrar". Si no distinguimos esto, logros_del_ciclo(nil) mezclaria
-  # las filas de "toda la marca" con las de todas las sedes sueltas.
   defp filtrar_logro_por_sede(query, nil), do: from(l in query, where: is_nil(l.brand_location_id))
   defp filtrar_logro_por_sede(query, sede_id), do: from(l in query, where: l.brand_location_id == ^sede_id)
 
-  defp posicion_de(bonus_map, user_id) do
+  defp posicion_desde_bonus(bonus_map, user_id) do
     case Map.get(bonus_map, user_id) do
       nil -> nil
       bonus -> Enum.find_value(@bonus_por_posicion, fn {pos, b} -> if b == bonus, do: pos end)
