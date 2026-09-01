@@ -623,12 +623,12 @@ defmodule DaleAppWeb.MiTiendaLive do
         <.link navigate="/mi-tienda/cajeros" style="display: block; text-align: center; background-color: white; color: #186904; padding: 12.5px; border-radius: 16px; border: 1.5px solid #186904; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
           Gestionar empleados (<%= length(@cajeros) %>)
         </.link>
+        <div style="height: 1px; background: #eee; margin: 8px 0 24px;"></div>
+        <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Contabilidad</p>
         <.link navigate="/mi-tienda/libro-ventas" style="display: block; text-align: center; background-color: white; color: #186904; padding: 12.5px; border-radius: 16px; border: 1.5px solid #186904; text-decoration: none; margin-bottom: 12px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 14px;">
           Ver Libro de Ventas
         </.link>
- 
         <div style="height: 1px; background: #eee; margin: 8px 0 24px;"></div>
-
         <p style="font-size: 15px; font-weight: 700; color: #186904; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Mi Cupón</p>
  
     <%
