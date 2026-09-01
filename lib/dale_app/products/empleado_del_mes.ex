@@ -87,6 +87,9 @@ defmodule DaleApp.Products.EmpleadoDelMes do
         desempatar_ganadores(candidatos, bonus_categoria, bonus_asistencia, crudos_por_usuario)
         |> MapSet.new()
 
+      categorias_por_usuario =
+        Map.new(empleados, fn u -> {u.id, RegistroPuntos.categoria_de_rol(u)} end)
+
       Enum.each(totales, fn {user_id, total} ->
         %LogroMensual{}
         |> LogroMensual.changeset(%{
@@ -96,6 +99,7 @@ defmodule DaleApp.Products.EmpleadoDelMes do
           ciclo_inicio: ciclo_inicio,
           ciclo_fin: ciclo_fin,
           puntos_logro: total,
+          categoria: Map.get(categorias_por_usuario, user_id),
           posicion_categoria: Map.get(posiciones_categoria, user_id),
           posicion_asistencia: Map.get(posiciones_asistencia, user_id),
           es_ganador: MapSet.member?(ganadores_ids, user_id)
