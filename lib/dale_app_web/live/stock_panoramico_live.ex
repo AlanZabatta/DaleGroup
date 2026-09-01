@@ -355,7 +355,8 @@ defmodule DaleAppWeb.StockPanoramicoLive do
         oferta_tipo: oferta && oferta.tipo,
         oferta_valor: oferta && oferta.valor,
         material: primero.material || [],
-        temporada: primero.temporada
+        temporada: primero.temporada,
+        precio_costo: primero.precio_costo
       }
     else
       nil
@@ -2413,7 +2414,11 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   Además, los productos con más detalle tienen mayor probabilidad de conversión y reciben un pequeño boost en el algoritmo de Dale.
                 </p>
               <% else %>
-                <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 38px 0 10px;">Material (opcional)</p>
+                <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 38px 0 6px;">Precio costo / proveedor (opcional)</p>
+                <input id="input-precio-costo-stock" type="number" placeholder="$" value={@articulo_editando && @articulo_editando.precio_costo} oninput="actualizarMargenStock()" style="width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; outline: none; background: white; margin-bottom: 6px;"/>
+                <p id="margen-precio-costo-stock" style="font-size: 12px; color: #666; margin: 0 0 16px; min-height: 15px;"></p>
+
+                <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 10px;">Material (opcional)</p>
                 <div id="chips-material-stock" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;">
                   <%= for mat <- ["Algodón", "Poliéster", "Lino", "Lana", "Cuero", "Cuerina", "Denim", "Seda", "Nylon", "Elastano/Lycra", "Viscosa", "Acrílico", "Gamuza"] do %>
                     <button type="button" class="chip-material-stock" data-material={mat} onclick={"toggleMaterialStock('#{mat}')"} style="padding: 7px 13px; border-radius: 20px; border: 1.5px solid #cfe4cf; background: white; font-family: Poppins, sans-serif; font-size: 12.5px; font-weight: 600; color: #186904; cursor: pointer;">
@@ -2682,11 +2687,28 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   if (contador) contador.textContent = Math.min(palabras.length, 500) + '/500 palabras';
                 };
 
+                window.actualizarMargenStock = () => {
+                  const elVenta = document.getElementById('input-precio-stock');
+                  const elCosto = document.getElementById('input-precio-costo-stock');
+                  const elMargen = document.getElementById('margen-precio-costo-stock');
+                  if (!elVenta || !elCosto || !elMargen) return;
+                  const venta = parseFloat(elVenta.value);
+                  const costo = parseFloat(elCosto.value);
+                  if (!venta || !costo || costo <= 0) {
+                    elMargen.textContent = '';
+                    return;
+                  }
+                  const margenPesos = venta - costo;
+                  const margenPorcentaje = (margenPesos / venta) * 100;
+                  const color = margenPesos >= 0 ? '#186904' : '#c0392b';
+                  elMargen.innerHTML = 'Margen: <strong style="color:' + color + ';">$' + margenPesos.toLocaleString() + ' (' + margenPorcentaje.toFixed(1) + '%)</strong>';
+                };
                 window.actualizarPreviewStock = () => {
                   const nombre = document.getElementById('input-nombre-stock').value;
                   const precio = document.getElementById('input-precio-stock').value;
                   document.getElementById('prev-nombre-stock').textContent = nombre;
                   document.getElementById('prev-precio-stock').textContent = precio ? '$' + parseInt(precio).toLocaleString() : '';
+                  if (typeof window.actualizarMargenStock === 'function') window.actualizarMargenStock();
                   if (typeof actualizarPrecioFinalStock === 'function') actualizarPrecioFinalStock();
                   if (typeof actualizarResumenOfertaStock === 'function') actualizarResumenOfertaStock();
                 };
@@ -3897,6 +3919,8 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   formData.append('variantes', JSON.stringify(cantidadesStock));
                   formData.append('material', JSON.stringify(materialesElegidos));
                   formData.append('temporada', temporadaElegida || '');
+                  const precioCostoEl = document.getElementById('input-precio-costo-stock');
+                  formData.append('precio_costo', precioCostoEl ? precioCostoEl.value : '');
                   const sedesElegidas = Array.from(document.querySelectorAll('.checkbox-sede-stock:checked')).map(el => el.value);
                   formData.append('sedes_ids', JSON.stringify(sedesElegidas));
 
@@ -4036,6 +4060,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                       if (datos.temporada) {
                         window.elegirTemporadaStock(datos.temporada);
                       }
+                      if (typeof window.actualizarMargenStock === 'function') window.actualizarMargenStock();
                     }
                   } catch (e) { /* noop */ }
                 }

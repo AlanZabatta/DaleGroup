@@ -12,6 +12,8 @@ defmodule DaleAppWeb.StockController do
     nombre = Map.get(params, "nombre", "Sin nombre")
     precio_original = params |> Map.get("precio_original", "0") |> String.to_integer()
     precio_final = params |> Map.get("precio_final", "0") |> String.to_integer()
+    precio_costo_raw = Map.get(params, "precio_costo", "")
+    precio_costo = if precio_costo_raw in ["", nil], do: nil, else: String.to_integer(precio_costo_raw)
     descripcion = Map.get(params, "descripcion", "")
     codigo_tipo = Map.get(params, "codigo_tipo")
     variantes_json = Map.get(params, "variantes", "{}")
@@ -163,6 +165,8 @@ defmodule DaleAppWeb.StockController do
     nombre = Map.get(params, "nombre", "Sin nombre")
     precio_original = params |> Map.get("precio_original", "0") |> String.to_integer()
     precio_final = params |> Map.get("precio_final", "0") |> String.to_integer()
+    precio_costo_raw = Map.get(params, "precio_costo", "")
+    precio_costo = if precio_costo_raw in ["", nil], do: nil, else: String.to_integer(precio_costo_raw)
     descripcion = Map.get(params, "descripcion", "")
     codigo_tipo = Map.get(params, "codigo_tipo")
     variantes_json = Map.get(params, "variantes", "{}")
@@ -316,7 +320,8 @@ defmodule DaleAppWeb.StockController do
                     price: precio_final,
                     description: descripcion,
                     material: material,
-                    temporada: temporada
+                    temporada: temporada,
+                    precio_costo: precio_costo
                   })
 
                 sedes_para_crear = if sedes_ids == [], do: [nil], else: sedes_ids
@@ -407,7 +412,8 @@ defmodule DaleAppWeb.StockController do
                     codigo_numero: codigo_numero,
                     creado_por_user_id: user_id,
                     material: material,
-                    temporada: temporada
+                    temporada: temporada,
+                    precio_costo: precio_costo
                   })
 
                 sedes_para_crear = if sedes_ids == [], do: [nil], else: sedes_ids
