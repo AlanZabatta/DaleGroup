@@ -19,6 +19,7 @@ defmodule DaleApp.Products.LogroMensual do
     field :puntos_logro, :integer, default: 0
     field :posicion_categoria, :integer
     field :posicion_asistencia, :integer
+    field :categoria, :string
     field :es_ganador, :boolean, default: false
     field :ganador_elegido_manualmente, :boolean, default: false
 
@@ -40,6 +41,7 @@ defmodule DaleApp.Products.LogroMensual do
       :puntos_logro,
       :posicion_categoria,
       :posicion_asistencia,
+      :categoria,
       :es_ganador,
       :ganador_elegido_manualmente
     ])
