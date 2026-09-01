@@ -58,6 +58,7 @@ live "/registro", RegistroLive
     get "/mi-stand", BrandController, :mi_stand
     get "/mi-tienda/cupon", CouponController, :new
     post "/mi-tienda/cupon", CouponController, :create
+    live "/mi-tienda/libro-ventas", LibroVentasLive
     live "/mi-tienda/cajeros", CajerosLive
     live "/mi-tienda/cajeros/ventas", VentasLive
     live "/mi-tienda/cajeros/gestores", GestoresLive

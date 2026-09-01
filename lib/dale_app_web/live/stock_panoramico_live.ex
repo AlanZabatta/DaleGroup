@@ -2082,7 +2082,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
             <input id="input-nombre-stock" type="text" placeholder="Ej: Buzo oversize" value={@articulo_editando && @articulo_editando.nombre} oninput="actualizarPreviewStock()" style="width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; outline: none; background: white;"/>
 
             <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 16px 0 6px;">Precio del producto</p>
-            <input id="input-precio-stock" type="number" placeholder="$" value={@articulo_editando && @articulo_editando.precio} oninput="actualizarPreviewStock()" style="width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; outline: none; background: white;"/>
+            <input id="input-precio-stock" type="text" inputmode="numeric" placeholder="$" value={@articulo_editando && @articulo_editando.precio && formatear_precio(@articulo_editando.precio)} oninput="formatearInputMilesStock(this); actualizarPreviewStock();" style="width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; outline: none; background: white;"/>
 
             <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 16px 0 6px;">Descripción (opcional)</p>
             <textarea id="input-descripcion-stock" placeholder="Detalles del producto" oninput="limitarPalabrasStock(this); this.style.height='auto'; this.style.height=(this.scrollHeight)+'px';" style="width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; resize: none; height: 70px; min-height: 70px; outline: none; background: white; overflow: hidden;"><%= @articulo_editando && @articulo_editando.descripcion %></textarea>
@@ -2415,7 +2415,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                 </p>
               <% else %>
                 <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 38px 0 6px;">Precio costo / proveedor (opcional)</p>
-                <input id="input-precio-costo-stock" type="number" placeholder="$" value={@articulo_editando && @articulo_editando.precio_costo} oninput="actualizarMargenStock()" style="width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; outline: none; background: white; margin-bottom: 6px;"/>
+                <input id="input-precio-costo-stock" type="text" inputmode="numeric" placeholder="$" value={@articulo_editando && @articulo_editando.precio_costo && formatear_precio(@articulo_editando.precio_costo)} oninput="formatearInputMilesStock(this); actualizarMargenStock();" style="width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; box-sizing: border-box; outline: none; background: white; margin-bottom: 6px;"/>
                 <p id="margen-precio-costo-stock" style="font-size: 12px; color: #666; margin: 0 0 16px; min-height: 15px;"></p>
 
                 <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 10px;">Material (opcional)</p>
@@ -2687,13 +2687,19 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   if (contador) contador.textContent = Math.min(palabras.length, 500) + '/500 palabras';
                 };
 
+                window.limpiarMilesStock = (valor) => (valor || '').toString().replace(/\D/g, '');
+                window.formatearInputMilesStock = (el) => {
+                  if (!el) return;
+                  const limpio = window.limpiarMilesStock(el.value);
+                  el.value = limpio ? parseInt(limpio, 10).toLocaleString('es-AR') : '';
+                };
                 window.actualizarMargenStock = () => {
                   const elVenta = document.getElementById('input-precio-stock');
                   const elCosto = document.getElementById('input-precio-costo-stock');
                   const elMargen = document.getElementById('margen-precio-costo-stock');
                   if (!elVenta || !elCosto || !elMargen) return;
-                  const venta = parseFloat(elVenta.value);
-                  const costo = parseFloat(elCosto.value);
+                  const venta = parseFloat(window.limpiarMilesStock(elVenta.value));
+                  const costo = parseFloat(window.limpiarMilesStock(elCosto.value));
                   if (!venta || !costo || costo <= 0) {
                     elMargen.textContent = '';
                     return;
@@ -2705,9 +2711,9 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                 };
                 window.actualizarPreviewStock = () => {
                   const nombre = document.getElementById('input-nombre-stock').value;
-                  const precio = document.getElementById('input-precio-stock').value;
+                  const precio = window.limpiarMilesStock(document.getElementById('input-precio-stock').value);
                   document.getElementById('prev-nombre-stock').textContent = nombre;
-                  document.getElementById('prev-precio-stock').textContent = precio ? '$' + parseInt(precio).toLocaleString() : '';
+                  document.getElementById('prev-precio-stock').textContent = precio ? '$' + parseInt(precio, 10).toLocaleString() : '';
                   if (typeof window.actualizarMargenStock === 'function') window.actualizarMargenStock();
                   if (typeof actualizarPrecioFinalStock === 'function') actualizarPrecioFinalStock();
                   if (typeof actualizarResumenOfertaStock === 'function') actualizarResumenOfertaStock();
@@ -2829,7 +2835,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   if (!original || !label || !valorDescuento || !final || !sinDale || !cont) return;
 
                   const precioInput = document.getElementById('input-precio-stock');
-                  const precio = parseFloat(precioInput ? precioInput.value : 0) || 0;
+                  const precio = parseFloat(precioInput ? window.limpiarMilesStock(precioInput.value) : 0) || 0;
 
                   let fraccionPagada = null;
                   let esOferta = false;
@@ -2962,7 +2968,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   if (descuento <= 0) return;
 
                   const precioInput = document.getElementById('input-precio-stock');
-                  const precio = parseFloat(precioInput ? precioInput.value : 0) || 0;
+                  const precio = parseFloat(precioInput ? window.limpiarMilesStock(precioInput.value) : 0) || 0;
                   const original = document.getElementById('precio-final-original-stock');
                   const resultado = document.getElementById('precio-final-resultado-stock');
                   if (!original || !resultado) return;
@@ -3503,7 +3509,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                       );
                     } else if (editandoArticuloActivo) {
                       const nombreActual = (document.getElementById('input-nombre-stock')?.value || '').trim();
-                      const precioActual = parseInt((document.getElementById('input-precio-stock')?.value || '').trim()) || 0;
+                      const precioActual = parseInt(window.limpiarMilesStock(document.getElementById('input-precio-stock')?.value || ''), 10) || 0;
                       const descripcionActual = (document.getElementById('input-descripcion-stock')?.value || '').trim();
                       const cambios = calcularCambiosStock(nombreActual, precioActual, descripcionActual);
                       if (cambios.length > 0) {
@@ -3867,7 +3873,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                 window.guardarProductoStock = () => {
                   const nombre = document.getElementById('input-nombre-stock').value.trim();
                   const precioRaw = document.getElementById('input-precio-stock').value.trim();
-                  const precio = parseInt(precioRaw) || 0;
+                  const precio = parseInt(window.limpiarMilesStock(precioRaw), 10) || 0;
                   const descripcion = document.getElementById('input-descripcion-stock').value.trim();
 
                   const faltantes = [];
@@ -3920,7 +3926,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   formData.append('material', JSON.stringify(materialesElegidos));
                   formData.append('temporada', temporadaElegida || '');
                   const precioCostoEl = document.getElementById('input-precio-costo-stock');
-                  formData.append('precio_costo', precioCostoEl ? precioCostoEl.value : '');
+                  formData.append('precio_costo', precioCostoEl ? window.limpiarMilesStock(precioCostoEl.value) : '');
                   const sedesElegidas = Array.from(document.querySelectorAll('.checkbox-sede-stock:checked')).map(el => el.value);
                   formData.append('sedes_ids', JSON.stringify(sedesElegidas));
 
@@ -4004,7 +4010,7 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                       };
 
                       document.getElementById('input-nombre-stock').value = datos.nombre || '';
-                      document.getElementById('input-precio-stock').value = datos.precio || '';
+                      document.getElementById('input-precio-stock').value = datos.precio ? parseInt(datos.precio, 10).toLocaleString('es-AR') : '';
                       document.getElementById('input-descripcion-stock').value = datos.descripcion || '';
                       actualizarPreviewStock();
                       limitarPalabrasStock(document.getElementById('input-descripcion-stock'));
