@@ -118,7 +118,7 @@ defmodule DaleAppWeb.MiTiendaInformacionLive do
         <div style="height:2px; width:60px; background:#186904; border-radius:2px; margin:0 auto 14px;"></div>
         <p id="aviso-confirmar-vacios-texto" style="font-size:14px; color:#555; margin:0 0 22px; line-height:1.5; font-family:Poppins,sans-serif; text-align:left;"></p>
         <div style="display:flex; gap:10px;">
-          <button onclick="continuarGuardadoGestion()" style="flex:1; background:#186904; color:#fff; border:none; border-radius:14px; padding:13px 0; font-size:14px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer;">Sí</button>
+          <button onclick="if(window.__accionSiGestion) window.__accionSiGestion();" style="flex:1; background:#186904; color:#fff; border:none; border-radius:14px; padding:13px 0; font-size:14px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer;">Sí</button>
           <button onclick="document.getElementById('aviso-confirmar-vacios').style.display='none'" style="flex:1; background:#fff; color:#186904; border:2px solid #186904; border-radius:14px; padding:11px 0; font-size:14px; font-weight:600; font-family:Poppins,sans-serif; cursor:pointer;">No</button>
         </div>
       </div>
@@ -352,7 +352,8 @@ defmodule DaleAppWeb.MiTiendaInformacionLive do
               address_full: document.getElementById('address-full-hidden').value,
               modalidad: document.getElementById('select-modalidad-tienda').value,
               horario_atencion: document.getElementById('input-horario-tienda').value,
-              categorias: document.getElementById('categorias-hidden').value
+              categorias: document.getElementById('categorias-hidden').value,
+              margen_online: document.getElementById('input-margen-online').value
             };
           }
 
@@ -384,6 +385,7 @@ defmodule DaleAppWeb.MiTiendaInformacionLive do
               faltantes.forEach(f => { html += f + '<br>'; });
               html += '<br>Si continuás así, tu tienda <b>no aparecerá en la búsqueda pública</b> hasta que completes estos datos.';
               document.getElementById('aviso-confirmar-vacios-texto').innerHTML = html;
+              window.__accionSiGestion = window.continuarGuardadoGestion;
               document.getElementById('aviso-confirmar-vacios').style.display = 'flex';
               return false;
             }
@@ -401,9 +403,12 @@ defmodule DaleAppWeb.MiTiendaInformacionLive do
           window.intentarVolverInformacion = function(event) {
             event.preventDefault();
             if (gestionModificado) {
-              if (confirm('Tenés cambios sin guardar. ¿Salir de todos modos?')) {
+              document.getElementById('aviso-confirmar-vacios-texto').innerHTML = 'Tenes cambios sin guardar en Gestionar informacion.<br><br>Si salis ahora los vas a perder. ¿Estas seguro?';
+              window.__accionSiGestion = function() {
+                document.getElementById('aviso-confirmar-vacios').style.display = 'none';
                 window.__informacionHook.pushEvent('volver_mi_tienda', {});
-              }
+              };
+              document.getElementById('aviso-confirmar-vacios').style.display = 'flex';
             } else {
               window.__informacionHook.pushEvent('volver_mi_tienda', {});
             }
