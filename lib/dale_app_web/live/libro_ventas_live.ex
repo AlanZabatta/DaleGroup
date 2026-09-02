@@ -156,6 +156,15 @@ defmodule DaleAppWeb.LibroVentasLive do
         width: 0;
         height: 0;
       }
+      #lista-ventas-scroll {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      #lista-ventas-scroll::-webkit-scrollbar {
+        display: none;
+        width: 0;
+        height: 0;
+      }
     </style>
     <div style="padding: 24px 18px 40px; font-family: Poppins, sans-serif; max-width: 600px; margin: 0 auto; background-color: white; min-height: 100vh;">
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
@@ -163,7 +172,7 @@ defmodule DaleAppWeb.LibroVentasLive do
       </div>
       <p style="font-size: 26px; font-weight: 800; color: #186904; margin: 0 0 20px;">Libro de Ventas</p>
 
-      <div style="background: white; border: 1.5px solid #f0f0f0; border-radius: 22px; padding: 16px; box-shadow: 0 3px 14px rgba(0,0,0,0.06);">
+      <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 22px; padding: 16px; box-shadow: 0 4px 14px rgba(24,105,4,0.10);">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; background: #f7f5ef; border-radius: 16px; padding: 10px 8px;">
           <button type="button" phx-click="mes_anterior" style="background: none; border: none; cursor: pointer; padding: 6px; display: flex;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -192,7 +201,7 @@ defmodule DaleAppWeb.LibroVentasLive do
           </div>
         <% end %>
 
-        <div style="max-height: 420px; overflow-y: auto;">
+        <div id="lista-ventas-scroll" style="background: white; border-radius: 14px; padding: 8px; max-height: 420px; overflow-y: auto; -webkit-overflow-scrolling: touch;">
         <%= if @ventas_agrupadas == [] do %>
           <div style="display: flex; align-items: center; justify-content: center; min-height: 200px; text-align: center;">
             <p style="font-size: 14px; color: #999; margin: 0; font-family: Poppins, sans-serif;">No hay ventas registradas este mes.</p>
