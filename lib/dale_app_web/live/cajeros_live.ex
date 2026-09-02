@@ -365,9 +365,16 @@ defmodule DaleAppWeb.CajerosLive do
               <% end %>
               <%
                 sedes_nombres = Map.get(@sedes_por_empleado, cajero.id, [])
+                texto_sedes_cajero =
+                  cond do
+                    sedes_nombres == [] -> nil
+                    length(sedes_nombres) == 1 -> List.first(sedes_nombres)
+                    length(@sedes) > 0 && length(sedes_nombres) >= length(@sedes) -> "Todas las sedes"
+                    true -> "Varias sedes"
+                  end
               %>
-              <%= if sedes_nombres != [] do %>
-                <p style="font-size: 11px; color: #888; margin: 4px 0 0; font-family: Poppins, sans-serif;"><%= Enum.join(sedes_nombres, ", ") %></p>
+              <%= if texto_sedes_cajero do %>
+                <p style="font-size: 11px; color: #888; margin: 4px 0 0; font-family: Poppins, sans-serif;"><%= texto_sedes_cajero %></p>
               <% end %>
               <%= if cajero.zona && cajero.zona != "" do %>
                 <p style="font-size: 11px; color: #888; margin: 2px 0 0; font-family: Poppins, sans-serif;">Zona: <%= cajero.zona %></p>

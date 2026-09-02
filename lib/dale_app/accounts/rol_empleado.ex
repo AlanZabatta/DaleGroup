@@ -8,18 +8,20 @@ defmodule DaleApp.Accounts.RolEmpleado do
 
   @roles %{
     "gerente" => %{nombre: "Gerente", categoria_ranking: "multitask"},
-    "cajero" => %{nombre: "Cajero", categoria_ranking: "cajero"},
+    "cajero" => %{nombre: "Cajero/a", categoria_ranking: "cajero"},
     "gestiones" => %{nombre: "Gestiones", categoria_ranking: "gestiones"},
-    "multitask" => %{nombre: "MultiTask", categoria_ranking: "multitask"}
+    "multitask" => %{nombre: "MultiTask", categoria_ranking: "multitask"},
+    "contador" => %{nombre: "Contador/a", categoria_ranking: nil}
   }
 
-  @doc "Todos los roles, en orden fijo: Gerente, Cajero, Gestiones, MultiTask"
+  @doc "Todos los roles, en orden fijo: Gerente, Cajero, Gestiones, MultiTask, Contador/a"
   def roles do
     [
       {"gerente", @roles["gerente"]},
       {"cajero", @roles["cajero"]},
       {"gestiones", @roles["gestiones"]},
-      {"multitask", @roles["multitask"]}
+      {"multitask", @roles["multitask"]},
+      {"contador", @roles["contador"]}
     ]
   end
 

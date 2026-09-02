@@ -589,7 +589,7 @@ defmodule DaleAppWeb.MiTiendaLive do
                 <span style="font-size: 32px; color: #ccc; font-weight: 800;">?</span>
               </div>
             </div>
-            <p style="font-size: 12px; color: #999; margin: 10px 0 0; font-family: Poppins, sans-serif;">Todavu00eda no hay empleado del mes</p>
+            <p style="font-size: 12px; color: #999; margin: 10px 0 0; font-family: Poppins, sans-serif;">Todavía no hay empleado del mes</p>
           <% else %>
             <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; position: relative; z-index: 1;">
               <%= for logro <- @empleados_del_mes do %>
