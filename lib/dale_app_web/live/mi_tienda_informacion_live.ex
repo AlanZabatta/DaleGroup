@@ -164,8 +164,16 @@ defmodule DaleAppWeb.MiTiendaInformacionLive do
             <p style="font-size: 12px; color: #c0392b; margin: 0 0 12px; font-family: Poppins, sans-serif; line-height: 1.6; background: #fff3f2; border-radius: 12px; padding: 10px 12px;">
               ⚠️ Inflar artificialmente el precio de local para simular que estás asumiendo el margen (por ejemplo, subiendo un 8% por detrás en Stock y declarando acá 0%) viola los Términos de DaleGroup y da lugar a sanciones graves y permanentes sobre la cuenta de tu marca.
             </p>
-            <input type="number" min="0" max="8" name="brand[margen_online]" id="input-margen-online" value={@brand.margen_online} oninput="gestionModificado = true"
-              style="width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; color: #333; outline: none; box-sizing: border-box; background: white;"/>
+            <div style="background: white; border-radius: 16px; padding: 18px 16px 14px; box-shadow: inset 0 1px 3px rgba(24,105,4,0.06);">
+              <p id="margen-online-valor" style="font-size: 40px; font-weight: 800; color: #186904; text-align: center; margin: 0 0 4px; font-family: Poppins, sans-serif; line-height: 1;">{@brand.margen_online}%</p>
+              <p id="margen-online-descripcion" style="font-size: 11.5px; color: #999; text-align: center; margin: 0 0 16px; font-family: Poppins, sans-serif;"></p>
+              <input type="range" min="0" max="8" step="1" name="brand[margen_online]" id="input-margen-online" value={@brand.margen_online} oninput="actualizarMargenOnlineSlider(this)"
+                style="width: 100%; height: 8px; border-radius: 8px; outline: none; cursor: pointer; accent-color: #186904; box-sizing: border-box;"/>
+              <div style="display: flex; justify-content: space-between; margin-top: 6px;">
+                <span style="font-size: 10.5px; color: #aaa; font-family: Poppins, sans-serif; font-weight: 600;">0% (mismo precio)</span>
+                <span style="font-size: 10.5px; color: #aaa; font-family: Poppins, sans-serif; font-weight: 600;">8% (tope máximo)</span>
+              </div>
+            </div>
           </div>
           <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-bottom: 16px;">
             <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.6px;">Categorías</p>
@@ -197,6 +205,27 @@ defmodule DaleAppWeb.MiTiendaInformacionLive do
         mounted() {
           window.__informacionHook = this;
           let gestionModificado = false;
+
+          window.actualizarMargenOnlineSlider = (el) => {
+            gestionModificado = true;
+            const valor = parseInt(el.value, 10) || 0;
+            const elValor = document.getElementById('margen-online-valor');
+            const elDescripcion = document.getElementById('margen-online-descripcion');
+            if (elValor) elValor.textContent = valor + '%';
+            const pct = (valor / 8) * 100;
+            el.style.background = 'linear-gradient(to right, #186904 0%, #186904 ' + pct + '%, #e0e0e0 ' + pct + '%, #e0e0e0 100%)';
+            if (elDescripcion) {
+              if (valor === 0) {
+                elDescripcion.textContent = 'No le trasladás nada al cliente — asumís vos todo el margen';
+              } else if (valor === 8) {
+                elDescripcion.textContent = 'Tope máximo — le trasladás todo el margen al cliente';
+              } else {
+                elDescripcion.textContent = 'Trasladás una parte al cliente, el resto es tu ganancia extra';
+              }
+            }
+          };
+          const sliderMargenInicial = document.getElementById('input-margen-online');
+          if (sliderMargenInicial) window.actualizarMargenOnlineSlider(sliderMargenInicial);
 
           const addressHidden = document.getElementById('address-hidden');
           const addressFullHidden = document.getElementById('address-full-hidden');
