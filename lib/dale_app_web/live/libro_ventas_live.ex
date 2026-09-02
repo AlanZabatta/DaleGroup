@@ -243,7 +243,7 @@ defmodule DaleAppWeb.LibroVentasLive do
       <% end %>
 
       <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 22px; padding: 16px; box-shadow: 0 4px 14px rgba(24,105,4,0.10);">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; background: #f7f5ef; border-radius: 16px; padding: 10px 8px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; background: #eef4ec; border-radius: 16px; padding: 10px 8px;">
           <button type="button" phx-click="mes_anterior" style="background: none; border: none; cursor: pointer; padding: 6px; display: flex;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
@@ -257,7 +257,7 @@ defmodule DaleAppWeb.LibroVentasLive do
         </div>
 
         <%= if @mostrar_selector_mes do %>
-          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; background: #f7f5ef; border-radius: 14px; padding: 12px;">
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; background: #eef4ec; border-radius: 14px; padding: 12px;">
             <%= for {nombre, i} <- Enum.with_index(@meses_lista, 1) do %>
               <button
                 type="button"
