@@ -163,55 +163,59 @@ defmodule DaleAppWeb.LibroVentasLive do
       </div>
       <p style="font-size: 26px; font-weight: 800; color: #186904; margin: 0 0 20px;">Libro de Ventas</p>
 
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; background: #f7f5ef; border-radius: 16px; padding: 10px 8px;">
-        <button type="button" phx-click="mes_anterior" style="background: none; border: none; cursor: pointer; padding: 6px; display: flex;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        </button>
-        <button type="button" phx-click="toggle_selector_mes" style="display: flex; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; padding: 0;">
-          <span style="font-size: 14px; font-weight: 700; color: #186904; text-transform: capitalize; font-family: Poppins, sans-serif;"><%= Enum.at(@meses_lista, @mes_seleccionado - 1) %> <%= @anio_seleccionado %></span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style={"transition: transform 0.15s; transform: rotate(#{if @mostrar_selector_mes, do: "180deg", else: "0deg"});"}><polyline points="6 9 12 15 18 9"/></svg>
-        </button>
-        <button type="button" phx-click="mes_siguiente" style="background: none; border: none; cursor: pointer; padding: 6px; display: flex;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
-      </div>
-
-      <%= if @mostrar_selector_mes do %>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px; background: #f7f5ef; border-radius: 14px; padding: 12px;">
-          <%= for {nombre, i} <- Enum.with_index(@meses_lista, 1) do %>
-            <button
-              type="button"
-              phx-click="seleccionar_mes"
-              phx-value-mes={i}
-              style={"padding: 9px 4px; border-radius: 10px; border: none; cursor: pointer; font-family: Poppins, sans-serif; font-size: 12px; font-weight: #{if @mes_seleccionado == i, do: "700", else: "500"}; background: #{if @mes_seleccionado == i, do: "#186904", else: "white"}; color: #{if @mes_seleccionado == i, do: "white", else: "#555"}; text-transform: capitalize;"}
-            >
-              <%= nombre %>
-            </button>
-          <% end %>
+      <div style="background: white; border: 1.5px solid #f0f0f0; border-radius: 22px; padding: 16px; box-shadow: 0 3px 14px rgba(0,0,0,0.06);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; background: #f7f5ef; border-radius: 16px; padding: 10px 8px;">
+          <button type="button" phx-click="mes_anterior" style="background: none; border: none; cursor: pointer; padding: 6px; display: flex;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <button type="button" phx-click="toggle_selector_mes" style="display: flex; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; padding: 0;">
+            <span style="font-size: 14px; font-weight: 700; color: #186904; text-transform: capitalize; font-family: Poppins, sans-serif;"><%= Enum.at(@meses_lista, @mes_seleccionado - 1) %> <%= @anio_seleccionado %></span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style={"transition: transform 0.15s; transform: rotate(#{if @mostrar_selector_mes, do: "180deg", else: "0deg"});"}><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <button type="button" phx-click="mes_siguiente" style="background: none; border: none; cursor: pointer; padding: 6px; display: flex;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#186904" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
         </div>
-      <% end %>
 
-      <%= if @ventas_agrupadas == [] do %>
-        <div style="display: flex; align-items: center; justify-content: center; min-height: 200px; text-align: center;">
-          <p style="font-size: 14px; color: #999; margin: 0; font-family: Poppins, sans-serif;">No hay ventas registradas este mes.</p>
-        </div>
-      <% else %>
-        <%= for {fecha, ventas_del_dia} <- @ventas_agrupadas do %>
-          <div style="display: flex; align-items: baseline; justify-content: space-between; margin: 20px 0 8px;">
-            <p style="font-size: 12px; font-weight: 700; color: #186904; margin: 0; text-transform: uppercase; letter-spacing: 1px; font-family: Poppins, sans-serif;"><%= etiqueta_dia(fecha) %></p>
-            <p style="font-size: 12px; font-weight: 700; color: #186904; margin: 0; font-family: Poppins, sans-serif;">$<%= formatear_precio_venta(total_del_dia(ventas_del_dia)) %></p>
+        <%= if @mostrar_selector_mes do %>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; background: #f7f5ef; border-radius: 14px; padding: 12px;">
+            <%= for {nombre, i} <- Enum.with_index(@meses_lista, 1) do %>
+              <button
+                type="button"
+                phx-click="seleccionar_mes"
+                phx-value-mes={i}
+                style={"padding: 9px 4px; border-radius: 10px; border: none; cursor: pointer; font-family: Poppins, sans-serif; font-size: 12px; font-weight: #{if @mes_seleccionado == i, do: "700", else: "500"}; background: #{if @mes_seleccionado == i, do: "#186904", else: "white"}; color: #{if @mes_seleccionado == i, do: "white", else: "#555"}; text-transform: capitalize;"}
+              >
+                <%= nombre %>
+              </button>
+            <% end %>
           </div>
-          <%= for venta <- ventas_del_dia do %>
-            <.link navigate={url_producto(venta)} style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 4px; border-bottom: 1px solid #f2f2f2; text-decoration: none;">
-              <div style="min-width: 0;">
-                <p style="font-size: 14px; font-weight: 600; color: #111; margin: 0; font-family: Poppins, sans-serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= venta.producto_nombre %></p>
-                <p style="font-size: 11px; color: #aaa; margin: 2px 0 0; font-family: Poppins, sans-serif;"><%= hora_argentina(venta.inserted_at) %></p>
-              </div>
-              <p style="font-size: 14px; font-weight: 700; color: #186904; margin: 0; font-family: Poppins, sans-serif; flex-shrink: 0;">$<%= formatear_precio_venta(venta.precio_unitario || 0) %></p>
-            </.link>
+        <% end %>
+
+        <div style="max-height: 420px; overflow-y: auto;">
+        <%= if @ventas_agrupadas == [] do %>
+          <div style="display: flex; align-items: center; justify-content: center; min-height: 200px; text-align: center;">
+            <p style="font-size: 14px; color: #999; margin: 0; font-family: Poppins, sans-serif;">No hay ventas registradas este mes.</p>
+          </div>
+        <% else %>
+          <%= for {fecha, ventas_del_dia} <- @ventas_agrupadas do %>
+            <div style="display: flex; align-items: baseline; justify-content: space-between; margin: 4px 0 8px;">
+              <p style="font-size: 12px; font-weight: 700; color: #186904; margin: 0; text-transform: uppercase; letter-spacing: 1px; font-family: Poppins, sans-serif;"><%= etiqueta_dia(fecha) %></p>
+              <p style="font-size: 12px; font-weight: 700; color: #186904; margin: 0; font-family: Poppins, sans-serif;">$<%= formatear_precio_venta(total_del_dia(ventas_del_dia)) %></p>
+            </div>
+            <%= for venta <- ventas_del_dia do %>
+              <.link navigate={url_producto(venta)} style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 4px; border-bottom: 1px solid #f2f2f2; text-decoration: none;">
+                <div style="min-width: 0;">
+                  <p style="font-size: 14px; font-weight: 600; color: #111; margin: 0; font-family: Poppins, sans-serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= venta.producto_nombre %></p>
+                  <p style="font-size: 11px; color: #aaa; margin: 2px 0 0; font-family: Poppins, sans-serif;"><%= hora_argentina(venta.inserted_at) %></p>
+                </div>
+                <p style="font-size: 14px; font-weight: 700; color: #186904; margin: 0; font-family: Poppins, sans-serif; flex-shrink: 0;">$<%= formatear_precio_venta(venta.precio_unitario || 0) %></p>
+              </.link>
+            <% end %>
           <% end %>
         <% end %>
-      <% end %>
+        </div>
+      </div>
     </div>
     """
   end
