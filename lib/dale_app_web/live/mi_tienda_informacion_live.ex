@@ -129,33 +129,47 @@ defmodule DaleAppWeb.MiTiendaInformacionLive do
       <p style="font-size: 26px; font-weight: 800; color: #186904; margin: 0 0 20px;">Gestionar información</p>
       <%= if @brand do %>
         <form id="form-gestion" onsubmit="return validarAntesDeGuardar(event)">
-          <div style="margin-bottom: 22px;">
-            <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Nombre de la tienda</p>
-            <input type="text" name="brand[name]" id="input-nombre-tienda" value={@brand.name} oninput="gestionModificado = true" style="width: 100%; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; color: #333; outline: none; box-sizing: border-box;"/>
+          <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-bottom: 16px;">
+            <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.6px;">Nombre de la tienda</p>
+            <input type="text" name="brand[name]" id="input-nombre-tienda" value={@brand.name} oninput="gestionModificado = true" style="width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; color: #333; outline: none; box-sizing: border-box; background: white;"/>
           </div>
-          <div style="margin-bottom: 22px;">
-            <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Direcciones</p>
+          <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-bottom: 16px;">
+            <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.6px;">Direcciones</p>
             <div id="direcciones-container" phx-update="ignore"></div>
-            <button type="button" onclick="agregarDireccion()" style="margin-top: 8px; background: none; border: 1.5px dashed #e0e0e0; border-radius: 16px; padding: 10px 16px; cursor: pointer; color: #888; font-size: 13px; font-family: Poppins, sans-serif;">+ Agregar dirección</button>
+            <button type="button" onclick="agregarDireccion()" style="margin-top: 8px; background: white; border: 1.5px dashed #cfe4cf; border-radius: 16px; padding: 10px 16px; cursor: pointer; color: #186904; font-size: 13px; font-weight: 600; font-family: Poppins, sans-serif;">+ Agregar dirección</button>
             <input type="hidden" name="brand[address]" id="address-hidden" value={@brand.address}/>
             <input type="hidden" name="brand[address_full]" id="address-full-hidden" value={@brand.address_full}/>
           </div>
-          <div style="margin-bottom: 22px;">
-            <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Modalidad</p>
-            <select name="brand[modalidad]" id="select-modalidad-tienda" onchange="gestionModificado = true" style="width: 100%; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; color: #333; outline: none; box-sizing: border-box;">
+          <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-bottom: 16px;">
+            <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.6px;">Modalidad</p>
+            <select name="brand[modalidad]" id="select-modalidad-tienda" onchange="gestionModificado = true" style="width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; color: #333; outline: none; box-sizing: border-box; background: white;">
               <option value="presencial" selected={@brand.modalidad == "presencial"}>Presencial</option>
               <option value="digital" selected={@brand.modalidad == "digital"}>Solo Digital</option>
               <option value="ambos" selected={@brand.modalidad == "ambos"}>Presencial y Digital</option>
             </select>
           </div>
-          <div style="margin-bottom: 16px;">
-            <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Horario de atención</p>
+          <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-bottom: 16px;">
+            <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.6px;">Horario de atención</p>
             <input type="text" name="brand[horario_atencion]" id="input-horario-tienda" value={@brand.horario_atencion} placeholder="Ej: Lun a Sáb 10 a 20hs" oninput="gestionModificado = true"
-              style="width: 100%; padding: 13px 16px; border: 1.5px solid #e0e0e0; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; color: #333; outline: none; box-sizing: border-box;"/>
+              style="width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; color: #333; outline: none; box-sizing: border-box; background: white;"/>
           </div>
-          <div style="margin-bottom: 28px;">
-            <p style="font-size: 13px; font-weight: 600; color: #186904; margin: 0 0 8px;">Categorías</p>
-            <p style="font-size: 12px; color: #888; margin: 0 0 12px; font-family: Poppins, sans-serif;">Seleccioná las que mejor describen tu marca.</p>
+          <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-bottom: 16px;">
+            <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.6px;">Margen sobre venta online</p>
+            <p style="font-size: 12.5px; color: #555; margin: 0 0 10px; font-family: Poppins, sans-serif; line-height: 1.6;">
+              Dale cobra un máximo de 8% de comisión por venta online. Elegí cuánto de ese margen querés trasladarle al cliente sobre tu precio de local — el resto queda como tu ganancia extra por vender online. Con 0%, el cliente paga exactamente lo mismo que en tu local.
+            </p>
+            <p style="font-size: 12.5px; color: #186904; margin: 0 0 10px; font-family: Poppins, sans-serif; line-height: 1.6; background: #eef4ec; border-radius: 12px; padding: 10px 12px;">
+              💡 Cuanto más margen asumas vos (en vez de trasladarlo al cliente) y más parejo esté tu precio online con el de tu local, tu marca recibe un pequeño impulso en el algoritmo de Dale para aparecerle a más usuarios.
+            </p>
+            <p style="font-size: 12px; color: #c0392b; margin: 0 0 12px; font-family: Poppins, sans-serif; line-height: 1.6; background: #fff3f2; border-radius: 12px; padding: 10px 12px;">
+              ⚠️ Inflar artificialmente el precio de local para simular que estás asumiendo el margen (por ejemplo, subiendo un 8% por detrás en Stock y declarando acá 0%) viola los Términos de DaleGroup y da lugar a sanciones graves y permanentes sobre la cuenta de tu marca.
+            </p>
+            <input type="number" min="0" max="8" name="brand[margen_online]" id="input-margen-online" value={@brand.margen_online} oninput="gestionModificado = true"
+              style="width: 100%; padding: 13px 16px; border: 1.5px solid #cfe4cf; border-radius: 16px; font-family: Poppins, sans-serif; font-size: 14px; color: #333; outline: none; box-sizing: border-box; background: white;"/>
+          </div>
+          <div style="background: linear-gradient(160deg, #ffffff 0%, #f6faf3 100%); border: 1.5px solid #d9ead9; border-radius: 18px; padding: 18px; box-shadow: 0 4px 14px rgba(24,105,4,0.10); margin-bottom: 16px;">
+            <p style="font-size: 12.5px; font-weight: 700; color: #186904; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.6px;">Categorías</p>
+            <p style="font-size: 12.5px; color: #888; margin: 0 0 12px; font-family: Poppins, sans-serif;">Seleccioná las que mejor describen tu marca.</p>
             <input type="hidden" name="brand[categorias]" id="categorias-hidden" value={Enum.join(@brand.categorias || [], ",")}/>
             <div style="display: flex; flex-wrap: wrap; gap: 8px;">
               <%= for cat <- ["Hombre", "Mujer", "Casual", "Elegante", "Street", "Sport", "Ropa", "Accesorios", "Calzado"] do %>
@@ -163,13 +177,13 @@ defmodule DaleAppWeb.MiTiendaInformacionLive do
                 <button type="button"
                   data-cat={cat}
                   onclick="toggleCategoria(this)"
-                  style={"padding: 9px 16px; border-radius: 20px; cursor: pointer; font-size: 13px; font-family: Poppins, sans-serif; font-weight: 600; transition: all 0.2s; border: 1.5px solid #{if activa, do: "#186904", else: "#e0e0e0"}; background: #{if activa, do: "#186904", else: "white"}; color: #{if activa, do: "white", else: "#666"};"}>
+                  style={"padding: 9px 16px; border-radius: 20px; cursor: pointer; font-size: 13px; font-family: Poppins, sans-serif; font-weight: 600; transition: all 0.2s; border: 1.5px solid #{if activa, do: "#186904", else: "#cfe4cf"}; background: #{if activa, do: "#186904", else: "white"}; color: #{if activa, do: "white", else: "#666"};"}>
                   <%= cat %>
                 </button>
               <% end %>
             </div>
           </div>
-          <button type="submit" style="width: 100%; background-color: #186904; color: white; padding: 14px 0; border: none; border-radius: 16px; cursor: pointer; font-size: 15px; font-weight: 700; font-family: Poppins, sans-serif; margin-bottom: 22px;">
+          <button type="submit" style="width: 100%; background-color: #186904; color: white; padding: 14px 0; border: none; border-radius: 16px; cursor: pointer; font-size: 15px; font-weight: 700; font-family: Poppins, sans-serif; margin-bottom: 22px; box-shadow: 0 4px 14px rgba(24,105,4,0.20);">
             Guardar cambios
           </button>
         </form>
