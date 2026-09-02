@@ -432,6 +432,13 @@ defmodule DaleAppWeb.MiTiendaInformacionLive do
             if (margenActual !== orig.margen_online) cambios.push('Margen online: de ' + orig.margen_online + '% a ' + margenActual + '%');
             return cambios;
           };
+          window.volverAtrasGestion = function() {
+            if (window.history.length > 1) {
+              window.history.back();
+            } else if (window.__informacionHook) {
+              window.__informacionHook.pushEvent('volver_mi_tienda', {});
+            }
+          };
           window.intentarVolverInformacion = function(event) {
             event.preventDefault();
             const cambiosSalida = window.calcularCambiosGestion();
@@ -439,11 +446,11 @@ defmodule DaleAppWeb.MiTiendaInformacionLive do
               document.getElementById('aviso-confirmar-vacios-texto').innerHTML = 'Tenes estos cambios sin guardar:<br><br>- ' + cambiosSalida.join('<br>- ') + '<br><br>Si salis ahora los vas a perder. ¿Estas seguro?';
               window.__accionSiGestion = function() {
                 document.getElementById('aviso-confirmar-vacios').style.display = 'none';
-                window.__informacionHook.pushEvent('volver_mi_tienda', {});
+                window.volverAtrasGestion();
               };
               document.getElementById('aviso-confirmar-vacios').style.display = 'flex';
             } else {
-              window.__informacionHook.pushEvent('volver_mi_tienda', {});
+              window.volverAtrasGestion();
             }
           }
         },
@@ -454,6 +461,7 @@ defmodule DaleAppWeb.MiTiendaInformacionLive do
           window.validarAntesDeGuardar = undefined;
           window.continuarGuardadoGestion = undefined;
           window.intentarVolverInformacion = undefined;
+          window.volverAtrasGestion = undefined;
         }
       }
     </script>
