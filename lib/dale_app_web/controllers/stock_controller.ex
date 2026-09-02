@@ -89,7 +89,8 @@ defmodule DaleAppWeb.StockController do
               codigo_numero: codigo_numero,
               creado_por_user_id: user_id,
               material: material,
-              temporada: temporada
+              temporada: temporada,
+              precio_costo: precio_costo
             }
 
             case DaleApp.Products.create_product(atributos) do

@@ -201,7 +201,7 @@ defmodule DaleAppWeb.LibroVentasLive do
           </div>
         <% end %>
 
-        <div id="lista-ventas-scroll" style="background: white; border-radius: 14px; padding: 8px; max-height: 420px; overflow-y: auto; -webkit-overflow-scrolling: touch;">
+        <div id="lista-ventas-scroll" style="background: white; border-radius: 14px; padding: 8px; height: 420px; overflow-y: auto; -webkit-overflow-scrolling: touch;">
         <%= if @ventas_agrupadas == [] do %>
           <div style="display: flex; align-items: center; justify-content: center; min-height: 200px; text-align: center;">
             <p style="font-size: 14px; color: #999; margin: 0; font-family: Poppins, sans-serif;">No hay ventas registradas este mes.</p>
