@@ -216,7 +216,10 @@ defmodule DaleAppWeb.LibroVentasLive do
               <.link navigate={url_producto(venta)} style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 4px; border-bottom: 1px solid #f2f2f2; text-decoration: none;">
                 <div style="min-width: 0;">
                   <p style="font-size: 14px; font-weight: 600; color: #111; margin: 0; font-family: Poppins, sans-serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= venta.producto_nombre %></p>
-                  <p style="font-size: 11px; color: #aaa; margin: 2px 0 0; font-family: Poppins, sans-serif;"><%= hora_argentina(venta.inserted_at) %></p>
+                  <div style="display: flex; align-items: center; gap: 6px; margin: 2px 0 0;">
+                    <p style="font-size: 11px; color: #aaa; margin: 0; font-family: Poppins, sans-serif;"><%= hora_argentina(venta.inserted_at) %></p>
+                    <span style={"font-size: 9.5px; font-weight: 700; color: #{if venta.canal == "online", do: "#0066cc", else: "#186904"}; background: #{if venta.canal == "online", do: "#eaf2fb", else: "#eef4ec"}; padding: 2px 6px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.4px;"}><%= if venta.canal == "online", do: "Online", else: "Local" %></span>
+                  </div>
                 </div>
                 <p style="font-size: 14px; font-weight: 700; color: #186904; margin: 0; font-family: Poppins, sans-serif; flex-shrink: 0;">$<%= formatear_precio_venta(venta.precio_unitario || 0) %></p>
               </.link>

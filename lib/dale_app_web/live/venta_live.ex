@@ -203,7 +203,8 @@ defmodule DaleAppWeb.VentaLive do
                     codigo_talle: stock_item.codigo_talle,
                     precio_unitario: stock_item.product.price,
                     grupo_venta: grupo_venta_id,
-                    brand_location_id: stock_item.brand_location_id
+                    brand_location_id: stock_item.brand_location_id,
+                    canal: "local"
                   })
 
                 {actualizado.cantidad, false, venta.id}

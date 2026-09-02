@@ -13,11 +13,13 @@ defmodule DaleApp.Products.Venta do
     field :precio_unitario, :integer
     field :grupo_venta, :string
     field :brand_location_id, :id
+    field :canal, :string, default: "local"
     timestamps()
   end
   def changeset(venta, attrs) do
     venta
-    |> cast(attrs, [:brand_id, :user_id, :product_id, :stock_item_id, :producto_nombre, :codigo_tipo, :codigo_color, :codigo_talle, :precio_unitario, :grupo_venta, :brand_location_id])
+    |> cast(attrs, [:brand_id, :user_id, :product_id, :stock_item_id, :producto_nombre, :codigo_tipo, :codigo_color, :codigo_talle, :precio_unitario, :grupo_venta, :brand_location_id, :canal])
     |> validate_required([:brand_id, :producto_nombre])
+    |> validate_inclusion(:canal, ["local", "online"])
   end
 end
