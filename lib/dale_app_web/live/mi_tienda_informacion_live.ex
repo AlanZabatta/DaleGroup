@@ -206,8 +206,7 @@ defmodule DaleAppWeb.MiTiendaInformacionLive do
           window.__informacionHook = this;
           let gestionModificado = false;
 
-          window.actualizarMargenOnlineSlider = (el) => {
-            gestionModificado = true;
+          window.actualizarVisualMargenOnlineSlider = (el) => {
             const valor = parseInt(el.value, 10) || 0;
             const elValor = document.getElementById('margen-online-valor');
             const elDescripcion = document.getElementById('margen-online-descripcion');
@@ -224,8 +223,12 @@ defmodule DaleAppWeb.MiTiendaInformacionLive do
               }
             }
           };
+          window.actualizarMargenOnlineSlider = (el) => {
+            gestionModificado = true;
+            window.actualizarVisualMargenOnlineSlider(el);
+          };
           const sliderMargenInicial = document.getElementById('input-margen-online');
-          if (sliderMargenInicial) window.actualizarMargenOnlineSlider(sliderMargenInicial);
+          if (sliderMargenInicial) window.actualizarVisualMargenOnlineSlider(sliderMargenInicial);
 
           const addressHidden = document.getElementById('address-hidden');
           const addressFullHidden = document.getElementById('address-full-hidden');
@@ -400,10 +403,40 @@ defmodule DaleAppWeb.MiTiendaInformacionLive do
             guardarGestion();
           }
 
+          window.__valoresOriginalesGestion = {
+            nombre: document.getElementById('input-nombre-tienda').value,
+            horario: document.getElementById('input-horario-tienda').value,
+            modalidad: document.getElementById('select-modalidad-tienda').value,
+            categorias: document.getElementById('categorias-hidden').value,
+            direcciones: document.getElementById('address-full-hidden').value,
+            margen_online: document.getElementById('input-margen-online').value
+          };
+          window.calcularCambiosGestion = function() {
+            const orig = window.__valoresOriginalesGestion;
+            if (!orig) return [];
+            const cambios = [];
+            const nombreActual = document.getElementById('input-nombre-tienda').value;
+            if (nombreActual !== orig.nombre) cambios.push('Nombre: de "' + orig.nombre + '" a "' + nombreActual + '"');
+            const horarioActual = document.getElementById('input-horario-tienda').value;
+            if (horarioActual !== orig.horario) cambios.push('Horario: de "' + orig.horario + '" a "' + horarioActual + '"');
+            const modalidadActual = document.getElementById('select-modalidad-tienda').value;
+            if (modalidadActual !== orig.modalidad) {
+              const etiquetas = { presencial: 'Presencial', digital: 'Solo Digital', ambos: 'Presencial y Digital' };
+              cambios.push('Modalidad: de "' + (etiquetas[orig.modalidad] || orig.modalidad) + '" a "' + (etiquetas[modalidadActual] || modalidadActual) + '"');
+            }
+            const categoriasActual = document.getElementById('categorias-hidden').value;
+            if (categoriasActual !== orig.categorias) cambios.push('Categorias modificadas');
+            const direccionesActual = document.getElementById('address-full-hidden').value;
+            if (direccionesActual !== orig.direcciones) cambios.push('Direcciones modificadas');
+            const margenActual = document.getElementById('input-margen-online').value;
+            if (margenActual !== orig.margen_online) cambios.push('Margen online: de ' + orig.margen_online + '% a ' + margenActual + '%');
+            return cambios;
+          };
           window.intentarVolverInformacion = function(event) {
             event.preventDefault();
-            if (gestionModificado) {
-              document.getElementById('aviso-confirmar-vacios-texto').innerHTML = 'Tenes cambios sin guardar en Gestionar informacion.<br><br>Si salis ahora los vas a perder. ¿Estas seguro?';
+            const cambiosSalida = window.calcularCambiosGestion();
+            if (cambiosSalida.length > 0) {
+              document.getElementById('aviso-confirmar-vacios-texto').innerHTML = 'Tenes estos cambios sin guardar:<br><br>- ' + cambiosSalida.join('<br>- ') + '<br><br>Si salis ahora los vas a perder. ¿Estas seguro?';
               window.__accionSiGestion = function() {
                 document.getElementById('aviso-confirmar-vacios').style.display = 'none';
                 window.__informacionHook.pushEvent('volver_mi_tienda', {});
