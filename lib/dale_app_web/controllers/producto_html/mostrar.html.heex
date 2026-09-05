@@ -1,6 +1,6 @@
-<% color_principal = (@brand.colores && @brand.colores["principal"]) || "#186904" %>
-<% color_letras = (@brand.colores && @brand.colores["letras"]) || "#1a1a1a" %>
-<% color_gestion = (@brand.colores && @brand.colores["gestion"]) || "#ffffff" %>
+<% color_principal = if @origen_marca, do: (@brand.colores && @brand.colores["principal"]) || "#186904", else: "#186904" %>
+<% color_letras = if @origen_marca, do: (@brand.colores && @brand.colores["letras"]) || "#1a1a1a", else: "#1a1a1a" %>
+<% color_gestion = if @origen_marca, do: (@brand.colores && @brand.colores["gestion"]) || "#ffffff", else: "#ffffff" %>
 <% hex_limpio = String.trim_leading(color_principal, "#") %>
 <% {cr, cg, cb} = if String.length(hex_limpio) == 6 do
      {String.to_integer(String.slice(hex_limpio, 0, 2), 16),

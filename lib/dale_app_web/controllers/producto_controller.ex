@@ -237,7 +237,8 @@ defmodule DaleAppWeb.ProductoController do
     end
   end
 
-  def mostrar(conn, %{"id" => id}) do
+  def mostrar(conn, %{"id" => id} = params) do
+    origen_marca = params["origen"] == "marca"
     product = Products.get_product(id)
     brand = Repo.get(DaleApp.Brands.Brand, product.brand_id)
     user_id = get_session(conn, :user_id)
@@ -273,7 +274,8 @@ defmodule DaleAppWeb.ProductoController do
       imagenes: imagenes,
       otros_productos: otros_productos,
       oferta: oferta,
-      colores: colores
+      colores: colores,
+      origen_marca: origen_marca
     )
   end
 
@@ -296,6 +298,7 @@ defmodule DaleAppWeb.ProductoController do
       images: (product.images && product.images != []) && product.images || (product.image && [product.image] || []),
       brand_id: brand.id,
       brand_name: brand.name,
+      color_principal: (brand.colores && brand.colores["principal"]) || "#186904",
       favorito: favorito,
       modalidad: brand.modalidad,
       address: brand.address,
