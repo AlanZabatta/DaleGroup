@@ -1119,7 +1119,21 @@ defmodule DaleAppWeb.StockPanoramicoLive do
 
   def render(assigns) do
     ~H"""
-    <div style="padding: 24px 18px 40px; font-family: Poppins, sans-serif; max-width: 600px; margin: 0 auto; background-color: white; min-height: 100vh; position: relative;">
+    <div id="stock-panoramico-wrapper" phx-hook=".ScrollArribaStock" data-categoria={@categoria_seleccionada && @categoria_seleccionada.codigo} style="padding: 24px 18px 40px; font-family: Poppins, sans-serif; max-width: 600px; margin: 0 auto; background-color: white; min-height: 100vh; position: relative;">
+      <script :type={Phoenix.LiveView.ColocatedHook} name=".ScrollArribaStock">
+        export default {
+          mounted() {
+            this._categoriaPrevia = this.el.dataset.categoria || "";
+          },
+          updated() {
+            const categoriaActual = this.el.dataset.categoria || "";
+            if (categoriaActual !== this._categoriaPrevia) {
+              window.scrollTo(0, 0);
+            }
+            this._categoriaPrevia = categoriaActual;
+          }
+        }
+      </script>
       <%= cond do %>
         <% @categoria_seleccionada && @mostrar_formulario_producto -> %>
           <button type="button" onclick="manejarClickVolverFormularioStock()" style="width: 34px; height: 34px; border-radius: 50%; background: white; border: 1.5px solid #e0e0e0; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; padding: 0;">
@@ -2273,7 +2287,10 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                 <%= for sede <- @sedes do %>
                   <label style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #f9f9f9; border-radius: 12px; cursor: pointer;">
                     <input type="checkbox" class="checkbox-sede-stock" value={sede.id} checked style="width: 18px; height: 18px; accent-color: #186904; cursor: pointer;" />
-                    <span style="font-size: 13px; font-weight: 600; color: #333;"><%= sede.nombre %></span>
+                    <div style="display: flex; flex-direction: column;">
+                      <span style="font-size: 13px; font-weight: 600; color: #333;"><%= sede.nombre %></span>
+                      <span style="font-size: 11px; color: #999;"><%= if sede.direccion_completa && sede.direccion_completa != "", do: sede.direccion_completa, else: sede.address %></span>
+                    </div>
                   </label>
                 <% end %>
               </div>
@@ -3950,6 +3967,8 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                   const data = await res.json();
 
                   if (data.ok) {
+                    const erroresSubidaFotos = [];
+
                     if (imagenBlobStock && data.ids) {
                       const extension = imagenBlobStock.type && imagenBlobStock.type.includes('png') ? 'png'
                         : (imagenBlobStock.type && imagenBlobStock.type.includes('webp') ? 'webp' : 'jpg');
@@ -3957,11 +3976,18 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                         const imgForm = new FormData();
                         imgForm.append('_csrf_token', csrfTokenStock);
                         imgForm.append('imagen', imagenBlobStock, 'producto.' + extension);
-                        await fetch('/mi-tienda/stock/productos/' + id + '/imagen', { method: 'POST', body: imgForm });
+                        try {
+                          const resImg = await fetch('/mi-tienda/stock/productos/' + id + '/imagen', { method: 'POST', body: imgForm });
+                          const dataImg = await resImg.json();
+                          if (!dataImg.ok) {
+                            erroresSubidaFotos.push('Producto ' + id + ': ' + (dataImg.error || 'error desconocido'));
+                          }
+                        } catch (e) {
+                          erroresSubidaFotos.push('Producto ' + id + ': ' + e.message);
+                        }
                       }
                     }
 
-                    const erroresSubidaFotos = [];
                     if (data.colores_ids) {
                       for (const [cod, fotos] of Object.entries(imagenesPorColorStock)) {
                         const productId = data.colores_ids[cod];
@@ -3985,6 +4011,22 @@ defmodule DaleAppWeb.StockPanoramicoLive do
                         }
                       }
                     }
+
+                    if (!editandoArticuloActivo && erroresSubidaFotos.length > 0 && codigoTipo === '99') {
+                      const idsParaBorrar = data.ids && data.ids.length > 0 ? data.ids : (data.colores_ids ? Object.values(data.colores_ids) : []);
+                      for (const idBorrar of idsParaBorrar) {
+                        try {
+                          await fetch('/mi-tienda/productos/' + idBorrar, {
+                            method: 'DELETE',
+                            headers: { 'x-csrf-token': csrfTokenStock }
+                          });
+                        } catch (e) {}
+                      }
+                      btn.textContent = "Guardar producto"; btn.disabled = false;
+                      alert('No se pudo guardar el producto para DaleStand porque falló la subida de las fotos:\n\n' + erroresSubidaFotos.join('\n') + '\n\nEl producto se eliminó, volvé a intentarlo.');
+                      return;
+                    }
+
                     if (erroresSubidaFotos.length > 0) {
                       alert('El producto se guardó, pero algunas fotos no se pudieron subir:\n\n' + erroresSubidaFotos.join('\n') + '\n\nVolvé a editar el producto para reintentar.');
                     }
